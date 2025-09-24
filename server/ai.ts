@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import * as fs from "fs";
 import * as path from "path";
-import * as csv from "csv-parser";
+import csv from "csv-parser";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
