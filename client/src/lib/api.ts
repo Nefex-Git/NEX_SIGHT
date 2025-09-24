@@ -1,0 +1,159 @@
+import { apiRequest } from "./queryClient";
+
+export interface DataSource {
+  id: string;
+  name: string;
+  type: string;
+  filename?: string;
+  size?: number;
+  rowCount?: number;
+  columnCount?: number;
+  status: string;
+  metadata?: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AiQuery {
+  id: string;
+  question: string;
+  answer: string;
+  isVoiceQuery: string;
+  chartData?: any;
+  chartType?: string;
+  kpiValue?: string;
+  unit?: string;
+  createdAt: string;
+}
+
+export interface KPI {
+  id: string;
+  question: string;
+  value: string;
+  unit?: string;
+  changePercent?: string;
+  lastUpdated: string;
+}
+
+export interface Chart {
+  id: string;
+  title: string;
+  type: string;
+  config: any;
+  dataSourceId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Data Source API
+export async function uploadDataSource(file: File): Promise<DataSource> {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await fetch('/api/data-sources/upload', {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || 'Upload failed');
+  }
+  
+  return response.json();
+}
+
+export async function getDataSources(): Promise<DataSource[]> {
+  const response = await apiRequest('GET', '/api/data-sources');
+  return response.json();
+}
+
+export async function deleteDataSource(id: string): Promise<void> {
+  await apiRequest('DELETE', `/api/data-sources/${id}`);
+}
+
+// AI Query API
+export async function submitAiQuery(question: string, dataSourceId?: string, isVoiceQuery = false): Promise<AiQuery> {
+  const response = await apiRequest('POST', '/api/ai/query', {
+    question,
+    dataSourceId,
+    isVoiceQuery
+  });
+  return response.json();
+}
+
+export async function transcribeAudio(audioBlob: Blob): Promise<{ transcription: string }> {
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'recording.wav');
+  
+  const response = await fetch('/api/ai/voice', {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to transcribe audio');
+  }
+  
+  return response.json();
+}
+
+export async function getAiQueries(limit = 10): Promise<AiQuery[]> {
+  const response = await apiRequest('GET', `/api/ai/queries?limit=${limit}`);
+  return response.json();
+}
+
+// KPI API
+export async function getKpis(): Promise<KPI[]> {
+  const response = await apiRequest('GET', '/api/kpis');
+  return response.json();
+}
+
+export async function createKpi(kpi: Omit<KPI, 'id' | 'lastUpdated'>): Promise<KPI> {
+  const response = await apiRequest('POST', '/api/kpis', kpi);
+  return response.json();
+}
+
+export async function createKpiFromQuery(question: string, answer: string): Promise<KPI> {
+  const response = await apiRequest('POST', '/api/kpis/from-query', {
+    question,
+    answer
+  });
+  return response.json();
+}
+
+export async function updateKpi(id: string, updates: Partial<KPI>): Promise<KPI> {
+  const response = await apiRequest('PUT', `/api/kpis/${id}`, updates);
+  return response.json();
+}
+
+export async function deleteKpi(id: string): Promise<void> {
+  await apiRequest('DELETE', `/api/kpis/${id}`);
+}
+
+// Chart API
+export async function getCharts(): Promise<Chart[]> {
+  const response = await apiRequest('GET', '/api/charts');
+  return response.json();
+}
+
+export async function getChart(id: string): Promise<Chart> {
+  const response = await apiRequest('GET', `/api/charts/${id}`);
+  return response.json();
+}
+
+export async function createChart(chart: Omit<Chart, 'id' | 'createdAt' | 'updatedAt'>): Promise<Chart> {
+  const response = await apiRequest('POST', '/api/charts', chart);
+  return response.json();
+}
+
+export async function updateChart(id: string, updates: Partial<Chart>): Promise<Chart> {
+  const response = await apiRequest('PUT', `/api/charts/${id}`, updates);
+  return response.json();
+}
+
+export async function deleteChart(id: string): Promise<void> {
+  await apiRequest('DELETE', `/api/charts/${id}`);
+}
