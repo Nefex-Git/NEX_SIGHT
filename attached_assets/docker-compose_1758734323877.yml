@@ -1,0 +1,86 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: nexai-mysql
+    command: ["mysqld","--default-authentication-plugin=mysql_native_password"]
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123
+      MYSQL_DATABASE: login_details
+      MYSQL_USER: nexuser
+      MYSQL_PASSWORD: nexpass123
+    ports:
+      - "3308:3306"
+    volumes:
+      # use a named volume for the data dir (no more .sock in your repo)
+      - mysql_data:/var/lib/mysql
+      # keep your init script bind-mounted
+      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -prootpass123 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: ./backend 
+      dockerfile: Dockerfile.api
+    container_name: nexai-api
+    ports:
+      - "8000:8000"
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL: mysql+asyncmy://nexuser:nexpass123@db:3306/login_details
+      SUPERSET_URL: http://superset:8088
+      SUPERSET_USER: admin
+      SUPERSET_PASS: admin
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - ./backend:/app/backend:rw
+      - ./data:/app/data:rw
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    
+  web:
+    build:
+      context: ./frontend
+    container_name: nexai-web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE: http://localhost:8000
+    volumes:
+      - ./frontend:/app:rw
+      - /app/node_modules
+    depends_on:
+      - api
+
+  superset:
+    build:
+      context: .
+      dockerfile: Dockerfile.superset
+    image: nexai-superset:local 
+    container_name: nexai-superset
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_SECRET_KEY: devsecret_devsecret_devsecret_123
+      ADMIN_USERNAME: admin
+      ADMIN_FIRSTNAME: Admin
+      ADMIN_LASTNAME: User
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: admin
+      SUPERSET_LOAD_EXAMPLES: "no"
+      SQLALCHEMY_DATABASE_URI: mysql+pymysql://nexuser:nexpass123@db:3306/superset
+    volumes:
+      - superset_home:/app/superset_home
+      - ./superset_config.py:/app/pythonpath/superset_config.py:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  superset_home:
+  mysql_data:

@@ -1,0 +1,35 @@
+# --- Core ---
+pillow
+flask-talisman
+flask-cors
+
+# --- MySQL ---
+mysqlclient==2.2.7
+PyMySQL==1.1.1
+
+# --- PostgreSQL ---
+psycopg2-binary
+
+# --- SQL Server / Azure SQL ---
+pyodbc
+
+# --- BigQuery ---
+pybigquery
+google-auth
+google-auth-oauthlib
+
+# --- Snowflake ---
+snowflake-sqlalchemy
+
+# --- Trino / Presto ---
+trino
+
+# --- DuckDB ---
+duckdb
+duckdb-engine
+
+# --- Google Sheets / Other APIs ---
+shillelagh[gsheetsapi]
+
+# --- Optional niceties ---
+sqlalchemy-utils
