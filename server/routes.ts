@@ -174,15 +174,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Test the connection
+      console.log(`Testing ${validatedConfig.type} connection to ${validatedConfig.host}:${validatedConfig.port || 'default'}`);
       const result = await testConnection(validatedConfig);
       
       if (result.success) {
+        console.log('Connection test successful:', result.metadata);
         res.json({ 
           success: true, 
           message: 'Connection successful',
           metadata: result.metadata 
         });
       } else {
+        console.log('Connection test failed:', result.error);
         res.status(400).json({ 
           success: false, 
           message: result.error || 'Connection failed' 
