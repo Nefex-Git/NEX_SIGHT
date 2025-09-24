@@ -16,9 +16,11 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import ConnectorModal from "@/components/connectors/connector-modal";
 
 export default function WarehousePage() {
   const [isDragging, setIsDragging] = useState(false);
+  const [isConnectorModalOpen, setIsConnectorModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -123,7 +125,11 @@ export default function WarehousePage() {
             Manage your data sources and datasets
           </p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90" data-testid="button-connect-source">
+        <Button 
+          className="bg-primary hover:bg-primary/90" 
+          onClick={() => setIsConnectorModalOpen(true)}
+          data-testid="button-connect-source"
+        >
           <Plus className="mr-2 h-4 w-4" />
           Connect Source
         </Button>
@@ -299,6 +305,15 @@ export default function WarehousePage() {
           </CardContent>
         </Card>
       )}
+      
+      <ConnectorModal
+        isOpen={isConnectorModalOpen}
+        onClose={() => setIsConnectorModalOpen(false)}
+        onConnectorAdded={() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/data-sources"] });
+          setIsConnectorModalOpen(false);
+        }}
+      />
     </div>
   );
 }

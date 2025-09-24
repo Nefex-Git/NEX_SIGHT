@@ -13,6 +13,7 @@ import {
 import { randomUUID } from "crypto";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import type { Store } from "express-session";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -48,7 +49,7 @@ export interface IStorage {
   deleteChart(id: string): Promise<boolean>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: Store;
 }
 
 export class MemStorage implements IStorage {
@@ -57,7 +58,7 @@ export class MemStorage implements IStorage {
   private aiQueries: Map<string, AiQuery>;
   private kpis: Map<string, KPI>;
   private charts: Map<string, Chart>;
-  public sessionStore: session.SessionStore;
+  public sessionStore: Store;
 
   constructor() {
     this.users = new Map();
@@ -88,6 +89,7 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const user: User = { 
       ...insertUser, 
+      name: insertUser.name || null,
       id, 
       createdAt: now, 
       updatedAt: now 
@@ -110,6 +112,14 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const dataSource: DataSource = {
       ...insertDataSource,
+      status: insertDataSource.status || 'processing',
+      filename: insertDataSource.filename || null,
+      size: insertDataSource.size || null,
+      rowCount: insertDataSource.rowCount || null,
+      columnCount: insertDataSource.columnCount || null,
+      connectionConfig: insertDataSource.connectionConfig || null,
+      metadata: insertDataSource.metadata || null,
+      lastSyncedAt: insertDataSource.lastSyncedAt || null,
       id,
       createdAt: now,
       updatedAt: now
@@ -143,6 +153,9 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const query: AiQuery = {
       ...insertQuery,
+      metadata: insertQuery.metadata || null,
+      isVoiceQuery: insertQuery.isVoiceQuery || null,
+      dataSourceId: insertQuery.dataSourceId || null,
       id,
       createdAt: new Date()
     };
@@ -160,6 +173,8 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const kpi: KPI = {
       ...insertKpi,
+      unit: insertKpi.unit || null,
+      changePercent: insertKpi.changePercent || null,
       id,
       lastUpdated: now,
       createdAt: now
@@ -195,6 +210,7 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const chart: Chart = {
       ...insertChart,
+      dataSourceId: insertChart.dataSourceId || null,
       id,
       createdAt: now,
       updatedAt: now

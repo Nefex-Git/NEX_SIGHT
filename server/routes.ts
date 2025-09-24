@@ -11,6 +11,14 @@ import {
   parseCSVFile, 
   generateKPIFromQuestion 
 } from "./ai";
+import {
+  testConnection,
+  encryptConnectionConfig,
+  sanitizeConnectionConfig,
+  DatabaseConnectionSchema,
+  ApiConnectionSchema,
+  SftpConnectionSchema
+} from "./connectors";
 import { 
   insertDataSourceSchema, 
   insertAiQuerySchema, 
@@ -115,6 +123,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: 'Data source deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Failed to delete data source' });
+    }
+  });
+
+  // Connector endpoints
+  app.post('/api/connectors/test', requireAuth, async (req: any, res) => {
+    try {
+      const config = req.body;
+      
+      // Validate configuration based on type
+      let validatedConfig;
+      try {
+        if (config.type === 'sftp') {
+          validatedConfig = SftpConnectionSchema.parse(config);
+        } else if (['rest', 'graphql', 'webhook'].includes(config.type)) {
+          validatedConfig = ApiConnectionSchema.parse(config);
+        } else {
+          validatedConfig = DatabaseConnectionSchema.parse(config);
+          
+          // Additional validation for database types requiring specific fields
+          const dbType = validatedConfig.type;
+          if (['mysql', 'postgresql', 'sqlserver'].includes(dbType)) {
+            if (!validatedConfig.host) {
+              return res.status(400).json({ message: `Host is required for ${dbType}` });
+            }
+            if (!validatedConfig.username) {
+              return res.status(400).json({ message: `Username is required for ${dbType}` });
+            }
+            if (!validatedConfig.password) {
+              return res.status(400).json({ message: `Password is required for ${dbType}` });
+            }
+            if (['mysql', 'postgresql'].includes(dbType) && !validatedConfig.database) {
+              return res.status(400).json({ message: `Database name is required for ${dbType}` });
+            }
+          } else if (dbType === 'sqlite') {
+            if (!validatedConfig.database) {
+              return res.status(400).json({ message: 'Database file path is required for SQLite' });
+            }
+          } else if (['mongodb', 'redis'].includes(dbType)) {
+            if (!validatedConfig.host) {
+              return res.status(400).json({ message: `Host is required for ${dbType}` });
+            }
+          }
+        }
+      } catch (validationError: any) {
+        return res.status(400).json({ 
+          message: 'Invalid configuration',
+          errors: validationError.errors 
+        });
+      }
+
+      // Test the connection
+      const result = await testConnection(validatedConfig);
+      
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: 'Connection successful',
+          metadata: result.metadata 
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          message: result.error || 'Connection failed' 
+        });
+      }
+    } catch (error: any) {
+      console.error('Connection test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Internal server error while testing connection' 
+      });
+    }
+  });
+
+  app.post('/api/connectors', requireAuth, async (req: any, res) => {
+    try {
+      const config = req.body;
+      
+      // Validate configuration
+      let validatedConfig;
+      try {
+        if (config.type === 'sftp') {
+          validatedConfig = SftpConnectionSchema.parse(config);
+        } else if (['rest', 'graphql', 'webhook'].includes(config.type)) {
+          validatedConfig = ApiConnectionSchema.parse(config);
+        } else {
+          validatedConfig = DatabaseConnectionSchema.parse(config);
+          
+          // Additional validation for database types requiring specific fields
+          const dbType = validatedConfig.type;
+          if (['mysql', 'postgresql', 'sqlserver'].includes(dbType)) {
+            if (!validatedConfig.host) {
+              return res.status(400).json({ message: `Host is required for ${dbType}` });
+            }
+            if (!validatedConfig.username) {
+              return res.status(400).json({ message: `Username is required for ${dbType}` });
+            }
+            if (!validatedConfig.password) {
+              return res.status(400).json({ message: `Password is required for ${dbType}` });
+            }
+            if (['mysql', 'postgresql'].includes(dbType) && !validatedConfig.database) {
+              return res.status(400).json({ message: `Database name is required for ${dbType}` });
+            }
+          } else if (dbType === 'sqlite') {
+            if (!validatedConfig.database) {
+              return res.status(400).json({ message: 'Database file path is required for SQLite' });
+            }
+          } else if (['mongodb', 'redis'].includes(dbType)) {
+            if (!validatedConfig.host) {
+              return res.status(400).json({ message: `Host is required for ${dbType}` });
+            }
+          }
+        }
+      } catch (validationError: any) {
+        return res.status(400).json({ 
+          message: 'Invalid configuration',
+          errors: validationError.errors 
+        });
+      }
+
+      // Create data source with connector configuration
+      const dataSource = await storage.createDataSource({
+        userId: req.user.id,
+        name: validatedConfig.name,
+        type: validatedConfig.type,
+        status: 'connected',
+        connectionConfig: encryptConnectionConfig(validatedConfig),
+        metadata: {
+          connectorType: validatedConfig.type,
+          createdVia: 'connector'
+        }
+      });
+
+      // Return sanitized response (no sensitive data)
+      res.json({
+        ...dataSource,
+        connectionConfig: sanitizeConnectionConfig(validatedConfig)
+      });
+    } catch (error: any) {
+      console.error('Connector save error:', error);
+      res.status(500).json({ message: 'Failed to save connector' });
     }
   });
 
