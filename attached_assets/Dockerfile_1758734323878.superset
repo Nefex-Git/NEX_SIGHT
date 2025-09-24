@@ -1,0 +1,20 @@
+FROM apache/superset:latest
+
+# --- Native deps required by mysqlclient build ---
+USER root
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      build-essential \
+      gcc \
+      pkg-config \
+      default-libmysqlclient-dev \
+      libmariadb-dev-compat \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- Install Python deps into Superset's venv (/app/.venv) ---
+COPY requirements-superset.txt /app/requirements-superset.txt
+RUN /app/.venv/bin/python -m ensurepip --upgrade \
+ && /app/.venv/bin/python -m pip install --upgrade pip \
+ && /app/.venv/bin/python -m pip install --no-cache-dir -r /app/requirements-superset.txt
+
+# drop back to the runtime user
+USER superset
