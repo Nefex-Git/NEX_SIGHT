@@ -28,7 +28,7 @@ interface ChatMessage {
 export default function AssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [selectedDataSource, setSelectedDataSource] = useState("");
+  const [selectedDataSource, setSelectedDataSource] = useState("all");
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const voiceRecorderRef = useRef<VoiceRecorder | null>(null);
@@ -119,7 +119,7 @@ export default function AssistantPage() {
     // Submit to AI
     aiQueryMutation.mutate({
       question: question.trim(),
-      dataSourceId: selectedDataSource || undefined,
+      dataSourceId: selectedDataSource === "all" ? undefined : selectedDataSource,
       isVoiceQuery,
     });
 
@@ -209,7 +209,7 @@ export default function AssistantPage() {
               <SelectValue placeholder="Select a data source" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Data Sources</SelectItem>
+              <SelectItem value="all">All Data Sources</SelectItem>
               {dataSources.map((source) => (
                 <SelectItem key={source.id} value={source.id}>
                   {source.name}
