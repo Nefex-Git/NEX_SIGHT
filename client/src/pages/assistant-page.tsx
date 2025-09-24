@@ -160,30 +160,29 @@ export default function AssistantPage() {
         setIsRecording(true);
       }
     } catch (error) {
+      console.error('Voice recording error:', error);
       setIsRecording(false);
       setIsTranscribing(false);
       
-      // Try speech recognition as fallback
+      // Try speech recognition as fallback only if available
       if (speechRecognitionRef.current?.isAvailable()) {
         try {
           const transcription = await speechRecognitionRef.current.startListening();
-          if (transcription.trim()) {
+          if (transcription && transcription.trim()) {
             handleSubmit(transcription, true);
+            return; // Success - exit early
           }
         } catch (speechError) {
-          toast({
-            title: "Voice input failed",
-            description: "Please check your microphone permissions and try again.",
-            variant: "destructive",
-          });
+          console.error('Speech recognition fallback error:', speechError);
         }
-      } else {
-        toast({
-          title: "Voice input not available",
-          description: "Your browser doesn't support voice recording.",
-          variant: "destructive",
-        });
       }
+      
+      // Show error toast only if all methods failed
+      toast({
+        title: "Voice input failed",
+        description: "Please check your microphone permissions and try typing instead.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -200,23 +199,55 @@ export default function AssistantPage() {
         </p>
       </div>
 
-      {/* Data Source Selection */}
+      {/* Dataset Selection */}
       {dataSources.length > 0 && (
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">Data Source (Optional)</label>
-          <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
-            <SelectTrigger className="max-w-md">
-              <SelectValue placeholder="Select a data source" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Data Sources</SelectItem>
-              {dataSources.map((source) => (
-                <SelectItem key={source.id} value={source.id}>
-                  {source.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Card className="p-4">
+            <CardHeader className="p-0 pb-4">
+              <CardTitle className="text-base">Dataset Selection</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Choose which datasets to analyze. Questions will be answered based on selected data only.
+              </p>
+            </CardHeader>
+            <div className="space-y-3">
+              <Select value={selectedDataSource} onValueChange={setSelectedDataSource} data-testid="select-data-source">
+                <SelectTrigger className="max-w-md">
+                  <SelectValue placeholder="Select target dataset" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Available Datasets</SelectItem>
+                  {dataSources.map((source) => (
+                    <SelectItem key={source.id} value={source.id}>
+                      {source.name} ({source.type})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {selectedDataSource !== "all" && (
+                <div className="text-sm p-3 bg-muted/50 rounded-lg border" data-testid="selected-dataset-info">
+                  <div className="font-medium text-primary">
+                    Analyzing: {dataSources.find(ds => ds.id === selectedDataSource)?.name}
+                  </div>
+                  <div className="text-muted-foreground mt-1">
+                    Type: {dataSources.find(ds => ds.id === selectedDataSource)?.type} • 
+                    Records: {dataSources.find(ds => ds.id === selectedDataSource)?.rowCount || 'Unknown'}
+                  </div>
+                </div>
+              )}
+              
+              {selectedDataSource === "all" && dataSources.length > 1 && (
+                <div className="text-sm p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800" data-testid="all-datasets-info">
+                  <div className="font-medium text-blue-700 dark:text-blue-300">
+                    Analyzing All Datasets ({dataSources.length} sources)
+                  </div>
+                  <div className="text-blue-600 dark:text-blue-400 mt-1">
+                    Questions will be answered using data from all available sources
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
         </div>
       )}
 
