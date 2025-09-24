@@ -1,0 +1,1001 @@
+month,date,product name,Product ID,Quantity,AmountPerUnit,Sales,Region
+6,06 June 2025,Toothpaste,P001,20,35,3599,Central
+6,06 June 2025,Milk Powder,P010,35,60,1111,East
+6,06 June 2025,Coffee,P009,60,100,2482,East
+6,06 June 2025,Toothpaste,P001,20,35,1993,North
+6,06 June 2025,Chips,P006,12,22,4229,Central
+6,06 June 2025,Coffee,P009,60,100,621,Central
+6,06 June 2025,Soap,P003,10,25,1074,South
+6,06 June 2025,Biscuits,P004,15,30,2263,South
+6,06 June 2025,Detergent,P007,40,70,553,West
+6,06 June 2025,Milk Powder,P010,35,60,3062,South
+6,06 June 2025,Juice,P005,25,45,3770,North
+6,06 June 2025,Detergent,P007,40,70,2089,West
+6,06 June 2025,Juice,P005,25,45,70,North
+6,06 June 2025,Juice,P005,25,45,3345,South
+6,06 June 2025,Juice,P005,25,45,1484,South
+6,06 June 2025,Soap,P003,10,25,4351,East
+6,05 June 2025,Detergent,P007,40,70,2422,Central
+6,05 June 2025,Biscuits,P004,15,30,3999,East
+6,05 June 2025,Milk Powder,P010,35,60,4675,South
+6,05 June 2025,Milk Powder,P010,35,60,1770,West
+6,05 June 2025,Tea,P008,30,55,3065,South
+6,05 June 2025,Chips,P006,12,22,1659,South
+6,05 June 2025,Detergent,P007,40,70,3651,Central
+6,04 June 2025,Detergent,P007,40,70,233,East
+6,04 June 2025,Biscuits,P004,15,30,1084,North
+6,04 June 2025,Juice,P005,25,45,1963,West
+6,04 June 2025,Detergent,P007,40,70,2812,West
+6,04 June 2025,Soap,P003,10,25,585,South
+6,04 June 2025,Toothpaste,P001,20,35,4198,East
+6,04 June 2025,Tea,P008,30,55,4349,West
+6,04 June 2025,Tea,P008,30,55,130,North
+6,04 June 2025,Juice,P005,25,45,1541,Central
+6,04 June 2025,Juice,P005,25,45,302,South
+6,04 June 2025,Coffee,P009,60,100,3448,East
+6,04 June 2025,Milk Powder,P010,35,60,3985,North
+6,04 June 2025,Biscuits,P004,15,30,882,North
+6,04 June 2025,Juice,P005,25,45,1990,Central
+6,04 June 2025,Milk Powder,P010,35,60,1719,West
+6,04 June 2025,Biscuits,P004,15,30,1812,West
+6,04 June 2025,Juice,P005,25,45,881,Central
+6,04 June 2025,Milk Powder,P010,35,60,207,Central
+6,03 June 2025,Detergent,P007,40,70,121,South
+6,03 June 2025,Detergent,P007,40,70,2480,Central
+6,03 June 2025,Coffee,P009,60,100,1077,East
+6,03 June 2025,Tea,P008,30,55,2006,Central
+6,03 June 2025,Shampoo,P002,50,90,2373,North
+6,03 June 2025,Biscuits,P004,15,30,90,East
+6,03 June 2025,Tea,P008,30,55,3321,West
+6,03 June 2025,Chips,P006,12,22,976,Central
+6,02 June 2025,Toothpaste,P001,20,35,659,West
+6,02 June 2025,Coffee,P009,60,100,529,North
+6,02 June 2025,Chips,P006,12,22,4679,West
+6,02 June 2025,Biscuits,P004,15,30,158,Central
+6,02 June 2025,Biscuits,P004,15,30,2202,Central
+6,02 June 2025,Juice,P005,25,45,3608,Central
+6,02 June 2025,Detergent,P007,40,70,2719,South
+6,02 June 2025,Chips,P006,12,22,178,East
+6,02 June 2025,Shampoo,P002,50,90,2055,West
+6,02 June 2025,Tea,P008,30,55,4310,North
+6,02 June 2025,Shampoo,P002,50,90,4998,West
+6,02 June 2025,Shampoo,P002,50,90,3008,Central
+6,02 June 2025,Toothpaste,P001,20,35,525,East
+6,01 June 2025,Chips,P006,12,22,881,North
+6,01 June 2025,Detergent,P007,40,70,1147,South
+6,01 June 2025,Tea,P008,30,55,2110,West
+6,01 June 2025,Chips,P006,12,22,1564,East
+6,01 June 2025,Detergent,P007,40,70,1944,East
+6,01 June 2025,Chips,P006,12,22,1929,East
+6,01 June 2025,Juice,P005,25,45,302,Central
+6,01 June 2025,Coffee,P009,60,100,4144,Central
+6,01 June 2025,Detergent,P007,40,70,493,South
+6,01 June 2025,Soap,P003,10,25,4813,Central
+6,01 June 2025,Tea,P008,30,55,118,South
+6,01 June 2025,Soap,P003,10,25,342,East
+5,31 May 2025,Toothpaste,P001,20,35,4276,East
+5,31 May 2025,Coffee,P009,60,100,1895,East
+5,31 May 2025,Soap,P003,10,25,3473,South
+5,31 May 2025,Juice,P005,25,45,3733,South
+5,31 May 2025,Coffee,P009,60,100,4366,South
+5,31 May 2025,Tea,P008,30,55,4834,North
+5,31 May 2025,Detergent,P007,40,70,3133,North
+5,31 May 2025,Biscuits,P004,15,30,3883,South
+5,31 May 2025,Toothpaste,P001,20,35,3020,Central
+5,31 May 2025,Tea,P008,30,55,4728,East
+5,31 May 2025,Toothpaste,P001,20,35,2781,East
+5,31 May 2025,Juice,P005,25,45,4085,South
+5,31 May 2025,Toothpaste,P001,20,35,939,North
+5,31 May 2025,Biscuits,P004,15,30,4441,Central
+5,31 May 2025,Detergent,P007,40,70,3623,South
+5,30 May 2025,Milk Powder,P010,35,60,2328,East
+5,30 May 2025,Toothpaste,P001,20,35,3737,West
+5,30 May 2025,Detergent,P007,40,70,1174,Central
+5,30 May 2025,Soap,P003,10,25,4568,East
+5,30 May 2025,Shampoo,P002,50,90,3577,West
+5,30 May 2025,Toothpaste,P001,20,35,721,East
+5,30 May 2025,Tea,P008,30,55,2013,West
+5,30 May 2025,Chips,P006,12,22,1425,South
+5,30 May 2025,Coffee,P009,60,100,2990,Central
+5,30 May 2025,Shampoo,P002,50,90,4196,East
+5,30 May 2025,Chips,P006,12,22,4768,South
+5,30 May 2025,Soap,P003,10,25,4300,West
+5,30 May 2025,Chips,P006,12,22,1973,Central
+5,30 May 2025,Soap,P003,10,25,541,North
+5,30 May 2025,Toothpaste,P001,20,35,1621,West
+5,29 May 2025,Coffee,P009,60,100,4090,Central
+5,29 May 2025,Biscuits,P004,15,30,4996,North
+5,29 May 2025,Soap,P003,10,25,2742,West
+5,29 May 2025,Juice,P005,25,45,3731,West
+5,29 May 2025,Milk Powder,P010,35,60,2351,Central
+5,29 May 2025,Biscuits,P004,15,30,486,South
+5,29 May 2025,Soap,P003,10,25,2688,North
+5,29 May 2025,Juice,P005,25,45,1493,West
+5,29 May 2025,Coffee,P009,60,100,4035,Central
+5,28 May 2025,Tea,P008,30,55,656,Central
+5,28 May 2025,Milk Powder,P010,35,60,,South
+5,28 May 2025,Coffee,P009,60,100,,East
+5,28 May 2025,Coffee,P009,60,100,,East
+5,28 May 2025,Shampoo,P002,50,90,,East
+5,28 May 2025,Milk Powder,P010,35,60,,North
+5,28 May 2025,Shampoo,P002,50,90,,North
+5,28 May 2025,Coffee,P009,60,100,,South
+5,28 May 2025,Chips,P006,12,22,,West
+5,28 May 2025,Toothpaste,P001,20,35,649,West
+5,28 May 2025,Biscuits,P004,15,30,4031,South
+5,28 May 2025,Juice,P005,25,45,4459,West
+5,27 May 2025,Soap,P003,10,25,3734,West
+5,27 May 2025,Milk Powder,P010,35,60,978,West
+5,27 May 2025,Tea,P008,30,55,3337,East
+5,27 May 2025,Juice,P005,25,45,1796,North
+5,27 May 2025,Tea,P008,30,55,128,West
+5,26 May 2025,Coffee,P009,60,100,4755,East
+5,26 May 2025,Biscuits,P004,15,30,402,South
+5,26 May 2025,Milk Powder,P010,35,60,4575,South
+5,26 May 2025,Coffee,P009,60,100,1233,West
+5,26 May 2025,Milk Powder,P010,35,60,2964,Central
+5,26 May 2025,Soap,P003,10,25,228,East
+5,26 May 2025,Chips,P006,12,22,1841,Central
+5,26 May 2025,Shampoo,P002,50,90,508,East
+5,25 May 2025,Detergent,P007,40,70,3752,Central
+5,25 May 2025,Milk Powder,P010,35,60,3119,West
+5,25 May 2025,Detergent,P007,40,70,3803,West
+5,25 May 2025,Chips,P006,12,22,1459,South
+5,25 May 2025,Juice,P005,25,45,592,East
+5,25 May 2025,Chips,P006,12,22,57,South
+5,25 May 2025,Detergent,P007,40,70,2253,South
+5,25 May 2025,Chips,P006,12,22,1049,East
+5,25 May 2025,Chips,P006,12,22,4070,North
+5,25 May 2025,Biscuits,P004,15,30,835,West
+5,25 May 2025,Toothpaste,P001,20,35,955,Central
+5,25 May 2025,Detergent,P007,40,70,4043,East
+5,25 May 2025,Biscuits,P004,15,30,4111,East
+5,25 May 2025,Biscuits,P004,15,30,3493,East
+5,24 May 2025,Toothpaste,P001,20,35,2834,Central
+5,24 May 2025,Detergent,P007,40,70,2276,East
+5,24 May 2025,Tea,P008,30,55,4198,East
+5,24 May 2025,Detergent,P007,40,70,4505,Central
+5,24 May 2025,Juice,P005,25,45,3149,West
+5,24 May 2025,Soap,P003,10,25,493,Central
+5,23 May 2025,Soap,P003,10,25,658,Central
+5,23 May 2025,Milk Powder,P010,35,60,3987,West
+5,23 May 2025,Shampoo,P002,50,90,3246,North
+5,23 May 2025,Coffee,P009,60,100,3143,East
+5,23 May 2025,Juice,P005,25,45,4865,South
+5,23 May 2025,Juice,P005,25,45,2128,East
+5,23 May 2025,Detergent,P007,40,70,2416,Central
+5,23 May 2025,Coffee,P009,60,100,1126,Central
+5,23 May 2025,Juice,P005,25,45,2415,North
+5,23 May 2025,Tea,P008,30,55,2976,East
+5,23 May 2025,Chips,P006,12,22,2075,North
+5,22 May 2025,Biscuits,P004,15,30,4954,North
+5,22 May 2025,Chips,P006,12,22,1455,West
+5,22 May 2025,Juice,P005,25,45,2965,North
+5,22 May 2025,Coffee,P009,60,100,2730,East
+5,22 May 2025,Milk Powder,P010,35,60,3076,North
+5,22 May 2025,Chips,P006,12,22,3707,North
+5,22 May 2025,Biscuits,P004,15,30,3397,North
+5,22 May 2025,Biscuits,P004,15,30,951,Central
+5,22 May 2025,Juice,P005,25,45,1316,East
+5,22 May 2025,Shampoo,P002,50,90,1281,West
+5,22 May 2025,Soap,P003,10,25,1910,North
+5,22 May 2025,Coffee,P009,60,100,2454,East
+5,21 May 2025,Biscuits,P004,15,30,796,North
+5,21 May 2025,Toothpaste,P001,20,35,3534,Central
+5,21 May 2025,Toothpaste,P001,20,35,3922,Central
+5,21 May 2025,Chips,P006,12,22,3188,Central
+5,21 May 2025,Biscuits,P004,15,30,2817,South
+5,21 May 2025,Chips,P006,12,22,4074,North
+5,21 May 2025,Detergent,P007,40,70,2697,East
+5,21 May 2025,Juice,P005,25,45,701,East
+5,21 May 2025,Chips,P006,12,22,2689,East
+5,21 May 2025,Shampoo,P002,50,90,3865,Central
+5,21 May 2025,Biscuits,P004,15,30,1875,Central
+5,21 May 2025,Soap,P003,10,25,3209,South
+5,21 May 2025,Toothpaste,P001,20,35,1044,Central
+5,21 May 2025,Toothpaste,P001,20,35,1589,Central
+5,20 May 2025,Biscuits,P004,15,30,584,South
+5,20 May 2025,Chips,P006,12,22,4455,South
+5,20 May 2025,Milk Powder,P010,35,60,2875,North
+5,20 May 2025,Chips,P006,12,22,3223,Central
+5,20 May 2025,Coffee,P009,60,100,3258,Central
+5,20 May 2025,Juice,P005,25,45,509,South
+5,20 May 2025,Tea,P008,30,55,1664,South
+5,19 May 2025,Tea,P008,30,55,905,Central
+5,19 May 2025,Milk Powder,P010,35,60,3808,South
+5,19 May 2025,Shampoo,P002,50,90,518,Central
+5,19 May 2025,Detergent,P007,40,70,3463,South
+5,19 May 2025,Toothpaste,P001,20,35,733,Central
+5,18 May 2025,Tea,P008,30,55,3898,North
+5,18 May 2025,Juice,P005,25,45,2985,East
+5,18 May 2025,Milk Powder,P010,35,60,2469,South
+5,18 May 2025,Coffee,P009,60,100,1283,East
+5,18 May 2025,Juice,P005,25,45,2943,West
+5,18 May 2025,Juice,P005,25,45,3422,East
+5,18 May 2025,Milk Powder,P010,35,60,2760,East
+5,18 May 2025,Shampoo,P002,50,90,4010,West
+5,18 May 2025,Shampoo,P002,50,90,1948,West
+5,18 May 2025,Soap,P003,10,25,4971,Central
+5,18 May 2025,Juice,P005,25,45,1793,Central
+5,18 May 2025,Toothpaste,P001,20,35,2756,North
+5,17 May 2025,Detergent,P007,40,70,909,South
+5,17 May 2025,Detergent,P007,40,70,3702,South
+5,17 May 2025,Biscuits,P004,15,30,3606,Central
+5,17 May 2025,Toothpaste,P001,20,35,366,West
+5,17 May 2025,Biscuits,P004,15,30,4538,South
+5,17 May 2025,Biscuits,P004,15,30,,East
+5,17 May 2025,Juice,P005,25,45,,Central
+5,16 May 2025,Biscuits,P004,15,30,,North
+5,16 May 2025,Chips,P006,12,22,,East
+5,16 May 2025,Biscuits,P004,15,30,,Central
+5,16 May 2025,Juice,P005,25,45,,South
+5,16 May 2025,Biscuits,P004,15,30,,South
+5,16 May 2025,Chips,P006,12,22,,North
+5,16 May 2025,Milk Powder,P010,35,60,,East
+5,16 May 2025,Juice,P005,25,45,,North
+5,16 May 2025,Tea,P008,30,55,,North
+5,16 May 2025,Toothpaste,P001,20,35,4493,West
+5,15 May 2025,Milk Powder,P010,35,60,1756,South
+5,15 May 2025,Toothpaste,P001,20,35,1711,Central
+5,15 May 2025,Coffee,P009,60,100,4179,South
+5,15 May 2025,Milk Powder,P010,35,60,2017,North
+5,15 May 2025,Detergent,P007,40,70,764,South
+5,15 May 2025,Soap,P003,10,25,2471,South
+5,14 May 2025,Chips,P006,12,22,4443,West
+5,14 May 2025,Toothpaste,P001,20,35,4492,South
+5,14 May 2025,Coffee,P009,60,100,4971,East
+5,14 May 2025,Detergent,P007,40,70,1964,North
+5,14 May 2025,Soap,P003,10,25,3588,Central
+5,14 May 2025,Milk Powder,P010,35,60,4316,North
+5,14 May 2025,Chips,P006,12,22,4915,South
+5,14 May 2025,Soap,P003,10,25,3198,West
+5,14 May 2025,Tea,P008,30,55,,Central
+5,14 May 2025,Milk Powder,P010,35,60,,East
+5,14 May 2025,Soap,P003,10,25,,South
+5,14 May 2025,Chips,P006,12,22,,West
+5,14 May 2025,Soap,P003,10,25,,West
+5,14 May 2025,Juice,P005,25,45,,South
+5,14 May 2025,Shampoo,P002,50,90,,South
+5,14 May 2025,Juice,P005,25,45,,West
+5,14 May 2025,Biscuits,P004,15,30,,South
+5,14 May 2025,Tea,P008,30,55,,South
+5,13 May 2025,Milk Powder,P010,35,60,,South
+5,13 May 2025,Milk Powder,P010,35,60,,South
+5,13 May 2025,Detergent,P007,40,70,,East
+5,13 May 2025,Detergent,P007,40,70,,South
+5,13 May 2025,Biscuits,P004,15,30,,West
+5,13 May 2025,Juice,P005,25,45,,South
+5,13 May 2025,Coffee,P009,60,100,,Central
+5,12 May 2025,Shampoo,P002,50,90,,South
+5,12 May 2025,Juice,P005,25,45,,West
+5,12 May 2025,Juice,P005,25,45,,East
+5,12 May 2025,Tea,P008,30,55,,West
+5,12 May 2025,Toothpaste,P001,20,35,3796,South
+5,12 May 2025,Toothpaste,P001,20,35,778,South
+5,12 May 2025,Detergent,P007,40,70,529,Central
+5,12 May 2025,Milk Powder,P010,35,60,349,East
+5,12 May 2025,Chips,P006,12,22,111,East
+5,12 May 2025,Chips,P006,12,22,503,North
+5,11 May 2025,Shampoo,P002,50,90,4331,East
+5,11 May 2025,Tea,P008,30,55,2893,Central
+5,11 May 2025,Tea,P008,30,55,1085,North
+5,11 May 2025,Juice,P005,25,45,2959,West
+5,11 May 2025,Detergent,P007,40,70,1342,East
+5,11 May 2025,Chips,P006,12,22,491,East
+5,11 May 2025,Toothpaste,P001,20,35,256,South
+5,11 May 2025,Juice,P005,25,45,2967,East
+5,11 May 2025,Biscuits,P004,15,30,1607,South
+5,11 May 2025,Toothpaste,P001,20,35,216,South
+5,10 May 2025,Biscuits,P004,15,30,3385,South
+5,10 May 2025,Chips,P006,12,22,4818,Central
+5,10 May 2025,Detergent,P007,40,70,1504,North
+5,10 May 2025,Soap,P003,10,25,500,Central
+5,10 May 2025,Chips,P006,12,22,3485,West
+5,10 May 2025,Biscuits,P004,15,30,4703,Central
+5,10 May 2025,Toothpaste,P001,20,35,3617,West
+5,10 May 2025,Shampoo,P002,50,90,3678,Central
+5,10 May 2025,Detergent,P007,40,70,1475,North
+5,10 May 2025,Soap,P003,10,25,3554,Central
+5,10 May 2025,Detergent,P007,40,70,2127,North
+5,10 May 2025,Chips,P006,12,22,1430,North
+5,10 May 2025,Detergent,P007,40,70,1572,South
+5,10 May 2025,Soap,P003,10,25,1117,North
+5,10 May 2025,Tea,P008,30,55,1265,East
+5,09 May 2025,Milk Powder,P010,35,60,4565,Central
+5,09 May 2025,Milk Powder,P010,35,60,3879,North
+5,09 May 2025,Toothpaste,P001,20,35,3320,North
+5,09 May 2025,Chips,P006,12,22,3459,North
+5,09 May 2025,Coffee,P009,60,100,1598,West
+5,09 May 2025,Detergent,P007,40,70,2270,South
+5,09 May 2025,Shampoo,P002,50,90,,South
+5,09 May 2025,Shampoo,P002,50,90,,West
+5,09 May 2025,Milk Powder,P010,35,60,,Central
+5,09 May 2025,Coffee,P009,60,100,,South
+5,09 May 2025,Detergent,P007,40,70,,North
+5,09 May 2025,Juice,P005,25,45,,West
+5,09 May 2025,Toothpaste,P001,20,35,3320,Central
+5,09 May 2025,Coffee,P009,60,100,,North
+5,08 May 2025,Detergent,P007,40,70,,North
+5,08 May 2025,Toothpaste,P001,20,35,3320,West
+5,08 May 2025,Detergent,P007,40,70,,North
+5,08 May 2025,Chips,P006,12,22,,Central
+5,08 May 2025,Toothpaste,P001,20,35,3320,West
+5,08 May 2025,Tea,P008,30,55,,East
+5,08 May 2025,Detergent,P007,40,70,,South
+5,08 May 2025,Soap,P003,10,25,,South
+5,08 May 2025,Shampoo,P002,50,90,,Central
+5,08 May 2025,Detergent,P007,40,70,,Central
+5,08 May 2025,Detergent,P007,40,70,,East
+5,08 May 2025,Coffee,P009,60,100,,West
+5,07 May 2025,Detergent,P007,40,70,,South
+5,07 May 2025,Shampoo,P002,50,90,,Central
+5,07 May 2025,Juice,P005,25,45,,Central
+5,07 May 2025,Tea,P008,30,55,,West
+5,07 May 2025,Chips,P006,12,22,,South
+5,07 May 2025,Detergent,P007,40,70,,North
+5,07 May 2025,Detergent,P007,40,70,,Central
+5,07 May 2025,Coffee,P009,60,100,,Central
+5,07 May 2025,Biscuits,P004,15,30,,West
+5,07 May 2025,Biscuits,P004,15,30,,West
+5,07 May 2025,Chips,P006,12,22,,South
+5,07 May 2025,Juice,P005,25,45,,North
+5,07 May 2025,Detergent,P007,40,70,,North
+5,07 May 2025,Chips,P006,12,22,,West
+5,07 May 2025,Juice,P005,25,45,,North
+5,07 May 2025,Soap,P003,10,25,,Central
+5,07 May 2025,Toothpaste,P001,20,35,5011,West
+5,07 May 2025,Chips,P006,12,22,,South
+5,07 May 2025,Soap,P003,10,25,,East
+5,06 May 2025,Coffee,P009,60,100,,North
+5,06 May 2025,Shampoo,P002,50,90,,North
+5,06 May 2025,Juice,P005,25,45,,South
+5,06 May 2025,Biscuits,P004,15,30,,West
+5,06 May 2025,Milk Powder,P010,35,60,,South
+5,06 May 2025,Shampoo,P002,50,90,,North
+5,06 May 2025,Shampoo,P002,50,90,,South
+5,06 May 2025,Shampoo,P002,50,90,,West
+5,06 May 2025,Biscuits,P004,15,30,,North
+5,06 May 2025,Biscuits,P004,15,30,,West
+5,06 May 2025,Chips,P006,12,22,,South
+5,05 May 2025,Juice,P005,25,45,,North
+5,05 May 2025,Shampoo,P002,50,90,,East
+5,05 May 2025,Toothpaste,P001,20,35,468,South
+5,05 May 2025,Juice,P005,25,45,,South
+5,05 May 2025,Biscuits,P004,15,30,,East
+5,05 May 2025,Detergent,P007,40,70,,North
+5,05 May 2025,Toothpaste,P001,20,35,52,Central
+5,05 May 2025,Milk Powder,P010,35,60,,Central
+5,05 May 2025,Soap,P003,10,25,,Central
+5,05 May 2025,Tea,P008,30,55,,Central
+5,05 May 2025,Toothpaste,P001,20,35,69,North
+5,05 May 2025,Coffee,P009,60,100,,West
+5,05 May 2025,Coffee,P009,60,100,,West
+5,04 May 2025,Biscuits,P004,15,30,,South
+5,04 May 2025,Toothpaste,P001,20,35,3320,East
+5,04 May 2025,Biscuits,P004,15,30,,East
+5,04 May 2025,Coffee,P009,60,100,,East
+5,04 May 2025,Detergent,P007,40,70,,North
+5,04 May 2025,Toothpaste,P001,20,35,1520,East
+5,04 May 2025,Tea,P008,30,55,,Central
+5,04 May 2025,Toothpaste,P001,20,35,2356,West
+5,04 May 2025,Shampoo,P002,50,90,,South
+5,04 May 2025,Juice,P005,25,45,,Central
+5,04 May 2025,Coffee,P009,60,100,,North
+5,04 May 2025,Detergent,P007,40,70,,South
+5,04 May 2025,Chips,P006,12,22,,East
+5,04 May 2025,Juice,P005,25,45,,South
+5,04 May 2025,Soap,P003,10,25,,South
+5,04 May 2025,Soap,P003,10,25,,Central
+5,03 May 2025,Toothpaste,P001,20,35,265,Central
+5,03 May 2025,Coffee,P009,60,100,104,West
+5,03 May 2025,Biscuits,P004,15,30,80,North
+5,03 May 2025,Detergent,P007,40,70,606,North
+5,03 May 2025,Chips,P006,12,22,670,North
+5,03 May 2025,Detergent,P007,40,70,669,Central
+5,03 May 2025,Milk Powder,P010,35,60,222,East
+5,03 May 2025,Coffee,P009,60,100,838,East
+5,03 May 2025,Juice,P005,25,45,50,North
+5,03 May 2025,Soap,P003,10,25,967,East
+5,02 May 2025,Biscuits,P004,15,30,428,East
+5,02 May 2025,Soap,P003,10,25,522,Central
+5,02 May 2025,Toothpaste,P001,20,35,625,South
+5,02 May 2025,Tea,P008,30,55,350,East
+5,02 May 2025,Chips,P006,12,22,560,North
+5,02 May 2025,Soap,P003,10,25,154,East
+5,02 May 2025,Toothpaste,P001,20,35,113,Central
+5,02 May 2025,Chips,P006,12,22,711,East
+5,02 May 2025,Toothpaste,P001,20,35,511,North
+5,02 May 2025,Biscuits,P004,15,30,207,Central
+5,02 May 2025,Chips,P006,12,22,430,South
+5,02 May 2025,Juice,P005,25,45,331,West
+5,02 May 2025,Shampoo,P002,50,90,303,West
+5,02 May 2025,Juice,P005,25,45,348,South
+5,02 May 2025,Detergent,P007,40,70,714,South
+5,01 May 2025,Juice,P005,25,45,565,South
+5,01 May 2025,Coffee,P009,60,100,130,Central
+5,01 May 2025,Milk Powder,P010,35,60,809,Central
+5,01 May 2025,Biscuits,P004,15,30,790,East
+5,01 May 2025,Shampoo,P002,50,90,165,Central
+5,01 May 2025,Shampoo,P002,50,90,856,North
+5,01 May 2025,Biscuits,P004,15,30,172,South
+5,01 May 2025,Juice,P005,25,45,244,Central
+5,01 May 2025,Milk Powder,P010,35,60,,Central
+5,01 May 2025,Coffee,P009,60,100,,East
+4,30 April 2025,Toothpaste,P001,20,35,177,Central
+4,30 April 2025,Detergent,P007,40,70,259,South
+4,30 April 2025,Biscuits,P004,15,30,781,North
+4,30 April 2025,Juice,P005,25,45,228,East
+4,30 April 2025,Milk Powder,P010,35,60,693,West
+4,30 April 2025,Soap,P003,10,25,839,East
+4,30 April 2025,Shampoo,P002,50,90,938,West
+4,30 April 2025,Toothpaste,P001,20,35,628,West
+4,30 April 2025,Shampoo,P002,50,90,54,West
+4,30 April 2025,Tea,P008,30,55,563,North
+4,30 April 2025,Toothpaste,P001,20,35,635,North
+4,30 April 2025,Toothpaste,P001,20,35,441,East
+4,29 April 2025,Biscuits,P004,15,30,867,Central
+4,29 April 2025,Milk Powder,P010,35,60,634,North
+4,29 April 2025,Chips,P006,12,22,273,South
+4,29 April 2025,Juice,P005,25,45,776,South
+4,29 April 2025,Detergent,P007,40,70,740,Central
+4,29 April 2025,Toothpaste,P001,20,35,196,North
+4,29 April 2025,Tea,P008,30,55,,North
+4,29 April 2025,Detergent,P007,40,70,,South
+4,29 April 2025,Chips,P006,12,22,,Central
+4,28 April 2025,Soap,P003,10,25,,East
+4,28 April 2025,Chips,P006,12,22,,East
+4,28 April 2025,Detergent,P007,40,70,,Central
+4,28 April 2025,Shampoo,P002,50,90,,North
+4,28 April 2025,Chips,P006,12,22,,North
+4,28 April 2025,Coffee,P009,60,100,,South
+4,28 April 2025,Detergent,P007,40,70,,Central
+4,28 April 2025,Chips,P006,12,22,,West
+4,28 April 2025,Juice,P005,25,45,,Central
+4,28 April 2025,Shampoo,P002,50,90,,East
+4,28 April 2025,Juice,P005,25,45,,South
+4,28 April 2025,Toothpaste,P001,20,35,642,North
+4,27 April 2025,Milk Powder,P010,35,60,676,West
+4,27 April 2025,Tea,P008,30,55,713,Central
+4,27 April 2025,Biscuits,P004,15,30,396,East
+4,27 April 2025,Biscuits,P004,15,30,559,West
+4,27 April 2025,Juice,P005,25,45,692,North
+4,27 April 2025,Biscuits,P004,15,30,156,South
+4,27 April 2025,Chips,P006,12,22,139,Central
+4,27 April 2025,Juice,P005,25,45,832,East
+4,27 April 2025,Coffee,P009,60,100,335,North
+4,27 April 2025,Biscuits,P004,15,30,83,West
+4,27 April 2025,Chips,P006,12,22,515,Central
+4,27 April 2025,Biscuits,P004,15,30,579,North
+4,27 April 2025,Coffee,P009,60,100,298,South
+4,27 April 2025,Tea,P008,30,55,580,West
+4,27 April 2025,Shampoo,P002,50,90,449,West
+4,27 April 2025,Soap,P003,10,25,869,North
+4,27 April 2025,Shampoo,P002,50,90,77,Central
+4,26 April 2025,Coffee,P009,60,100,,South
+4,26 April 2025,Toothpaste,P001,20,35,644,West
+4,26 April 2025,Milk Powder,P010,35,60,339,South
+4,26 April 2025,Toothpaste,P001,20,35,151,South
+4,26 April 2025,Detergent,P007,40,70,494,South
+4,26 April 2025,Tea,P008,30,55,354,West
+4,26 April 2025,Soap,P003,10,25,380,North
+4,26 April 2025,Detergent,P007,40,70,783,East
+4,26 April 2025,Juice,P005,25,45,992,East
+4,26 April 2025,Detergent,P007,40,70,143,West
+4,26 April 2025,Soap,P003,10,25,187,West
+4,25 April 2025,Detergent,P007,40,70,506,North
+4,25 April 2025,Biscuits,P004,15,30,635,West
+4,25 April 2025,Biscuits,P004,15,30,188,West
+4,25 April 2025,Toothpaste,P001,20,35,100,East
+4,25 April 2025,Coffee,P009,60,100,273,Central
+4,25 April 2025,Detergent,P007,40,70,108,North
+4,25 April 2025,Shampoo,P002,50,90,399,South
+4,25 April 2025,Shampoo,P002,50,90,956,South
+4,25 April 2025,Juice,P005,25,45,456,North
+4,25 April 2025,Detergent,P007,40,70,643,West
+4,25 April 2025,Soap,P003,10,25,597,East
+4,24 April 2025,Biscuits,P004,15,30,170,South
+4,24 April 2025,Chips,P006,12,22,887,South
+4,24 April 2025,Detergent,P007,40,70,220,East
+4,24 April 2025,Milk Powder,P010,35,60,786,South
+4,24 April 2025,Chips,P006,12,22,724,West
+4,24 April 2025,Biscuits,P004,15,30,273,West
+4,24 April 2025,Coffee,P009,60,100,275,East
+4,24 April 2025,Milk Powder,P010,35,60,468,West
+4,24 April 2025,Juice,P005,25,45,676,East
+4,24 April 2025,Milk Powder,P010,35,60,634,West
+4,24 April 2025,Milk Powder,P010,35,60,,East
+4,24 April 2025,Detergent,P007,40,70,,North
+4,24 April 2025,Detergent,P007,40,70,,North
+4,24 April 2025,Chips,P006,12,22,,Central
+4,24 April 2025,Coffee,P009,60,100,,Central
+4,24 April 2025,Coffee,P009,60,100,,East
+4,24 April 2025,Detergent,P007,40,70,,Central
+4,24 April 2025,Coffee,P009,60,100,,Central
+4,24 April 2025,Coffee,P009,60,100,,East
+4,24 April 2025,Shampoo,P002,50,90,,Central
+4,23 April 2025,Soap,P003,10,25,,Central
+4,23 April 2025,Milk Powder,P010,35,60,,Central
+4,23 April 2025,Coffee,P009,60,100,,Central
+4,23 April 2025,Toothpaste,P001,20,35,862,South
+4,23 April 2025,Coffee,P009,60,100,988,West
+4,23 April 2025,Milk Powder,P010,35,60,40,East
+4,23 April 2025,Toothpaste,P001,20,35,71,East
+4,23 April 2025,Tea,P008,30,55,922,East
+4,23 April 2025,Soap,P003,10,25,575,East
+4,22 April 2025,Shampoo,P002,50,90,178,East
+4,22 April 2025,Toothpaste,P001,20,35,515,North
+4,22 April 2025,Coffee,P009,60,100,581,East
+4,22 April 2025,Toothpaste,P001,20,35,206,East
+4,22 April 2025,Tea,P008,30,55,68,East
+4,22 April 2025,Chips,P006,12,22,835,South
+4,22 April 2025,Juice,P005,25,45,856,West
+4,22 April 2025,Milk Powder,P010,35,60,463,East
+4,22 April 2025,Soap,P003,10,25,621,Central
+4,22 April 2025,Juice,P005,25,45,252,Central
+4,22 April 2025,Coffee,P009,60,100,497,North
+4,21 April 2025,Tea,P008,30,55,356,East
+4,21 April 2025,Chips,P006,12,22,865,North
+4,21 April 2025,Detergent,P007,40,70,373,South
+4,21 April 2025,Tea,P008,30,55,394,East
+4,21 April 2025,Soap,P003,10,25,902,West
+4,21 April 2025,Toothpaste,P001,20,35,725,East
+4,21 April 2025,Soap,P003,10,25,,North
+4,21 April 2025,Biscuits,P004,15,30,,East
+4,21 April 2025,Chips,P006,12,22,,South
+4,21 April 2025,Shampoo,P002,50,90,,South
+4,21 April 2025,Shampoo,P002,50,90,,East
+4,21 April 2025,Biscuits,P004,15,30,,East
+4,20 April 2025,Toothpaste,P001,20,35,388,South
+4,20 April 2025,Tea,P008,30,55,764,East
+4,20 April 2025,Coffee,P009,60,100,417,North
+4,20 April 2025,Shampoo,P002,50,90,932,East
+4,20 April 2025,Coffee,P009,60,100,978,East
+4,20 April 2025,Tea,P008,30,55,204,East
+4,20 April 2025,Tea,P008,30,55,30,Central
+4,20 April 2025,Shampoo,P002,50,90,497,East
+4,20 April 2025,Toothpaste,P001,20,35,151,East
+4,20 April 2025,Chips,P006,12,22,482,West
+4,19 April 2025,Toothpaste,P001,20,35,641,West
+4,19 April 2025,Shampoo,P002,50,90,963,South
+4,19 April 2025,Juice,P005,25,45,41,South
+4,19 April 2025,Biscuits,P004,15,30,549,South
+4,19 April 2025,Coffee,P009,60,100,312,East
+4,19 April 2025,Detergent,P007,40,70,792,North
+4,19 April 2025,Soap,P003,10,25,99,West
+4,19 April 2025,Tea,P008,30,55,444,East
+4,19 April 2025,Tea,P008,30,55,163,North
+4,19 April 2025,Detergent,P007,40,70,948,East
+4,19 April 2025,Chips,P006,12,22,878,Central
+4,19 April 2025,Shampoo,P002,50,90,452,Central
+4,19 April 2025,Biscuits,P004,15,30,135,North
+4,19 April 2025,Shampoo,P002,50,90,,South
+4,19 April 2025,Coffee,P009,60,100,,South
+4,18 April 2025,Soap,P003,10,25,,East
+4,18 April 2025,Biscuits,P004,15,30,,South
+4,18 April 2025,Juice,P005,25,45,,East
+4,18 April 2025,Shampoo,P002,50,90,,Central
+4,18 April 2025,Detergent,P007,40,70,,East
+4,18 April 2025,Tea,P008,30,55,,East
+4,18 April 2025,Milk Powder,P010,35,60,,West
+4,18 April 2025,Biscuits,P004,15,30,,West
+4,18 April 2025,Soap,P003,10,25,,North
+4,18 April 2025,Soap,P003,10,25,,North
+4,18 April 2025,Chips,P006,12,22,,North
+4,18 April 2025,Milk Powder,P010,35,60,,North
+4,18 April 2025,Coffee,P009,60,100,,North
+4,17 April 2025,Chips,P006,12,22,,East
+4,17 April 2025,Coffee,P009,60,100,,West
+4,17 April 2025,Milk Powder,P010,35,60,,South
+4,17 April 2025,Tea,P008,30,55,,North
+4,17 April 2025,Biscuits,P004,15,30,,East
+4,17 April 2025,Biscuits,P004,15,30,,South
+4,17 April 2025,Coffee,P009,60,100,,East
+4,16 April 2025,Shampoo,P002,50,90,,West
+4,16 April 2025,Toothpaste,P001,20,35,629,Central
+4,16 April 2025,Shampoo,P002,50,90,237,West
+4,16 April 2025,Juice,P005,25,45,693,West
+4,16 April 2025,Soap,P003,10,25,208,Central
+4,16 April 2025,Coffee,P009,60,100,867,North
+4,16 April 2025,Biscuits,P004,15,30,488,Central
+4,16 April 2025,Coffee,P009,60,100,795,South
+4,16 April 2025,Soap,P003,10,25,537,West
+4,16 April 2025,Shampoo,P002,50,90,457,North
+4,16 April 2025,Milk Powder,P010,35,60,214,North
+4,16 April 2025,Toothpaste,P001,20,35,799,North
+4,15 April 2025,Soap,P003,10,25,657,Central
+4,15 April 2025,Milk Powder,P010,35,60,196,West
+4,15 April 2025,Milk Powder,P010,35,60,358,East
+4,15 April 2025,Chips,P006,12,22,245,Central
+4,15 April 2025,Soap,P003,10,25,611,Central
+4,15 April 2025,Tea,P008,30,55,212,East
+4,15 April 2025,Biscuits,P004,15,30,806,Central
+4,15 April 2025,Toothpaste,P001,20,35,897,North
+4,15 April 2025,Coffee,P009,60,100,783,West
+4,15 April 2025,Coffee,P009,60,100,624,West
+4,15 April 2025,Milk Powder,P010,35,60,606,North
+4,15 April 2025,Toothpaste,P001,20,35,224,North
+4,15 April 2025,Tea,P008,30,55,,West
+4,15 April 2025,Chips,P006,12,22,,North
+4,14 April 2025,Milk Powder,P010,35,60,,East
+4,14 April 2025,Tea,P008,30,55,,Central
+4,14 April 2025,Coffee,P009,60,100,,East
+4,14 April 2025,Tea,P008,30,55,,South
+4,14 April 2025,Coffee,P009,60,100,,East
+4,14 April 2025,Soap,P003,10,25,,Central
+4,14 April 2025,Shampoo,P002,50,90,,West
+4,14 April 2025,Shampoo,P002,50,90,,North
+4,14 April 2025,Biscuits,P004,15,30,,East
+4,13 April 2025,Tea,P008,30,55,,East
+4,13 April 2025,Chips,P006,12,22,,Central
+4,13 April 2025,Detergent,P007,40,70,,West
+4,13 April 2025,Toothpaste,P001,20,35,272,West
+4,13 April 2025,Soap,P003,10,25,117,East
+4,13 April 2025,Milk Powder,P010,35,60,497,South
+4,13 April 2025,Biscuits,P004,15,30,336,South
+4,13 April 2025,Juice,P005,25,45,342,North
+4,13 April 2025,Soap,P003,10,25,67,West
+4,13 April 2025,Juice,P005,25,45,781,East
+4,13 April 2025,Detergent,P007,40,70,935,West
+4,13 April 2025,Shampoo,P002,50,90,185,South
+4,12 April 2025,Tea,P008,30,55,517,East
+4,12 April 2025,Chips,P006,12,22,926,East
+4,12 April 2025,Chips,P006,12,22,65,North
+4,12 April 2025,Biscuits,P004,15,30,893,North
+4,12 April 2025,Toothpaste,P001,20,35,815,West
+4,12 April 2025,Juice,P005,25,45,396,South
+4,12 April 2025,Toothpaste,P001,20,35,587,South
+4,12 April 2025,Biscuits,P004,15,30,761,West
+4,12 April 2025,Chips,P006,12,22,992,South
+4,12 April 2025,Coffee,P009,60,100,109,Central
+4,11 April 2025,Detergent,P007,40,70,880,West
+4,11 April 2025,Juice,P005,25,45,78,North
+4,11 April 2025,Chips,P006,12,22,621,South
+4,11 April 2025,Soap,P003,10,25,533,South
+4,11 April 2025,Coffee,P009,60,100,,South
+4,11 April 2025,Biscuits,P004,15,30,,West
+4,11 April 2025,Biscuits,P004,15,30,,West
+4,11 April 2025,Shampoo,P002,50,90,,North
+4,11 April 2025,Juice,P005,25,45,,West
+4,10 April 2025,Chips,P006,12,22,,West
+4,10 April 2025,Biscuits,P004,15,30,,East
+4,10 April 2025,Soap,P003,10,25,,South
+4,10 April 2025,Juice,P005,25,45,,North
+4,09 April 2025,Juice,P005,25,45,,West
+4,09 April 2025,Milk Powder,P010,35,60,,East
+4,09 April 2025,Juice,P005,25,45,,South
+4,09 April 2025,Milk Powder,P010,35,60,,North
+4,09 April 2025,Juice,P005,25,45,,North
+4,08 April 2025,Juice,P005,25,45,,East
+4,08 April 2025,Toothpaste,P001,20,35,314,West
+4,08 April 2025,Coffee,P009,60,100,607,Central
+4,08 April 2025,Coffee,P009,60,100,1000,North
+4,08 April 2025,Shampoo,P002,50,90,374,Central
+4,08 April 2025,Tea,P008,30,55,87,Central
+4,08 April 2025,Toothpaste,P001,20,35,757,West
+4,07 April 2025,Detergent,P007,40,70,338,South
+4,07 April 2025,Detergent,P007,40,70,358,North
+4,07 April 2025,Juice,P005,25,45,422,East
+4,07 April 2025,Biscuits,P004,15,30,456,North
+4,07 April 2025,Biscuits,P004,15,30,53,West
+4,07 April 2025,Coffee,P009,60,100,924,South
+4,07 April 2025,Tea,P008,30,55,332,West
+4,07 April 2025,Toothpaste,P001,20,35,24,West
+4,07 April 2025,Detergent,P007,40,70,663,East
+4,06 April 2025,Shampoo,P002,50,90,302,South
+4,06 April 2025,Shampoo,P002,50,90,647,Central
+4,06 April 2025,Biscuits,P004,15,30,949,North
+4,06 April 2025,Toothpaste,P001,20,35,53,West
+4,06 April 2025,Biscuits,P004,15,30,120,South
+4,06 April 2025,Biscuits,P004,15,30,562,Central
+4,06 April 2025,Coffee,P009,60,100,279,East
+4,06 April 2025,Chips,P006,12,22,42,North
+4,06 April 2025,Juice,P005,25,45,559,Central
+4,06 April 2025,Milk Powder,P010,35,60,541,Central
+4,06 April 2025,Juice,P005,25,45,657,South
+4,06 April 2025,Milk Powder,P010,35,60,90,North
+4,05 April 2025,Biscuits,P004,15,30,288,North
+4,05 April 2025,Milk Powder,P010,35,60,,South
+4,05 April 2025,Soap,P003,10,25,,South
+4,05 April 2025,Shampoo,P002,50,90,,East
+4,05 April 2025,Shampoo,P002,50,90,,East
+4,05 April 2025,Biscuits,P004,15,30,,South
+4,05 April 2025,Milk Powder,P010,35,60,,South
+4,05 April 2025,Chips,P006,12,22,,East
+4,05 April 2025,Juice,P005,25,45,,Central
+4,04 April 2025,Milk Powder,P010,35,60,,West
+4,04 April 2025,Biscuits,P004,15,30,,West
+4,04 April 2025,Toothpaste,P001,20,35,676,East
+4,04 April 2025,Tea,P008,30,55,155,West
+4,04 April 2025,Toothpaste,P001,20,35,595,North
+4,04 April 2025,Biscuits,P004,15,30,26,East
+4,04 April 2025,Toothpaste,P001,20,35,624,East
+4,04 April 2025,Tea,P008,30,55,188,North
+4,04 April 2025,Toothpaste,P001,20,35,456,West
+4,04 April 2025,Milk Powder,P010,35,60,933,North
+4,04 April 2025,Toothpaste,P001,20,35,737,South
+4,04 April 2025,Juice,P005,25,45,555,South
+4,04 April 2025,Tea,P008,30,55,28,Central
+4,04 April 2025,Milk Powder,P010,35,60,958,North
+4,03 April 2025,Coffee,P009,60,100,157,East
+4,03 April 2025,Tea,P008,30,55,806,West
+4,03 April 2025,Soap,P003,10,25,493,Central
+4,03 April 2025,Juice,P005,25,45,390,East
+4,03 April 2025,Chips,P006,12,22,274,East
+4,03 April 2025,Shampoo,P002,50,90,819,West
+4,03 April 2025,Detergent,P007,40,70,751,Central
+4,03 April 2025,Chips,P006,12,22,885,North
+4,03 April 2025,Toothpaste,P001,20,35,149,Central
+4,03 April 2025,Toothpaste,P001,20,35,956,West
+4,03 April 2025,Biscuits,P004,15,30,286,Central
+4,02 April 2025,Tea,P008,30,55,,South
+4,02 April 2025,Biscuits,P004,15,30,,North
+4,02 April 2025,Shampoo,P002,50,90,,Central
+4,02 April 2025,Coffee,P009,60,100,,North
+4,02 April 2025,Soap,P003,10,25,,West
+4,02 April 2025,Detergent,P007,40,70,,Central
+4,02 April 2025,Biscuits,P004,15,30,,West
+4,02 April 2025,Biscuits,P004,15,30,,North
+4,02 April 2025,Tea,P008,30,55,,West
+4,01 April 2025,Milk Powder,P010,35,60,,East
+4,01 April 2025,Shampoo,P002,50,90,,South
+4,01 April 2025,Detergent,P007,40,70,,North
+4,01 April 2025,Detergent,P007,40,70,,South
+4,01 April 2025,Detergent,P007,40,70,,East
+4,01 April 2025,Tea,P008,30,55,,East
+4,01 April 2025,Toothpaste,P001,20,35,984,North
+4,01 April 2025,Detergent,P007,40,70,464,South
+4,01 April 2025,Chips,P006,12,22,249,South
+3,31 March 2025,Toothpaste,P001,20,35,304,South
+3,31 March 2025,Toothpaste,P001,20,35,760,North
+3,31 March 2025,Milk Powder,P010,35,60,627,North
+3,31 March 2025,Shampoo,P002,50,90,595,East
+3,31 March 2025,Toothpaste,P001,20,35,590,East
+3,31 March 2025,Tea,P008,30,55,120,South
+3,31 March 2025,Milk Powder,P010,35,60,746,West
+3,31 March 2025,Shampoo,P002,50,90,544,East
+3,31 March 2025,Tea,P008,30,55,813,North
+3,31 March 2025,Coffee,P009,60,100,621,North
+3,30 March 2025,Milk Powder,P010,35,60,426,East
+3,30 March 2025,Soap,P003,10,25,889,North
+3,30 March 2025,Coffee,P009,60,100,843,North
+3,30 March 2025,Chips,P006,12,22,151,North
+3,30 March 2025,Shampoo,P002,50,90,645,North
+3,30 March 2025,Coffee,P009,60,100,17,North
+3,30 March 2025,Detergent,P007,40,70,889,North
+3,30 March 2025,Juice,P005,25,45,149,Central
+3,30 March 2025,Biscuits,P004,15,30,850,West
+3,30 March 2025,Chips,P006,12,22,469,East
+3,30 March 2025,Detergent,P007,40,70,,East
+3,30 March 2025,Biscuits,P004,15,30,,South
+3,29 March 2025,Juice,P005,25,45,,North
+3,29 March 2025,Shampoo,P002,50,90,,East
+3,29 March 2025,Tea,P008,30,55,,North
+3,29 March 2025,Chips,P006,12,22,,West
+3,29 March 2025,Juice,P005,25,45,,Central
+3,29 March 2025,Biscuits,P004,15,30,,East
+3,29 March 2025,Detergent,P007,40,70,,North
+3,29 March 2025,Detergent,P007,40,70,,Central
+3,28 March 2025,Toothpaste,P001,20,35,688,East
+3,28 March 2025,Toothpaste,P001,20,35,952,West
+3,28 March 2025,Milk Powder,P010,35,60,682,South
+3,28 March 2025,Milk Powder,P010,35,60,12,South
+3,28 March 2025,Chips,P006,12,22,90,North
+3,28 March 2025,Detergent,P007,40,70,414,South
+3,27 March 2025,Coffee,P009,60,100,743,North
+3,27 March 2025,Shampoo,P002,50,90,380,Central
+3,27 March 2025,Toothpaste,P001,20,35,687,Central
+3,27 March 2025,Milk Powder,P010,35,60,524,Central
+3,27 March 2025,Coffee,P009,60,100,956,South
+3,26 March 2025,Toothpaste,P001,20,35,518,Central
+3,26 March 2025,Toothpaste,P001,20,35,154,Central
+3,26 March 2025,Soap,P003,10,25,577,East
+3,26 March 2025,Coffee,P009,60,100,307,East
+3,26 March 2025,Toothpaste,P001,20,35,315,Central
+3,26 March 2025,Toothpaste,P001,20,35,288,South
+3,26 March 2025,Toothpaste,P001,20,35,114,North
+3,26 March 2025,Detergent,P007,40,70,588,West
+3,26 March 2025,Soap,P003,10,25,822,Central
+3,26 March 2025,Detergent,P007,40,70,61,Central
+3,26 March 2025,Tea,P008,30,55,438,West
+3,25 March 2025,Shampoo,P002,50,90,327,North
+3,25 March 2025,Chips,P006,12,22,,East
+3,25 March 2025,Juice,P005,25,45,,South
+3,25 March 2025,Toothpaste,P001,20,35,781,West
+3,25 March 2025,Tea,P008,30,55,278,Central
+3,25 March 2025,Coffee,P009,60,100,35,Central
+3,25 March 2025,Shampoo,P002,50,90,459,East
+3,25 March 2025,Milk Powder,P010,35,60,119,South
+3,25 March 2025,Toothpaste,P001,20,35,689,Central
+3,25 March 2025,Milk Powder,P010,35,60,199,North
+3,25 March 2025,Tea,P008,30,55,954,South
+3,25 March 2025,Toothpaste,P001,20,35,40,West
+3,25 March 2025,Soap,P003,10,25,884,West
+3,25 March 2025,Detergent,P007,40,70,542,Central
+3,25 March 2025,Juice,P005,25,45,366,West
+3,25 March 2025,Toothpaste,P001,20,35,295,East
+3,24 March 2025,Tea,P008,30,55,205,East
+3,24 March 2025,Juice,P005,25,45,508,North
+3,24 March 2025,Coffee,P009,60,100,676,South
+3,24 March 2025,Coffee,P009,60,100,315,Central
+3,24 March 2025,Toothpaste,P001,20,35,220,West
+3,24 March 2025,Milk Powder,P010,35,60,12,Central
+3,24 March 2025,Chips,P006,12,22,961,South
+3,24 March 2025,Chips,P006,12,22,811,East
+3,23 March 2025,Detergent,P007,40,70,949,North
+3,23 March 2025,Biscuits,P004,15,30,531,North
+3,23 March 2025,Shampoo,P002,50,90,,East
+3,23 March 2025,Detergent,P007,40,70,,Central
+3,23 March 2025,Milk Powder,P010,35,60,,West
+3,23 March 2025,Coffee,P009,60,100,,Central
+3,23 March 2025,Shampoo,P002,50,90,,West
+3,23 March 2025,Milk Powder,P010,35,60,,West
+3,23 March 2025,Coffee,P009,60,100,,South
+3,23 March 2025,Tea,P008,30,55,,West
+3,23 March 2025,Chips,P006,12,22,,Central
+3,23 March 2025,Tea,P008,30,55,,North
+3,23 March 2025,Biscuits,P004,15,30,,South
+3,23 March 2025,Juice,P005,25,45,,East
+3,23 March 2025,Toothpaste,P001,20,35,152,West
+3,23 March 2025,Soap,P003,10,25,808,South
+3,23 March 2025,Milk Powder,P010,35,60,707,East
+3,23 March 2025,Milk Powder,P010,35,60,965,North
+3,22 March 2025,Milk Powder,P010,35,60,236,West
+3,22 March 2025,Chips,P006,12,22,901,North
+3,22 March 2025,Milk Powder,P010,35,60,735,North
+3,22 March 2025,Tea,P008,30,55,235,East
+3,22 March 2025,Toothpaste,P001,20,35,712,Central
+3,22 March 2025,Biscuits,P004,15,30,105,North
+3,22 March 2025,Tea,P008,30,55,295,South
+3,22 March 2025,Coffee,P009,60,100,495,North
+3,22 March 2025,Shampoo,P002,50,90,574,East
+3,22 March 2025,Milk Powder,P010,35,60,808,North
+3,22 March 2025,Coffee,P009,60,100,945,South
+3,21 March 2025,Juice,P005,25,45,762,Central
+3,21 March 2025,Coffee,P009,60,100,546,South
+3,21 March 2025,Biscuits,P004,15,30,50,East
+3,21 March 2025,Milk Powder,P010,35,60,846,Central
+3,21 March 2025,Toothpaste,P001,20,35,99,North
+3,21 March 2025,Milk Powder,P010,35,60,905,South
+3,21 March 2025,Soap,P003,10,25,747,North
+3,21 March 2025,Toothpaste,P001,20,35,869,North
+3,21 March 2025,Tea,P008,30,55,,West
+3,21 March 2025,Tea,P008,30,55,,South
+3,21 March 2025,Toothpaste,P001,20,35,174,South
+3,21 March 2025,Chips,P006,12,22,898,Central
+3,20 March 2025,Toothpaste,P001,20,35,145,Central
+3,20 March 2025,Milk Powder,P010,35,60,84,East
+3,20 March 2025,Juice,P005,25,45,432,South
+3,20 March 2025,Chips,P006,12,22,184,Central
+3,20 March 2025,Juice,P005,25,45,653,West
+3,20 March 2025,Biscuits,P004,15,30,967,South
+3,20 March 2025,Coffee,P009,60,100,631,East
+3,19 March 2025,Soap,P003,10,25,212,Central
+3,19 March 2025,Milk Powder,P010,35,60,345,West
+3,19 March 2025,Tea,P008,30,55,235,Central
+3,19 March 2025,Biscuits,P004,15,30,212,Central
+3,19 March 2025,Shampoo,P002,50,90,272,West
+3,19 March 2025,Toothpaste,P001,20,35,803,East
+3,19 March 2025,Soap,P003,10,25,226,South
+3,19 March 2025,Juice,P005,25,45,65,East
+3,19 March 2025,Chips,P006,12,22,412,Central
+3,18 March 2025,Shampoo,P002,50,90,870,North
+3,18 March 2025,Soap,P003,10,25,295,South
+3,18 March 2025,Detergent,P007,40,70,124,South
+3,18 March 2025,Juice,P005,25,45,82,West
+3,18 March 2025,Milk Powder,P010,35,60,525,East
+3,18 March 2025,Toothpaste,P001,20,35,129,North
+3,18 March 2025,Milk Powder,P010,35,60,640,East
+3,18 March 2025,Detergent,P007,40,70,161,West
+3,18 March 2025,Biscuits,P004,15,30,420,West
+3,18 March 2025,Chips,P006,12,22,512,West
+3,18 March 2025,Toothpaste,P001,20,35,541,East
+3,18 March 2025,Milk Powder,P010,35,60,558,North
+3,18 March 2025,Toothpaste,P001,20,35,139,South
+3,18 March 2025,Detergent,P007,40,70,330,Central
+3,18 March 2025,Biscuits,P004,15,30,578,South
+3,18 March 2025,Milk Powder,P010,35,60,143,East
+3,18 March 2025,Coffee,P009,60,100,492,North
+3,18 March 2025,Juice,P005,25,45,642,East
+3,18 March 2025,Soap,P003,10,25,619,East
+3,18 March 2025,Chips,P006,12,22,41,North
+3,17 March 2025,Shampoo,P002,50,90,495,South
+3,17 March 2025,Juice,P005,25,45,471,North
+3,17 March 2025,Chips,P006,12,22,184,North
+3,17 March 2025,Chips,P006,12,22,622,North
+3,17 March 2025,Chips,P006,12,22,317,Central
+3,17 March 2025,Detergent,P007,40,70,859,Central
+3,17 March 2025,Milk Powder,P010,35,60,214,North
+3,16 March 2025,Milk Powder,P010,35,60,566,West
+3,16 March 2025,Juice,P005,25,45,,North
+3,16 March 2025,Chips,P006,12,22,,West
+3,16 March 2025,Milk Powder,P010,35,60,,West
+3,16 March 2025,Milk Powder,P010,35,60,,East
+3,16 March 2025,Chips,P006,12,22,,North
+3,16 March 2025,Detergent,P007,40,70,,North
+3,16 March 2025,Toothpaste,P001,20,35,678,Central
+3,16 March 2025,Chips,P006,12,22,272,Central
+3,16 March 2025,Shampoo,P002,50,90,601,Central
+3,16 March 2025,Milk Powder,P010,35,60,613,North
+3,15 March 2025,Juice,P005,25,45,501,North
+3,15 March 2025,Coffee,P009,60,100,345,North
+3,15 March 2025,Milk Powder,P010,35,60,31,Central
+3,15 March 2025,Shampoo,P002,50,90,281,Central
+3,15 March 2025,Shampoo,P002,50,90,892,South
+3,15 March 2025,Juice,P005,25,45,277,South
+3,15 March 2025,Toothpaste,P001,20,35,544,Central
+3,15 March 2025,Soap,P003,10,25,363,Central
+3,15 March 2025,Coffee,P009,60,100,288,North
+3,14 March 2025,Biscuits,P004,15,30,593,Central
+3,14 March 2025,Chips,P006,12,22,967,East
+3,14 March 2025,Coffee,P009,60,100,467,East
+3,14 March 2025,Biscuits,P004,15,30,100,North
+3,14 March 2025,Shampoo,P002,50,90,811,North
+3,14 March 2025,Chips,P006,12,22,848,West
+3,14 March 2025,Biscuits,P004,15,30,986,Central
+3,14 March 2025,Milk Powder,P010,35,60,523,South
+3,14 March 2025,Coffee,P009,60,100,722,East
+3,14 March 2025,Milk Powder,P010,35,60,171,East
+3,14 March 2025,Detergent,P007,40,70,,East
+3,14 March 2025,Tea,P008,30,55,,North
+3,13 March 2025,Chips,P006,12,22,,Central
+3,13 March 2025,Coffee,P009,60,100,,West
+3,13 March 2025,Tea,P008,30,55,,North
+3,13 March 2025,Soap,P003,10,25,,West
+3,13 March 2025,Toothpaste,P001,20,35,110,North
+3,13 March 2025,Biscuits,P004,15,30,184,West
+3,13 March 2025,Shampoo,P002,50,90,532,East
+3,13 March 2025,Coffee,P009,60,100,781,South
+3,13 March 2025,Toothpaste,P001,20,35,81,South
+3,12 March 2025,Juice,P005,25,45,60,Central
+3,12 March 2025,Shampoo,P002,50,90,774,South
+3,12 March 2025,Chips,P006,12,22,308,West
+3,12 March 2025,Soap,P003,10,25,893,South
+3,12 March 2025,Chips,P006,12,22,305,North
+3,12 March 2025,Chips,P006,12,22,366,North
+3,12 March 2025,Detergent,P007,40,70,581,North
+3,12 March 2025,Shampoo,P002,50,90,202,Central
+3,12 March 2025,Shampoo,P002,50,90,439,South
+3,12 March 2025,Toothpaste,P001,20,35,133,West
+3,12 March 2025,Juice,P005,25,45,296,West
+3,11 March 2025,Chips,P006,12,22,192,South
+3,11 March 2025,Shampoo,P002,50,90,804,West
+3,11 March 2025,Milk Powder,P010,35,60,804,West
+3,11 March 2025,Biscuits,P004,15,30,989,North
+3,11 March 2025,Milk Powder,P010,35,60,24,East
+3,11 March 2025,Milk Powder,P010,35,60,708,North
+3,11 March 2025,Coffee,P009,60,100,406,Central
+3,11 March 2025,Milk Powder,P010,35,60,,South
+3,10 March 2025,Tea,P008,30,55,,West
+3,10 March 2025,Toothpaste,P001,20,35,668,Central
+3,10 March 2025,Juice,P005,25,45,65,North
+3,10 March 2025,Chips,P006,12,22,677,North
+3,10 March 2025,Shampoo,P002,50,90,628,East
+3,10 March 2025,Coffee,P009,60,100,853,West
+3,10 March 2025,Tea,P008,30,55,997,North
+3,10 March 2025,Soap,P003,10,25,777,South
+3,10 March 2025,Shampoo,P002,50,90,141,West
+3,10 March 2025,Soap,P003,10,25,401,East
+3,10 March 2025,Juice,P005,25,45,714,East
+3,10 March 2025,Shampoo,P002,50,90,573,South
+3,09 March 2025,Tea,P008,30,55,144,Central
+3,09 March 2025,Tea,P008,30,55,465,West
+3,09 March 2025,Chips,P006,12,22,145,Central
+3,09 March 2025,Biscuits,P004,15,30,672,West
+3,09 March 2025,Shampoo,P002,50,90,434,West
+3,09 March 2025,Biscuits,P004,15,30,283,South
+3,09 March 2025,Tea,P008,30,55,460,South
+3,09 March 2025,Coffee,P009,60,100,531,South
+3,09 March 2025,Detergent,P007,40,70,622,West
+3,09 March 2025,Coffee,P009,60,100,591,East
+3,09 March 2025,Biscuits,P004,15,30,801,West
+3,08 March 2025,Tea,P008,30,55,941,East
+3,08 March 2025,Juice,P005,25,45,,West
+3,08 March 2025,Coffee,P009,60,100,,East
+3,08 March 2025,Soap,P003,10,25,,North
+3,08 March 2025,Coffee,P009,60,100,,North
+3,08 March 2025,Milk Powder,P010,35,60,,South
+3,08 March 2025,Milk Powder,P010,35,60,,South
+3,08 March 2025,Milk Powder,P010,35,60,,East
+3,08 March 2025,Toothpaste,P001,20,35,622,Central
+3,08 March 2025,Milk Powder,P010,35,60,443,Central
+3,08 March 2025,Biscuits,P004,15,30,151,Central
