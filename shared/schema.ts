@@ -38,15 +38,17 @@ export const dataSources = pgTable("data_sources", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
-  type: text("type").notNull(), // 'csv', 'mysql', 'postgres', etc.
-  filename: text("filename"),
+  type: text("type").notNull(), // 'csv', 'mysql', 'postgresql', 'sqlserver', 'sqlite', 'mongodb', 'redis', 'rest', 'graphql', 'sftp', etc.
+  filename: text("filename"), // For file-based sources
   size: integer("size"),
   rowCount: integer("row_count"),
   columnCount: integer("column_count"),
-  status: text("status").notNull().default('processing'), // 'processing', 'ready', 'error'
-  metadata: jsonb("metadata"),
+  status: text("status").notNull().default('processing'), // 'processing', 'ready', 'error', 'connected'
+  connectionConfig: jsonb("connection_config"), // Store encrypted connection details
+  metadata: jsonb("metadata"), // Additional metadata like schema info, file paths, etc.
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  lastSyncedAt: timestamp("last_synced_at"),
 });
 
 // AI queries table
