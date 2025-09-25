@@ -8,6 +8,7 @@ import {
   Database, 
   Bot, 
   Table,
+  Plug,
   Settings,
   LogOut
 } from "lucide-react";
@@ -29,7 +30,7 @@ const navigation = [
   {
     id: "warehouse",
     name: "NEX Connect", 
-    icon: Database,
+    icon: Plug,
     description: "Data sources"
   },
   {
@@ -40,14 +41,14 @@ const navigation = [
   },
   {
     id: "charts",
-    name: "NEX-VIZ",
+    name: "NEX VIZ",
     icon: BarChart3,
     description: "Visualizations"
   },
   {
     id: "datasets",
     name: "NEX House",
-    icon: Table,
+    icon: Database,
     description: "Data & Views"
   }
 ];

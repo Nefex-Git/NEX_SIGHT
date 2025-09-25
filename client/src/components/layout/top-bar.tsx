@@ -14,7 +14,7 @@ const pageLabels: Record<string, string> = {
   dashboard: "Dashboard Overview",
   warehouse: "NEX Connect", 
   assistant: "NEX AI",
-  charts: "NEX-VIZ",
+  charts: "NEX VIZ",
   datasets: "NEX House"
 };
 
