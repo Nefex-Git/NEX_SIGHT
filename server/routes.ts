@@ -24,8 +24,10 @@ import {
   insertAiQuerySchema, 
   insertKpiSchema, 
   insertChartSchema,
-  insertViewSchema 
+  insertViewSchema,
+  DatabaseConnectionConfig 
 } from "@shared/schema";
+import { DatabaseConnectorService } from './services/database-connectors';
 
 // Configure multer for file uploads
 const upload = multer({
@@ -175,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Test the connection
-      console.log(`Testing ${validatedConfig.type} connection to ${validatedConfig.host}:${validatedConfig.port || 'default'}`);
+      console.log(`Testing ${validatedConfig.type} connection to ${(validatedConfig as any).host}:${(validatedConfig as any).port || 'default'}`);
       const result = await testConnection(validatedConfig);
       
       if (result.success) {
@@ -673,6 +675,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(mockResults);
     } catch (error) {
       res.status(500).json({ message: 'Failed to execute view' });
+    }
+  });
+
+  // Database connector endpoints
+  app.get('/api/database-connectors', requireAuth, async (req: any, res) => {
+    try {
+      const connectors = DatabaseConnectorService.getAvailableConnectors();
+      res.json(connectors);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch database connectors' });
+    }
+  });
+
+  app.get('/api/database-connectors/:type', requireAuth, async (req: any, res) => {
+    try {
+      const connector = DatabaseConnectorService.getConnector(req.params.type);
+      if (!connector) {
+        return res.status(404).json({ message: 'Connector not found' });
+      }
+      res.json(connector);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch connector details' });
+    }
+  });
+
+  app.post('/api/database-connectors/test', requireAuth, async (req: any, res) => {
+    try {
+      const { type, config } = req.body;
+      
+      if (!type || !config) {
+        return res.status(400).json({ message: 'Type and config are required' });
+      }
+
+      const result = await DatabaseConnectorService.testConnection(type, config);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Connection test failed', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
+  app.post('/api/database-connectors/schema', requireAuth, async (req: any, res) => {
+    try {
+      const { type, config } = req.body;
+      
+      if (!type || !config) {
+        return res.status(400).json({ message: 'Type and config are required' });
+      }
+
+      const schemaInfo = await DatabaseConnectorService.getSchemaInfo(type, config);
+      res.json(schemaInfo);
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Failed to fetch schema information', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
+  app.post('/api/data-sources/database', requireAuth, async (req: any, res) => {
+    try {
+      const { name, type, config } = req.body;
+      
+      if (!name || !type || !config) {
+        return res.status(400).json({ message: 'Name, type, and config are required' });
+      }
+
+      // Test connection first
+      const testResult = await DatabaseConnectorService.testConnection(type, config);
+      if (!testResult.success) {
+        return res.status(400).json({ 
+          message: 'Database connection test failed', 
+          error: testResult.message 
+        });
+      }
+
+      // Encrypt configuration before storing
+      const encryptedConfig = DatabaseConnectorService.encryptConfig(config);
+      
+      const dataSource = await storage.createDataSource({
+        userId: req.user.id,
+        name,
+        type,
+        status: 'connected',
+        connectionConfig: encryptedConfig,
+        metadata: {
+          connector: DatabaseConnectorService.getConnector(type),
+          connectionTest: testResult,
+        },
+      });
+
+      res.json(dataSource);
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Failed to create database connection', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
   });
 
