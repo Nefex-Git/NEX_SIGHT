@@ -40,7 +40,7 @@ export default function HomePage() {
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
       
-      <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'} lg:ml-64`}>
+      <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'ml-16' : 'ml-0'} lg:ml-16`}>
         <TopBar 
           currentPage={currentPage}
           onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
