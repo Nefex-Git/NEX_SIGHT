@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
-  Brain, 
   BarChart3, 
   Database, 
   Bot, 
@@ -12,6 +11,7 @@ import {
   Settings,
   LogOut
 } from "lucide-react";
+import nexSightLogo from "@assets/nexsight_1758799902588.png";
 
 interface SidebarProps {
   currentPage: string;
@@ -85,8 +85,12 @@ export default function Sidebar({ currentPage, onPageChange, isOpen, onToggle }:
           {/* Header */}
           <div className="p-6 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                <Brain className="text-white text-lg" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden">
+                <img 
+                  src={nexSightLogo} 
+                  alt="NEX Sight Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-xl font-bold">NEX Sight</h1>
