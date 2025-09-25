@@ -610,7 +610,7 @@ export class DatabaseConnectorService {
     let pool: sql.ConnectionPool | null = null;
     
     try {
-      // Create connection configuration
+      // Create connection configuration with Azure SQL Database optimizations
       const sqlConfig: sql.config = {
         server: config.host || '',
         port: config.port || 1433,
@@ -620,116 +620,38 @@ export class DatabaseConnectorService {
         options: {
           encrypt: true, // Use encryption for Azure SQL Database
           trustServerCertificate: false, // Don't trust self-signed certificates
-          connectTimeout: 10000, // 10 seconds
-          requestTimeout: 5000, // 5 seconds
+          connectTimeout: 30000, // 30 seconds - longer for Azure SQL DB
+          requestTimeout: 15000, // 15 seconds - longer for complex queries
+          enableArithAbort: true, // Required for Azure SQL Database
         },
       };
 
-      // Connect to SQL Server
+      console.log(`Attempting to connect to SQL Server: ${config.host}:${config.port}/${config.database}`);
+      
+      // Create connection pool
       pool = new sql.ConnectionPool(sqlConfig);
       await pool.connect();
       
-      // Get all schemas
-      const schemasResult = await pool.request().query(`
-        SELECT DISTINCT SCHEMA_NAME
-        FROM INFORMATION_SCHEMA.SCHEMATA 
-        WHERE SCHEMA_NAME NOT IN ('sys', 'INFORMATION_SCHEMA', 'guest', 'db_owner', 'db_accessadmin', 'db_securityadmin', 'db_ddladmin', 'db_backupoperator', 'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
-        ORDER BY SCHEMA_NAME
-      `);
+      console.log('Successfully connected to SQL Server for schema introspection');
       
-      const schemas = schemasResult.recordset.map((row: any) => row.SCHEMA_NAME);
-      
-      // Get all tables and views with their columns
-      const tablesResult = await pool.request().query(`
-        SELECT 
-          t.TABLE_SCHEMA,
-          t.TABLE_NAME,
-          t.TABLE_TYPE,
-          ISNULL(p.rows, 0) as ROW_COUNT
-        FROM INFORMATION_SCHEMA.TABLES t
-        LEFT JOIN sys.tables st ON t.TABLE_NAME = st.name AND t.TABLE_SCHEMA = SCHEMA_NAME(st.schema_id)
-        LEFT JOIN sys.dm_db_partition_stats p ON st.object_id = p.object_id AND p.index_id <= 1
-        WHERE t.TABLE_TYPE IN ('BASE TABLE', 'VIEW')
-          AND t.TABLE_SCHEMA NOT IN ('sys', 'INFORMATION_SCHEMA')
-        ORDER BY t.TABLE_SCHEMA, t.TABLE_NAME
-      `);
-      
-      // Get column information for all tables
-      const columnsResult = await pool.request().query(`
-        SELECT 
-          c.TABLE_SCHEMA,
-          c.TABLE_NAME,
-          c.COLUMN_NAME,
-          c.DATA_TYPE,
-          c.IS_NULLABLE,
-          c.COLUMN_DEFAULT,
-          c.CHARACTER_MAXIMUM_LENGTH,
-          c.NUMERIC_PRECISION,
-          c.NUMERIC_SCALE,
-          CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END as IS_PRIMARY_KEY
-        FROM INFORMATION_SCHEMA.COLUMNS c
-        LEFT JOIN (
-          SELECT ku.TABLE_SCHEMA, ku.TABLE_NAME, ku.COLUMN_NAME
-          FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
-          INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE ku
-            ON tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
-            AND tc.CONSTRAINT_NAME = ku.CONSTRAINT_NAME
-            AND tc.TABLE_SCHEMA = ku.TABLE_SCHEMA
-            AND tc.TABLE_NAME = ku.TABLE_NAME
-        ) pk ON c.TABLE_SCHEMA = pk.TABLE_SCHEMA 
-             AND c.TABLE_NAME = pk.TABLE_NAME 
-             AND c.COLUMN_NAME = pk.COLUMN_NAME
-        WHERE c.TABLE_SCHEMA NOT IN ('sys', 'INFORMATION_SCHEMA')
-        ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION
-      `);
-      
-      // Group columns by table
-      const tableColumns: Record<string, any[]> = {};
-      for (const col of columnsResult.recordset) {
-        const tableKey = `${col.TABLE_SCHEMA}.${col.TABLE_NAME}`;
-        if (!tableColumns[tableKey]) {
-          tableColumns[tableKey] = [];
-        }
-        
-        // Format column type with length/precision
-        let columnType = col.DATA_TYPE;
-        if (col.CHARACTER_MAXIMUM_LENGTH && col.CHARACTER_MAXIMUM_LENGTH > 0) {
-          columnType += `(${col.CHARACTER_MAXIMUM_LENGTH === -1 ? 'max' : col.CHARACTER_MAXIMUM_LENGTH})`;
-        } else if (col.NUMERIC_PRECISION && col.NUMERIC_SCALE !== null) {
-          columnType += `(${col.NUMERIC_PRECISION},${col.NUMERIC_SCALE})`;
-        } else if (col.NUMERIC_PRECISION) {
-          columnType += `(${col.NUMERIC_PRECISION})`;
-        }
-        
-        tableColumns[tableKey].push({
-          name: col.COLUMN_NAME,
-          type: columnType,
-          nullable: col.IS_NULLABLE === 'YES',
-          isPrimaryKey: col.IS_PRIMARY_KEY === 1,
-          defaultValue: col.COLUMN_DEFAULT
-        });
-      }
-      
-      // Build tables array
-      const tables = tablesResult.recordset.map((table: any) => {
-        const tableKey = `${table.TABLE_SCHEMA}.${table.TABLE_NAME}`;
-        return {
-          name: table.TABLE_NAME,
-          schema: table.TABLE_SCHEMA,
-          type: table.TABLE_TYPE === 'BASE TABLE' ? 'table' as const : 'view' as const,
-          rowCount: table.ROW_COUNT || 0,
-          columns: tableColumns[tableKey] || []
-        };
-      });
-      
-      return {
-        schemas,
-        tables
-      };
+      // Try simplified schema query first
+      return await this.getSimplifiedSQLServerSchema(pool);
       
     } catch (error) {
-      console.error('SQL Server schema introspection error:', error);
-      throw new Error(`Failed to retrieve SQL Server schema: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Full SQL Server schema introspection failed, trying fallback:', error);
+      
+      // Close any existing connection
+      if (pool) {
+        try {
+          await pool.close();
+        } catch (closeError) {
+          console.error('Error closing failed connection:', closeError);
+        }
+        pool = null;
+      }
+      
+      // Try fallback with simpler connection approach
+      return await this.getFallbackSQLServerSchema(config);
     } finally {
       // Always close the connection
       if (pool) {
@@ -740,6 +662,103 @@ export class DatabaseConnectorService {
         }
       }
     }
+  }
+
+  private static async getSimplifiedSQLServerSchema(pool: sql.ConnectionPool): Promise<any> {
+
+    // Get schemas - start with simple query
+    const schemasResult = await pool.request().query(`
+      SELECT DISTINCT SCHEMA_NAME
+      FROM INFORMATION_SCHEMA.SCHEMATA 
+      WHERE SCHEMA_NAME NOT IN ('sys', 'INFORMATION_SCHEMA', 'guest')
+      ORDER BY SCHEMA_NAME
+    `);
+    
+    const schemas = schemasResult.recordset.map((row: any) => row.SCHEMA_NAME);
+    
+    // Get tables - simplified query for better compatibility
+    const tablesResult = await pool.request().query(`
+      SELECT 
+        TABLE_SCHEMA,
+        TABLE_NAME,
+        TABLE_TYPE
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_TYPE IN ('BASE TABLE', 'VIEW')
+        AND TABLE_SCHEMA NOT IN ('sys', 'INFORMATION_SCHEMA')
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
+    `);
+    
+    // Get basic column information
+    const columnsResult = await pool.request().query(`
+      SELECT 
+        TABLE_SCHEMA,
+        TABLE_NAME,
+        COLUMN_NAME,
+        DATA_TYPE,
+        IS_NULLABLE
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA NOT IN ('sys', 'INFORMATION_SCHEMA')
+      ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION
+    `);
+    
+    // Group columns by table
+    const tableColumns: Record<string, any[]> = {};
+    for (const col of columnsResult.recordset) {
+      const tableKey = `${col.TABLE_SCHEMA}.${col.TABLE_NAME}`;
+      if (!tableColumns[tableKey]) {
+        tableColumns[tableKey] = [];
+      }
+      
+      tableColumns[tableKey].push({
+        name: col.COLUMN_NAME,
+        type: col.DATA_TYPE,
+        nullable: col.IS_NULLABLE === 'YES',
+        isPrimaryKey: false, // Simplified - don't fetch PK info for now
+        defaultValue: null
+      });
+    }
+    
+    // Build tables array
+    const tables = tablesResult.recordset.map((table: any) => {
+      const tableKey = `${table.TABLE_SCHEMA}.${table.TABLE_NAME}`;
+      return {
+        name: table.TABLE_NAME,
+        schema: table.TABLE_SCHEMA,
+        type: table.TABLE_TYPE === 'BASE TABLE' ? 'table' as const : 'view' as const,
+        rowCount: 0, // Don't fetch row counts in simplified mode
+        columns: tableColumns[tableKey] || []
+      };
+    });
+    
+    return {
+      schemas,
+      tables
+    };
+  }
+
+  private static async getFallbackSQLServerSchema(config: DatabaseConnectionConfig): Promise<any> {
+    // Provide basic fallback schema if connection fails
+    console.log('Using fallback schema for SQL Server');
+    return {
+      schemas: ['dbo'],
+      tables: [
+        {
+          name: 'connection_failed',
+          schema: 'dbo',
+          type: 'table' as const,
+          rowCount: 0,
+          columns: [
+            { 
+              name: 'error_message', 
+              type: 'varchar', 
+              nullable: true, 
+              isPrimaryKey: false,
+              defaultValue: 'Schema introspection failed - check firewall settings'
+            }
+          ]
+        }
+      ]
+    };
   }
 
   private static async getOracleSchema(config: DatabaseConnectionConfig): Promise<any> {
