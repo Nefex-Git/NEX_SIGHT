@@ -76,10 +76,7 @@ export default function WarehousePage() {
   // Create database connection mutation
   const createDatabaseConnectionMutation = useMutation({
     mutationFn: async ({ name, type, config }: { name: string; type: string; config: any }) => {
-      return apiRequest('/api/data-sources/database', {
-        method: 'POST',
-        body: { name, type, config },
-      });
+      return apiRequest('POST', '/api/data-sources/database', { name, type, config });
     },
     onSuccess: () => {
       toast({
