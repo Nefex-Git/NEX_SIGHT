@@ -52,7 +52,7 @@ export default function TopBar({ currentPage, onSidebarToggle }: TopBarProps) {
               <Menu className="h-5 w-5" />
             </Button>
             <h2 className="text-lg font-semibold">
-              {pageLabels[currentPage] || "NEX-AI"}
+              {pageLabels[currentPage] || "NEX Sight"}
             </h2>
           </div>
           

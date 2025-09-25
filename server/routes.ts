@@ -23,7 +23,8 @@ import {
   insertDataSourceSchema, 
   insertAiQuerySchema, 
   insertKpiSchema, 
-  insertChartSchema 
+  insertChartSchema,
+  insertViewSchema 
 } from "@shared/schema";
 
 // Configure multer for file uploads
@@ -513,6 +514,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: 'Chart deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Failed to delete chart' });
+    }
+  });
+
+  // Data preview endpoint
+  app.get('/api/data-sources/:id/preview', requireAuth, async (req: any, res) => {
+    try {
+      const dataSource = await storage.getDataSource(req.params.id);
+      
+      if (!dataSource || dataSource.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Data source not found' });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      if (dataSource.type === 'csv' && dataSource.filename) {
+        const filePath = path.join(process.cwd(), 'uploads', dataSource.filename);
+        if (fs.existsSync(filePath)) {
+          const csvData = await parseCSVFile(filePath);
+          
+          const previewData = {
+            name: dataSource.name,
+            columns: csvData.length > 0 ? Object.keys(csvData[0]) : [],
+            rows: csvData.slice(0, limit).map(row => Object.values(row)),
+            totalRows: csvData.length,
+            type: dataSource.type
+          };
+          
+          res.json(previewData);
+        } else {
+          res.status(404).json({ message: 'Data file not found' });
+        }
+      } else {
+        // For non-CSV data sources, return mock data for now
+        res.json({
+          name: dataSource.name,
+          columns: ['ID', 'Name', 'Value', 'Status'],
+          rows: [
+            ['1', 'Sample Data', '123.45', 'Active'],
+            ['2', 'Example Row', '67.89', 'Inactive'],
+            ['3', 'Test Entry', '45.67', 'Active'],
+          ],
+          totalRows: 150,
+          type: dataSource.type,
+          message: 'Preview from external data source (simulated)'
+        });
+      }
+    } catch (error) {
+      console.error('Data preview error:', error);
+      res.status(500).json({ message: 'Failed to preview data' });
+    }
+  });
+
+  // View endpoints
+  app.get('/api/views', requireAuth, async (req: any, res) => {
+    try {
+      const views = await storage.getViews(req.user.id);
+      res.json(views);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch views' });
+    }
+  });
+
+  app.post('/api/views', requireAuth, async (req: any, res) => {
+    try {
+      const validation = insertViewSchema.safeParse({
+        ...req.body,
+        userId: req.user.id
+      });
+
+      if (!validation.success) {
+        return res.status(400).json({ message: 'Invalid view data', errors: validation.error.errors });
+      }
+
+      const view = await storage.createView(validation.data);
+      res.json(view);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to create view' });
+    }
+  });
+
+  app.get('/api/views/:id', requireAuth, async (req: any, res) => {
+    try {
+      const view = await storage.getView(req.params.id);
+      
+      if (!view || view.userId !== req.user.id) {
+        return res.status(404).json({ message: 'View not found' });
+      }
+
+      res.json(view);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch view' });
+    }
+  });
+
+  app.put('/api/views/:id', requireAuth, async (req: any, res) => {
+    try {
+      const view = await storage.getView(req.params.id);
+      
+      if (!view || view.userId !== req.user.id) {
+        return res.status(404).json({ message: 'View not found' });
+      }
+
+      const updated = await storage.updateView(req.params.id, {
+        ...req.body,
+        lastExecuted: new Date()
+      });
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update view' });
+    }
+  });
+
+  app.delete('/api/views/:id', requireAuth, async (req: any, res) => {
+    try {
+      const view = await storage.getView(req.params.id);
+      
+      if (!view || view.userId !== req.user.id) {
+        return res.status(404).json({ message: 'View not found' });
+      }
+
+      await storage.deleteView(req.params.id);
+      res.json({ message: 'View deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to delete view' });
+    }
+  });
+
+  // Execute view query endpoint
+  app.post('/api/views/:id/execute', requireAuth, async (req: any, res) => {
+    try {
+      const view = await storage.getView(req.params.id);
+      
+      if (!view || view.userId !== req.user.id) {
+        return res.status(404).json({ message: 'View not found' });
+      }
+
+      // In a real implementation, this would execute the SQL query
+      // For now, we'll return mock data and update the view
+      const mockResults = {
+        columns: ['ID', 'Name', 'Value', 'Date'],
+        rows: [
+          ['1', 'Sample Data', '123.45', '2024-01-01'],
+          ['2', 'Example Row', '67.89', '2024-01-02'],
+          ['3', 'Test Entry', '45.67', '2024-01-03'],
+        ],
+        rowCount: 3,
+        executionTime: Math.floor(Math.random() * 500) + 50
+      };
+
+      // Update view with execution metadata
+      await storage.updateView(req.params.id, {
+        lastExecuted: new Date(),
+        resultData: mockResults,
+        rowCount: mockResults.rowCount
+      });
+
+      res.json(mockResults);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to execute view' });
     }
   });
 
