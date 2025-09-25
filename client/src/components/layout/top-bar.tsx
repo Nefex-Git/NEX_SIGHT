@@ -56,29 +56,33 @@ export default function TopBar({ currentPage, onSidebarToggle }: TopBarProps) {
             </h2>
           </div>
           
-          {/* Voice/Text prompt interface */}
+          {/* Voice/Text prompt interface - Hidden on dashboard */}
           <div className="flex items-center gap-4">
-            {/* Voice Input Button */}
-            <VoiceButton
-              isRecording={isRecording}
-              isTranscribing={isTranscribing}
-              onClick={handleVoiceClick}
-            />
-            
-            {/* Text Prompt Input */}
-            <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  type="text"
-                  placeholder="Ask anything about your data..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-input border-border focus:ring-2 focus:ring-primary focus:border-transparent"
-                  data-testid="input-global-search"
+            {currentPage !== "dashboard" && (
+              <>
+                {/* Voice Input Button */}
+                <VoiceButton
+                  isRecording={isRecording}
+                  isTranscribing={isTranscribing}
+                  onClick={handleVoiceClick}
                 />
-              </div>
-            </form>
+                
+                {/* Text Prompt Input */}
+                <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      type="text"
+                      placeholder="Ask anything about your data..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 bg-input border-border focus:ring-2 focus:ring-primary focus:border-transparent"
+                      data-testid="input-global-search"
+                    />
+                  </div>
+                </form>
+              </>
+            )}
             
             <Button 
               variant="ghost" 
@@ -90,12 +94,14 @@ export default function TopBar({ currentPage, onSidebarToggle }: TopBarProps) {
           </div>
         </div>
         
-        {/* Voice Status Component */}
-        <VoiceStatus 
-          isRecording={isRecording}
-          isTranscribing={isTranscribing}
-          onStop={handleVoiceClick}
-        />
+        {/* Voice Status Component - Hidden on dashboard */}
+        {currentPage !== "dashboard" && (
+          <VoiceStatus 
+            isRecording={isRecording}
+            isTranscribing={isTranscribing}
+            onStop={handleVoiceClick}
+          />
+        )}
       </div>
     </header>
   );
