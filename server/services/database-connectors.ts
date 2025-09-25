@@ -428,19 +428,165 @@ export class DatabaseConnectorService {
   /**
    * Execute query on database connection
    */
-  static async executeQuery(type: string, config: DatabaseConnectionConfig, query: string): Promise<any[]> {
+  static async executeQuery(type: string, config: DatabaseConnectionConfig, query: string): Promise<any> {
     const connector = this.getConnector(type);
     
     if (!connector) {
       throw new Error(`Unknown database connector type: ${type}`);
     }
 
-    // For now, return mock data
-    // In a real implementation, this would execute the query using the appropriate driver
-    return [
-      { id: 1, name: 'Sample Data', value: 100 },
-      { id: 2, name: 'Test Record', value: 200 },
-    ];
+    console.log(`Executing query on ${type}: ${query}`);
+
+    try {
+      switch (type) {
+        case 'mysql':
+          return await this.executeMySQLQuery(config, query);
+        case 'postgresql':
+          return await this.executePostgreSQLQuery(config, query);
+        case 'sqlserver':
+          return await this.executeSQLServerQuery(config, query);
+        case 'oracle':
+          return await this.executeOracleQuery(config, query);
+        case 'sqlite':
+          return await this.executeSQLiteQuery(config, query);
+        default:
+          throw new Error(`Query execution not implemented for ${type}`);
+      }
+    } catch (error) {
+      console.error(`Query execution error for ${type}:`, error);
+      throw new Error(`Failed to execute query: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Execute MySQL query
+   */
+  private static async executeMySQLQuery(config: DatabaseConnectionConfig, query: string): Promise<any> {
+    const mysql = await import('mysql2/promise');
+    let connection: any = null;
+    
+    try {
+      connection = await mysql.createConnection({
+        host: config.host,
+        port: parseInt(String(config.port || '3306')),
+        user: config.username,
+        password: config.password,
+        database: config.database,
+        connectTimeout: 10000,
+      });
+
+      const [results] = await connection.execute(query);
+      
+      return {
+        columns: Array.isArray(results) && results.length > 0 ? Object.keys(results[0]) : [],
+        rows: Array.isArray(results) ? results.map(row => Object.values(row)) : [],
+        rowCount: Array.isArray(results) ? results.length : 0
+      };
+    } finally {
+      if (connection) {
+        await connection.end();
+      }
+    }
+  }
+
+  /**
+   * Execute PostgreSQL query
+   */
+  private static async executePostgreSQLQuery(config: DatabaseConnectionConfig, query: string): Promise<any> {
+    const { Client } = await import('pg');
+    const client = new Client({
+      host: config.host,
+      port: parseInt(String(config.port || '5432')),
+      user: config.username,
+      password: config.password,
+      database: config.database,
+      connectionTimeoutMillis: 10000,
+    });
+
+    try {
+      await client.connect();
+      const result = await client.query(query);
+      
+      return {
+        columns: result.fields ? result.fields.map(field => field.name) : [],
+        rows: result.rows ? result.rows.map(row => Object.values(row)) : [],
+        rowCount: result.rowCount || result.rows?.length || 0
+      };
+    } finally {
+      await client.end();
+    }
+  }
+
+  /**
+   * Execute SQL Server query
+   */
+  private static async executeSQLServerQuery(config: DatabaseConnectionConfig, query: string): Promise<any> {
+    const sql = await import('mssql');
+    let pool: any = null;
+
+    try {
+      const sqlConfig: any = {
+        server: config.host || '',
+        port: parseInt(String(config.port || '1433')),
+        database: config.database || '',
+        user: config.username || '',
+        password: config.password || '',
+        options: {
+          encrypt: true,
+          trustServerCertificate: false,
+          connectTimeout: 30000,
+          requestTimeout: 15000,
+          enableArithAbort: true,
+        },
+      };
+
+      pool = new sql.ConnectionPool(sqlConfig);
+      await pool.connect();
+      
+      const result = await pool.request().query(query);
+      
+      return {
+        columns: result.recordset.columns ? Object.keys(result.recordset.columns) : [],
+        rows: result.recordset ? result.recordset.map((row: any) => Object.values(row)) : [],
+        rowCount: result.rowsAffected ? result.rowsAffected[0] : result.recordset?.length || 0
+      };
+    } finally {
+      if (pool) {
+        await pool.close();
+      }
+    }
+  }
+
+  /**
+   * Execute Oracle query (placeholder - returns mock data)
+   */
+  private static async executeOracleQuery(config: DatabaseConnectionConfig, query: string): Promise<any> {
+    // Oracle implementation would go here
+    console.log('Oracle query execution not implemented, returning mock data');
+    return {
+      columns: ['ID', 'NAME', 'VALUE'],
+      rows: [
+        [1, 'Oracle Sample', 100],
+        [2, 'Oracle Test', 200]
+      ],
+      rowCount: 2
+    };
+  }
+
+  /**
+   * Execute SQLite query (placeholder - returns mock data)
+   */
+  private static async executeSQLiteQuery(config: DatabaseConnectionConfig, query: string): Promise<any> {
+    // SQLite implementation would go here
+    console.log('SQLite query execution not implemented, returning mock data');
+    return {
+      columns: ['ID', 'DATA'],
+      rows: [
+        [1, 'SQLite Sample'],
+        [2, 'SQLite Test']
+      ],
+      rowCount: 2
+    };
   }
 
   /**

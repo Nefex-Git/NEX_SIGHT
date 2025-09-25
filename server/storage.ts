@@ -10,7 +10,9 @@ import {
   type Chart,
   type InsertChart,
   type View,
-  type InsertView
+  type InsertView,
+  type Connection,
+  type InsertConnection
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
@@ -57,6 +59,14 @@ export interface IStorage {
   updateView(id: string, updates: Partial<View>): Promise<View | undefined>;
   deleteView(id: string): Promise<boolean>;
   
+  // Connection operations
+  getConnections(userId: string): Promise<Connection[]>;
+  getConnection(id: string): Promise<Connection | undefined>;
+  createConnection(connection: InsertConnection): Promise<Connection>;
+  updateConnection(id: string, updates: Partial<Connection>): Promise<Connection | undefined>;
+  deleteConnection(id: string): Promise<boolean>;
+  getConnectionByNameAndUser(userId: string, name: string): Promise<Connection | undefined>;
+  
   // Session store
   sessionStore: Store;
 }
@@ -68,6 +78,7 @@ export class MemStorage implements IStorage {
   private kpis: Map<string, KPI>;
   private charts: Map<string, Chart>;
   private views: Map<string, View>;
+  private connections: Map<string, Connection>;
   public sessionStore: Store;
 
   constructor() {
@@ -77,6 +88,7 @@ export class MemStorage implements IStorage {
     this.kpis = new Map();
     this.charts = new Map();
     this.views = new Map();
+    this.connections = new Map();
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24 hours
     });
@@ -130,6 +142,7 @@ export class MemStorage implements IStorage {
       columnCount: insertDataSource.columnCount || null,
       connectionConfig: insertDataSource.connectionConfig || null,
       metadata: insertDataSource.metadata || null,
+      connectionId: insertDataSource.connectionId || null,
       lastSyncedAt: insertDataSource.lastSyncedAt || null,
       id,
       createdAt: now,
@@ -282,6 +295,54 @@ export class MemStorage implements IStorage {
 
   async deleteView(id: string): Promise<boolean> {
     return this.views.delete(id);
+  }
+
+  // Connection operations
+  async getConnections(userId: string): Promise<Connection[]> {
+    return Array.from(this.connections.values()).filter(connection => connection.userId === userId);
+  }
+
+  async getConnection(id: string): Promise<Connection | undefined> {
+    return this.connections.get(id);
+  }
+
+  async createConnection(insertConnection: InsertConnection): Promise<Connection> {
+    const id = randomUUID();
+    const now = new Date();
+    const connection: Connection = {
+      ...insertConnection,
+      status: insertConnection.status || 'connected',
+      metadata: insertConnection.metadata || null,
+      id,
+      createdAt: now,
+      updatedAt: now,
+      lastTestedAt: null,
+    };
+    this.connections.set(id, connection);
+    return connection;
+  }
+
+  async updateConnection(id: string, updates: Partial<Connection>): Promise<Connection | undefined> {
+    const connection = this.connections.get(id);
+    if (!connection) return undefined;
+    
+    const updated: Connection = {
+      ...connection,
+      ...updates,
+      updatedAt: new Date()
+    };
+    this.connections.set(id, updated);
+    return updated;
+  }
+
+  async deleteConnection(id: string): Promise<boolean> {
+    return this.connections.delete(id);
+  }
+
+  async getConnectionByNameAndUser(userId: string, name: string): Promise<Connection | undefined> {
+    return Array.from(this.connections.values()).find(
+      connection => connection.userId === userId && connection.name === name
+    );
   }
 }
 

@@ -29,6 +29,45 @@ import {
 } from "@shared/schema";
 import { DatabaseConnectorService } from './services/database-connectors';
 
+/**
+ * Execute a user's SQL query by determining the appropriate database connection
+ */
+async function executeUserSQLQuery(sqlQuery: string, userId: string): Promise<any> {
+  console.log('Executing user SQL query:', sqlQuery);
+
+  // Get all table datasets for this user
+  const dataSources = await storage.getDataSources(userId);
+  const tableDatasets = dataSources.filter((ds: any) => ds.metadata?.isTableDataset);
+
+  if (tableDatasets.length === 0) {
+    throw new Error('No table datasets available for query execution');
+  }
+
+  // For now, use the first table dataset's connection (we can improve this later with query parsing)
+  // In a real implementation, we would parse the SQL to identify which tables are being queried
+  // and select the appropriate connection(s)
+  const firstTableDataset = tableDatasets[0];
+  const metadata = firstTableDataset.metadata as any;
+
+  // Get connection configuration from metadata
+  const connectionConfig = {
+    host: metadata.host,
+    port: metadata.port,
+    database: metadata.database,
+    username: metadata.username,
+    password: metadata.password
+  };
+
+  // Execute query using DatabaseConnectorService
+  const result = await DatabaseConnectorService.executeQuery(
+    metadata.connectionType || firstTableDataset.type,
+    connectionConfig,
+    sqlQuery
+  );
+
+  return result;
+}
+
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.diskStorage({
@@ -547,8 +586,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           res.status(404).json({ message: 'Data file not found' });
         }
+      } else if (dataSource.metadata && (dataSource.metadata as any).isTableDataset) {
+        // For table datasets, query the actual database
+        try {
+          const metadata = dataSource.metadata as any;
+          const { parentConnection, schemaName, tableName } = metadata;
+          
+          // Build the SQL query with proper schema qualification
+          const qualifiedTableName = schemaName ? `${schemaName}.${tableName}` : tableName;
+          const query = `SELECT TOP ${limit} * FROM ${qualifiedTableName}`;
+          
+          // Get connection configuration from metadata
+          const connectionConfig = {
+            host: metadata.host,
+            port: metadata.port,
+            database: metadata.database,
+            username: metadata.username,
+            password: metadata.password
+          };
+          
+          // Execute query using DatabaseConnectorService
+          const result = await DatabaseConnectorService.executeQuery(
+            metadata.connectionType || dataSource.type, 
+            connectionConfig, 
+            query
+          );
+          
+          res.json({
+            name: dataSource.name,
+            columns: result.columns || [],
+            rows: result.rows || [],
+            totalRows: result.rowCount || 0,
+            type: dataSource.type,
+            message: `Preview from ${parentConnection} • ${schemaName}.${tableName}`
+          });
+          
+        } catch (error) {
+          console.error('Database preview error:', error);
+          // Fallback to mock data if database query fails
+          res.json({
+            name: dataSource.name,
+            columns: ['Error'],
+            rows: [['Failed to connect to database']],
+            totalRows: 0,
+            type: dataSource.type,
+            message: `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`
+          });
+        }
       } else {
-        // For non-CSV data sources, return mock data for now
+        // For other non-CSV data sources, return mock data
         res.json({
           name: dataSource.name,
           columns: ['ID', 'Name', 'Value', 'Status'],
@@ -652,29 +738,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'View not found' });
       }
 
-      // In a real implementation, this would execute the SQL query
-      // For now, we'll return mock data and update the view
-      const mockResults = {
-        columns: ['ID', 'Name', 'Value', 'Date'],
-        rows: [
-          ['1', 'Sample Data', '123.45', '2024-01-01'],
-          ['2', 'Example Row', '67.89', '2024-01-02'],
-          ['3', 'Test Entry', '45.67', '2024-01-03'],
-        ],
-        rowCount: 3,
-        executionTime: Math.floor(Math.random() * 500) + 50
+      const startTime = Date.now();
+      let results;
+
+      try {
+        // Execute the actual SQL query
+        results = await executeUserSQLQuery(view.sqlQuery, req.user.id);
+      } catch (queryError) {
+        console.error('SQL query execution error:', queryError);
+        // Fallback to error result
+        results = {
+          columns: ['Error'],
+          rows: [['Query execution failed: ' + (queryError instanceof Error ? queryError.message : 'Unknown error')]],
+          rowCount: 0
+        };
+      }
+
+      const executionTime = Date.now() - startTime;
+      const finalResults = {
+        ...results,
+        executionTime
       };
 
       // Update view with execution metadata
       await storage.updateView(req.params.id, {
         lastExecuted: new Date(),
-        resultData: mockResults,
-        rowCount: mockResults.rowCount
+        resultData: finalResults,
+        rowCount: results.rowCount
       });
 
-      res.json(mockResults);
+      res.json(finalResults);
     } catch (error) {
+      console.error('View execution error:', error);
       res.status(500).json({ message: 'Failed to execute view' });
+    }
+  });
+
+  // Direct SQL execution endpoint for SQL Engine
+  app.post('/api/sql/execute', requireAuth, async (req: any, res) => {
+    try {
+      const { query } = req.body;
+
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: 'SQL query is required' });
+      }
+
+      const startTime = Date.now();
+      let results;
+
+      try {
+        // Execute the SQL query
+        results = await executeUserSQLQuery(query, req.user.id);
+      } catch (queryError) {
+        console.error('Direct SQL execution error:', queryError);
+        return res.status(400).json({ 
+          message: 'Query execution failed',
+          error: queryError instanceof Error ? queryError.message : 'Unknown error'
+        });
+      }
+
+      const executionTime = Date.now() - startTime;
+      const finalResults = {
+        ...results,
+        executionTime
+      };
+
+      res.json(finalResults);
+    } catch (error) {
+      console.error('SQL execution endpoint error:', error);
+      res.status(500).json({ message: 'Failed to execute SQL query' });
     }
   });
 
@@ -795,27 +927,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Encrypt the connection config for storage
-      const encryptedConfig = DatabaseConnectorService.encryptConfig(connectionConfig);
+      // Check if connection already exists for this user and name
+      let connection = await storage.getConnectionByNameAndUser(req.user.id, connectionName);
+      
+      if (!connection) {
+        // Create new connection if it doesn't exist
+        const encryptedConfig = DatabaseConnectorService.encryptConfig(connectionConfig);
+        
+        connection = await storage.createConnection({
+          userId: req.user.id,
+          name: connectionName,
+          type: databaseType,
+          status: 'connected',
+          connectionConfig: encryptedConfig,
+          metadata: {
+            host: connectionConfig.host,
+            port: connectionConfig.port,
+            database: connectionConfig.database,
+            username: connectionConfig.username,
+            // Don't store password in metadata
+            lastTested: new Date().toISOString(),
+          }
+        });
+      }
 
-      // Create a data source for this specific table
+      // Create a data source for this specific table, referencing the connection
       const dataSource = await storage.createDataSource({
         userId: req.user.id,
-        name: `${connectionName} - ${schemaName}.${tableName}`,
+        name: `${schemaName}.${tableName}`, // Simpler name without connection prefix
         type: databaseType,
         status: 'ready',
-        connectionConfig: encryptedConfig,
+        connectionId: connection.id, // Reference to parent connection
         rowCount: tableMetadata?.rowCount,
         columnCount: tableMetadata?.columns?.length || 0,
         metadata: {
+          isTableDataset: true, // Flag to identify table-based datasets
           connectorType: databaseType,
           connectionName,
           tableName,
           schemaName,
           tableType: tableMetadata?.type || 'table',
           columns: tableMetadata?.columns || [],
-          isTableDataset: true, // Flag to identify table-based datasets
           parentConnection: connectionName,
+          // Store connection details for backwards compatibility during transition
+          host: connectionConfig.host,
+          port: connectionConfig.port,
+          database: connectionConfig.database,
+          username: connectionConfig.username,
+          password: connectionConfig.password,
+          connectionType: databaseType,
         }
       });
 
@@ -826,6 +986,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Failed to create table data source',
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
+    }
+  });
+
+  // Connection management endpoints
+  app.get('/api/connections', requireAuth, async (req: any, res) => {
+    try {
+      const connections = await storage.getConnections(req.user.id);
+      res.json(connections);
+    } catch (error) {
+      console.error('Failed to fetch connections:', error);
+      res.status(500).json({ message: 'Failed to fetch connections' });
+    }
+  });
+
+  app.get('/api/connections/:id', requireAuth, async (req: any, res) => {
+    try {
+      const connection = await storage.getConnection(req.params.id);
+      
+      if (!connection || connection.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Connection not found' });
+      }
+
+      res.json(connection);
+    } catch (error) {
+      console.error('Failed to fetch connection:', error);
+      res.status(500).json({ message: 'Failed to fetch connection' });
+    }
+  });
+
+  app.get('/api/connections/:id/tables', requireAuth, async (req: any, res) => {
+    try {
+      const connection = await storage.getConnection(req.params.id);
+      
+      if (!connection || connection.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Connection not found' });
+      }
+
+      // Get all table datasets for this connection
+      const dataSources = await storage.getDataSources(req.user.id);
+      const connectionTables = dataSources.filter((ds: any) => 
+        ds.connectionId === req.params.id && ds.metadata?.isTableDataset
+      );
+
+      res.json(connectionTables);
+    } catch (error) {
+      console.error('Failed to fetch connection tables:', error);
+      res.status(500).json({ message: 'Failed to fetch connection tables' });
     }
   });
 
