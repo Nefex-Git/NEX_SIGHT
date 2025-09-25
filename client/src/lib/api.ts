@@ -207,3 +207,35 @@ export async function executeView(id: string): Promise<any> {
   const response = await apiRequest('POST', `/api/views/${id}/execute`);
   return response.json();
 }
+
+export async function executeSQLQuery(query: string): Promise<any> {
+  const response = await apiRequest('POST', '/api/sql/execute', { query });
+  return response.json();
+}
+
+// Connection API
+export interface Connection {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  metadata?: any;
+  createdAt: string;
+  updatedAt: string;
+  lastTestedAt?: string;
+}
+
+export async function getConnections(): Promise<Connection[]> {
+  const response = await apiRequest('GET', '/api/connections');
+  return response.json();
+}
+
+export async function getConnection(id: string): Promise<Connection> {
+  const response = await apiRequest('GET', `/api/connections/${id}`);
+  return response.json();
+}
+
+export async function getConnectionTables(connectionId: string): Promise<DataSource[]> {
+  const response = await apiRequest('GET', `/api/connections/${connectionId}/tables`);
+  return response.json();
+}

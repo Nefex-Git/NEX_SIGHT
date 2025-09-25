@@ -46,9 +46,24 @@ export const dataSources = pgTable("data_sources", {
   status: text("status").notNull().default('processing'), // 'processing', 'ready', 'error', 'connected'
   connectionConfig: jsonb("connection_config"), // Store encrypted connection details
   metadata: jsonb("metadata"), // Additional metadata like schema info, file paths, etc.
+  connectionId: varchar("connection_id").references(() => connections.id), // Reference to parent connection for table datasets
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   lastSyncedAt: timestamp("last_synced_at"),
+});
+
+// Database connections table - stores unique database connections
+export const connections = pgTable("connections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(), // User-friendly connection name
+  type: text("type").notNull(), // Database connector type (mysql, postgresql, sqlserver, etc.)
+  status: text("status").notNull().default('connected'), // 'connected', 'disconnected', 'error'
+  connectionConfig: jsonb("connection_config").notNull(), // Store encrypted connection details
+  metadata: jsonb("metadata"), // Additional metadata like available schemas, last tested, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  lastTestedAt: timestamp("last_tested_at"),
 });
 
 // AI queries table
@@ -139,6 +154,13 @@ export const insertViewSchema = createInsertSchema(views).omit({
   createdAt: true,
   updatedAt: true,
   lastExecuted: true,
+});
+
+export const insertConnectionSchema = createInsertSchema(connections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastTestedAt: true,
 });
 
 // Database connector types (similar to Apache Superset)
@@ -277,3 +299,5 @@ export type Chart = typeof charts.$inferSelect;
 export type InsertChart = z.infer<typeof insertChartSchema>;
 export type View = typeof views.$inferSelect;
 export type InsertView = z.infer<typeof insertViewSchema>;
+export type Connection = typeof connections.$inferSelect;
+export type InsertConnection = z.infer<typeof insertConnectionSchema>;
