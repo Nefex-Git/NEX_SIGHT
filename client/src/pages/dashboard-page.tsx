@@ -4,7 +4,7 @@ import KpiCard from "@/components/dashboard/kpi-card";
 import ChartContainer from "@/components/dashboard/chart-container";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Upload, TrendingUp, Brain, Mic } from "lucide-react";
+import { TrendingUp, Brain, Mic, Eye, MoreHorizontal, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
@@ -32,25 +32,115 @@ export default function DashboardPage() {
     return `${diffDays}d ago`;
   };
 
+  // Mock dashboard data - in real implementation, this would come from API
+  const dashboards = [
+    {
+      id: "1",
+      name: "Sales Overview",
+      description: "Revenue trends and sales KPIs",
+      createdAt: "2024-01-15T10:30:00Z",
+      lastViewed: "2024-01-20T15:45:00Z",
+      chartCount: 4,
+      kpiCount: 6,
+      thumbnail: "/api/dashboards/1/thumbnail" // placeholder path
+    },
+    {
+      id: "2", 
+      name: "Product Analytics",
+      description: "Product performance and inventory insights",
+      createdAt: "2024-01-18T14:20:00Z",
+      lastViewed: "2024-01-22T09:15:00Z",
+      chartCount: 3,
+      kpiCount: 4,
+      thumbnail: "/api/dashboards/2/thumbnail"
+    },
+    {
+      id: "3",
+      name: "Customer Insights", 
+      description: "Customer behavior and satisfaction metrics",
+      createdAt: "2024-01-20T16:45:00Z",
+      lastViewed: "2024-01-21T11:30:00Z",
+      chartCount: 5,
+      kpiCount: 3,
+      thumbnail: "/api/dashboards/3/thumbnail"
+    }
+  ];
+
+  const handleDashboardClick = (dashboardId: string) => {
+    // In a real implementation, this would navigate to the specific dashboard
+    console.log(`Opening dashboard: ${dashboardId}`);
+    // For now, we'll just show an alert - in reality this would navigate to the dashboard
+    alert(`Opening dashboard: ${dashboards.find(d => d.id === dashboardId)?.name}`);
+  };
+
   return (
     <div className="p-6 space-y-6">
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-3">
-        <Button className="bg-primary hover:bg-primary/90" data-testid="button-new-dataset">
-          <Plus className="mr-2 h-4 w-4" />
-          New Dataset
-        </Button>
-        <Button className="bg-secondary hover:bg-secondary/90" data-testid="button-create-chart">
-          <TrendingUp className="mr-2 h-4 w-4" />
-          Create Chart
-        </Button>
-        <Button variant="outline" data-testid="button-upload-data">
-          <Upload className="mr-2 h-4 w-4" />
-          Upload Data
-        </Button>
+      {/* Dashboard Previews */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">Your Dashboards</h2>
+            <p className="text-muted-foreground">
+              Click on any dashboard to open it
+            </p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {dashboards.map((dashboard) => (
+            <Card 
+              key={dashboard.id} 
+              className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105"
+              onClick={() => handleDashboardClick(dashboard.id)}
+              data-testid={`dashboard-preview-${dashboard.id}`}
+            >
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg mb-1">{dashboard.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{dashboard.description}</p>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log(`Dashboard options: ${dashboard.id}`);
+                    }}
+                    data-testid={`dashboard-options-${dashboard.id}`}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Dashboard thumbnail/preview area */}
+                <div className="w-full h-32 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg mb-4 flex items-center justify-center border-2 border-dashed border-border">
+                  <div className="text-center">
+                    <Eye className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Dashboard Preview</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
+                  <span>{dashboard.chartCount} charts</span>
+                  <span>{dashboard.kpiCount} KPIs</span>
+                </div>
+                
+                <div className="text-xs text-muted-foreground">
+                  <p>Created: {formatTimeAgo(dashboard.createdAt)}</p>
+                  <p>Last viewed: {formatTimeAgo(dashboard.lastViewed)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
-      {/* KPI Grid */}
+      {/* Current Dashboard KPIs */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Current Dashboard KPIs</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpisLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
@@ -73,8 +163,11 @@ export default function DashboardPage() {
           </Card>
         )}
       </div>
+      </div>
 
-      {/* Charts Grid */}
+      {/* Current Dashboard Charts */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Current Dashboard Charts</h3>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartContainer
           title="Revenue Trends"
@@ -99,6 +192,7 @@ export default function DashboardPage() {
             { name: "SKU-DX640", value: 98750 },
           ]}
         />
+      </div>
       </div>
 
       {/* Recent Activity */}
