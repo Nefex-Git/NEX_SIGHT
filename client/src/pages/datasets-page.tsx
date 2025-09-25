@@ -81,7 +81,20 @@ const DatasetsTab = () => {
 
   const filteredDataSources = dataSources.filter((source) => {
     const matchesSearch = source.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterType === "all" || source.type === filterType;
+    
+    let matchesFilter = false;
+    if (filterType === "all") {
+      matchesFilter = true;
+    } else if (filterType === "csv") {
+      matchesFilter = source.type === "csv";
+    } else if (filterType === "tables") {
+      matchesFilter = source.metadata?.isTableDataset === true;
+    } else if (filterType === "database") {
+      matchesFilter = source.type !== "csv" && source.metadata?.isTableDataset !== true;
+    } else {
+      matchesFilter = source.type === filterType;
+    }
+    
     return matchesSearch && matchesFilter;
   });
 
@@ -113,12 +126,18 @@ const DatasetsTab = () => {
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
+  const getTypeIcon = (source: any) => {
+    if (source.metadata?.isTableDataset) {
+      return <TableProperties className="h-4 w-4" />;
+    }
+    
+    switch (source.type) {
       case 'csv':
         return <FileText className="h-4 w-4" />;
       case 'mysql':
-      case 'postgres':
+      case 'postgresql':
+      case 'sqlserver':
+      case 'oracle':
         return <Database className="h-4 w-4" />;
       default:
         return <Database className="h-4 w-4" />;
@@ -179,6 +198,14 @@ const DatasetsTab = () => {
                 CSV Files
               </Button>
               <Button
+                variant={filterType === "tables" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterType("tables")}
+                data-testid="filter-tables"
+              >
+                Tables
+              </Button>
+              <Button
                 variant={filterType === "database" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilterType("database")}
@@ -237,18 +264,29 @@ const DatasetsTab = () => {
                     <TableRow key={source.id} className="group">
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          {getTypeIcon(source.type)}
+                          {getTypeIcon(source)}
                           <div>
-                            <div className="font-medium">{source.name}</div>
+                            <div className="font-medium">
+                              {source.metadata?.isTableDataset 
+                                ? `${source.metadata.schemaName}.${source.metadata.tableName}`
+                                : source.name
+                              }
+                            </div>
                             <div className="text-sm text-muted-foreground">
-                              {source.type.toUpperCase()}
+                              {source.metadata?.isTableDataset 
+                                ? `Table from ${source.metadata.parentConnection}` 
+                                : source.type.toUpperCase()
+                              }
                             </div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="capitalize">
-                          {source.type}
+                          {source.metadata?.isTableDataset 
+                            ? `${source.type} table` 
+                            : source.type
+                          }
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -579,24 +617,50 @@ const SQLEngineTab = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {dataSources.map((source) => (
-              <div
-                key={source.id}
-                className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setSqlQuery(`SELECT * FROM ${source.name.toLowerCase().replace(/\s+/g, '_')} LIMIT 10;`)}
-                data-testid={`source-${source.id}`}
-              >
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <div>
-                    <div className="font-medium text-sm">{source.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {source.rowCount?.toLocaleString()} rows
+            {dataSources.map((source) => {
+              const isTableDataset = source.metadata?.isTableDataset;
+              const tableName = isTableDataset 
+                ? `${source.metadata.schemaName}.${source.metadata.tableName}`
+                : source.name.toLowerCase().replace(/\s+/g, '_');
+              
+              const displayName = isTableDataset 
+                ? `${source.metadata.schemaName}.${source.metadata.tableName}`
+                : source.name;
+                
+              const subtitle = isTableDataset 
+                ? `${source.metadata.parentConnection} • ${source.metadata.tableType}`
+                : `${source.type.toUpperCase()} • ${source.rowCount?.toLocaleString() || 0} rows`;
+
+              return (
+                <div
+                  key={source.id}
+                  className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => setSqlQuery(`SELECT * FROM ${tableName} LIMIT 10;`)}
+                  data-testid={`source-${source.id}`}
+                >
+                  <div className="flex items-center gap-2">
+                    {isTableDataset ? (
+                      <TableProperties className="h-4 w-4 text-primary" />
+                    ) : source.type === 'csv' ? (
+                      <FileText className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Database className="h-4 w-4 text-primary" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{displayName}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {subtitle}
+                      </div>
+                      {source.rowCount && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {source.rowCount.toLocaleString()} rows
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
