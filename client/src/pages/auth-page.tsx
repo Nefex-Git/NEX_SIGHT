@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, BarChart3, Database, Mic } from "lucide-react";
+import nexSightLogo from "@assets/nexsight_1758799902588.png";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -46,8 +47,12 @@ export default function AuthPage() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mx-auto mb-4">
-              <Brain className="text-white text-2xl" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
+              <img 
+                src={nexSightLogo} 
+                alt="NEX Sight Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <h1 className="text-3xl font-bold">Welcome to NEX Sight</h1>
             <p className="text-muted-foreground mt-2">
