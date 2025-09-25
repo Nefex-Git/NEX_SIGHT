@@ -505,7 +505,7 @@ const ViewsTab = () => {
                       </TableCell>
                       <TableCell>
                         <div className="font-mono text-sm">
-                          {view.rowCount.toLocaleString()}
+                          {view.rowCount ? view.rowCount.toLocaleString() : "—"}
                         </div>
                       </TableCell>
                       <TableCell>

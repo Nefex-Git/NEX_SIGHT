@@ -1,5 +1,6 @@
 import { DatabaseConnectorType, DatabaseConnectionConfig, ConnectionTestResult } from "@shared/schema";
 import crypto from 'crypto';
+import sql from 'mssql';
 
 /**
  * Database Connector Service - Inspired by Apache Superset's BaseEngineSpec
@@ -606,50 +607,139 @@ export class DatabaseConnectorService {
   }
 
   private static async getSQLServerSchema(config: DatabaseConnectionConfig): Promise<any> {
-    // Mock SQL Server schema - in real implementation, would use tedious driver
-    return {
-      schemas: ['dbo', 'analytics'],
-      tables: [
-        {
-          name: 'Employees',
-          schema: 'dbo',
-          type: 'table' as const,
-          rowCount: 500,
-          columns: [
-            { name: 'EmployeeID', type: 'int', nullable: false, isPrimaryKey: true },
-            { name: 'FirstName', type: 'nvarchar(50)', nullable: false, isPrimaryKey: false },
-            { name: 'LastName', type: 'nvarchar(50)', nullable: false, isPrimaryKey: false },
-            { name: 'Department', type: 'nvarchar(100)', nullable: true, isPrimaryKey: false },
-            { name: 'HireDate', type: 'datetime2', nullable: true, isPrimaryKey: false }
-          ]
+    let pool: sql.ConnectionPool | null = null;
+    
+    try {
+      // Create connection configuration
+      const sqlConfig: sql.config = {
+        server: config.host || '',
+        port: config.port || 1433,
+        database: config.database || '',
+        user: config.username || '',
+        password: config.password || '',
+        options: {
+          encrypt: true, // Use encryption for Azure SQL Database
+          trustServerCertificate: false, // Don't trust self-signed certificates
+          connectTimeout: 10000, // 10 seconds
+          requestTimeout: 5000, // 5 seconds
         },
-        {
-          name: 'Sales',
-          schema: 'dbo',
-          type: 'table' as const,
-          rowCount: 25000,
-          columns: [
-            { name: 'SaleID', type: 'int', nullable: false, isPrimaryKey: true },
-            { name: 'EmployeeID', type: 'int', nullable: false, isPrimaryKey: false },
-            { name: 'SaleDate', type: 'datetime2', nullable: false, isPrimaryKey: false },
-            { name: 'Amount', type: 'money', nullable: false, isPrimaryKey: false },
-            { name: 'Region', type: 'nvarchar(50)', nullable: true, isPrimaryKey: false }
-          ]
-        },
-        {
-          name: 'Customers',
-          schema: 'dbo',
-          type: 'table' as const,
-          rowCount: 1800,
-          columns: [
-            { name: 'CustomerID', type: 'int', nullable: false, isPrimaryKey: true },
-            { name: 'CompanyName', type: 'nvarchar(100)', nullable: false, isPrimaryKey: false },
-            { name: 'ContactEmail', type: 'nvarchar(255)', nullable: true, isPrimaryKey: false },
-            { name: 'Country', type: 'nvarchar(50)', nullable: true, isPrimaryKey: false }
-          ]
+      };
+
+      // Connect to SQL Server
+      pool = new sql.ConnectionPool(sqlConfig);
+      await pool.connect();
+      
+      // Get all schemas
+      const schemasResult = await pool.request().query(`
+        SELECT DISTINCT SCHEMA_NAME
+        FROM INFORMATION_SCHEMA.SCHEMATA 
+        WHERE SCHEMA_NAME NOT IN ('sys', 'INFORMATION_SCHEMA', 'guest', 'db_owner', 'db_accessadmin', 'db_securityadmin', 'db_ddladmin', 'db_backupoperator', 'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
+        ORDER BY SCHEMA_NAME
+      `);
+      
+      const schemas = schemasResult.recordset.map((row: any) => row.SCHEMA_NAME);
+      
+      // Get all tables and views with their columns
+      const tablesResult = await pool.request().query(`
+        SELECT 
+          t.TABLE_SCHEMA,
+          t.TABLE_NAME,
+          t.TABLE_TYPE,
+          ISNULL(p.rows, 0) as ROW_COUNT
+        FROM INFORMATION_SCHEMA.TABLES t
+        LEFT JOIN sys.tables st ON t.TABLE_NAME = st.name AND t.TABLE_SCHEMA = SCHEMA_NAME(st.schema_id)
+        LEFT JOIN sys.dm_db_partition_stats p ON st.object_id = p.object_id AND p.index_id <= 1
+        WHERE t.TABLE_TYPE IN ('BASE TABLE', 'VIEW')
+          AND t.TABLE_SCHEMA NOT IN ('sys', 'INFORMATION_SCHEMA')
+        ORDER BY t.TABLE_SCHEMA, t.TABLE_NAME
+      `);
+      
+      // Get column information for all tables
+      const columnsResult = await pool.request().query(`
+        SELECT 
+          c.TABLE_SCHEMA,
+          c.TABLE_NAME,
+          c.COLUMN_NAME,
+          c.DATA_TYPE,
+          c.IS_NULLABLE,
+          c.COLUMN_DEFAULT,
+          c.CHARACTER_MAXIMUM_LENGTH,
+          c.NUMERIC_PRECISION,
+          c.NUMERIC_SCALE,
+          CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END as IS_PRIMARY_KEY
+        FROM INFORMATION_SCHEMA.COLUMNS c
+        LEFT JOIN (
+          SELECT ku.TABLE_SCHEMA, ku.TABLE_NAME, ku.COLUMN_NAME
+          FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+          INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE ku
+            ON tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
+            AND tc.CONSTRAINT_NAME = ku.CONSTRAINT_NAME
+            AND tc.TABLE_SCHEMA = ku.TABLE_SCHEMA
+            AND tc.TABLE_NAME = ku.TABLE_NAME
+        ) pk ON c.TABLE_SCHEMA = pk.TABLE_SCHEMA 
+             AND c.TABLE_NAME = pk.TABLE_NAME 
+             AND c.COLUMN_NAME = pk.COLUMN_NAME
+        WHERE c.TABLE_SCHEMA NOT IN ('sys', 'INFORMATION_SCHEMA')
+        ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION
+      `);
+      
+      // Group columns by table
+      const tableColumns: Record<string, any[]> = {};
+      for (const col of columnsResult.recordset) {
+        const tableKey = `${col.TABLE_SCHEMA}.${col.TABLE_NAME}`;
+        if (!tableColumns[tableKey]) {
+          tableColumns[tableKey] = [];
         }
-      ]
-    };
+        
+        // Format column type with length/precision
+        let columnType = col.DATA_TYPE;
+        if (col.CHARACTER_MAXIMUM_LENGTH && col.CHARACTER_MAXIMUM_LENGTH > 0) {
+          columnType += `(${col.CHARACTER_MAXIMUM_LENGTH === -1 ? 'max' : col.CHARACTER_MAXIMUM_LENGTH})`;
+        } else if (col.NUMERIC_PRECISION && col.NUMERIC_SCALE !== null) {
+          columnType += `(${col.NUMERIC_PRECISION},${col.NUMERIC_SCALE})`;
+        } else if (col.NUMERIC_PRECISION) {
+          columnType += `(${col.NUMERIC_PRECISION})`;
+        }
+        
+        tableColumns[tableKey].push({
+          name: col.COLUMN_NAME,
+          type: columnType,
+          nullable: col.IS_NULLABLE === 'YES',
+          isPrimaryKey: col.IS_PRIMARY_KEY === 1,
+          defaultValue: col.COLUMN_DEFAULT
+        });
+      }
+      
+      // Build tables array
+      const tables = tablesResult.recordset.map((table: any) => {
+        const tableKey = `${table.TABLE_SCHEMA}.${table.TABLE_NAME}`;
+        return {
+          name: table.TABLE_NAME,
+          schema: table.TABLE_SCHEMA,
+          type: table.TABLE_TYPE === 'BASE TABLE' ? 'table' as const : 'view' as const,
+          rowCount: table.ROW_COUNT || 0,
+          columns: tableColumns[tableKey] || []
+        };
+      });
+      
+      return {
+        schemas,
+        tables
+      };
+      
+    } catch (error) {
+      console.error('SQL Server schema introspection error:', error);
+      throw new Error(`Failed to retrieve SQL Server schema: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      // Always close the connection
+      if (pool) {
+        try {
+          await pool.close();
+        } catch (closeError) {
+          console.error('Error closing SQL Server connection:', closeError);
+        }
+      }
+    }
   }
 
   private static async getOracleSchema(config: DatabaseConnectionConfig): Promise<any> {
