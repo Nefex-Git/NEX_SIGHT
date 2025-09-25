@@ -447,22 +447,247 @@ export class DatabaseConnectorService {
    */
   static async getSchemaInfo(type: string, config: DatabaseConnectionConfig): Promise<{
     schemas: string[];
-    tables: Array<{ schema: string; table: string; }>;
+    tables: Array<{
+      name: string;
+      schema: string;
+      type: 'table' | 'view';
+      rowCount?: number;
+      columns: Array<{
+        name: string;
+        type: string;
+        nullable: boolean;
+        isPrimaryKey: boolean;
+        defaultValue?: string;
+      }>;
+    }>;
   }> {
     const connector = this.getConnector(type);
     
-    if (!connector || !connector.supportsSchema) {
-      return { schemas: [], tables: [] };
+    if (!connector) {
+      throw new Error(`Unknown database connector type: ${type}`);
     }
 
-    // Mock schema information
+    try {
+      // Generate tables and schema information based on database type
+      switch (type) {
+        case 'mysql':
+          return await this.getMySQLSchema(config);
+        case 'postgresql':
+          return await this.getPostgreSQLSchema(config);
+        case 'sqlserver':
+          return await this.getSQLServerSchema(config);
+        case 'oracle':
+          return await this.getOracleSchema(config);
+        case 'sqlite':
+          return await this.getSQLiteSchema(config);
+        default:
+          // For other databases, return mock data for now
+          return {
+            schemas: ['public'],
+            tables: [
+              {
+                name: 'sample_table_1',
+                schema: 'public',
+                type: 'table',
+                rowCount: 1000,
+                columns: [
+                  { name: 'id', type: 'integer', nullable: false, isPrimaryKey: true },
+                  { name: 'name', type: 'varchar', nullable: true, isPrimaryKey: false },
+                  { name: 'created_at', type: 'timestamp', nullable: true, isPrimaryKey: false }
+                ]
+              },
+              {
+                name: 'sample_table_2',
+                schema: 'public',
+                type: 'table',
+                rowCount: 500,
+                columns: [
+                  { name: 'id', type: 'integer', nullable: false, isPrimaryKey: true },
+                  { name: 'value', type: 'decimal', nullable: true, isPrimaryKey: false }
+                ]
+              }
+            ]
+          };
+      }
+    } catch (error) {
+      console.error('Schema introspection error:', error);
+      throw new Error(`Failed to retrieve schema: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  private static async getMySQLSchema(config: DatabaseConnectionConfig): Promise<any> {
+    // Mock MySQL schema - in real implementation, would use mysql2 driver
     return {
-      schemas: ['public', 'analytics', 'staging'],
+      schemas: [config.database || 'default'],
       tables: [
-        { schema: 'public', table: 'users' },
-        { schema: 'public', table: 'orders' },
-        { schema: 'analytics', table: 'revenue_summary' },
-      ],
+        {
+          name: 'customers',
+          schema: config.database,
+          type: 'table' as const,
+          rowCount: 2500,
+          columns: [
+            { name: 'customer_id', type: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'first_name', type: 'varchar(50)', nullable: false, isPrimaryKey: false },
+            { name: 'last_name', type: 'varchar(50)', nullable: false, isPrimaryKey: false },
+            { name: 'email', type: 'varchar(100)', nullable: true, isPrimaryKey: false },
+            { name: 'created_at', type: 'datetime', nullable: true, isPrimaryKey: false }
+          ]
+        },
+        {
+          name: 'orders',
+          schema: config.database,
+          type: 'table' as const,
+          rowCount: 15000,
+          columns: [
+            { name: 'order_id', type: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'customer_id', type: 'int', nullable: false, isPrimaryKey: false },
+            { name: 'order_date', type: 'datetime', nullable: false, isPrimaryKey: false },
+            { name: 'total_amount', type: 'decimal(10,2)', nullable: false, isPrimaryKey: false },
+            { name: 'status', type: 'varchar(20)', nullable: false, isPrimaryKey: false }
+          ]
+        },
+        {
+          name: 'products',
+          schema: config.database,
+          type: 'table' as const,
+          rowCount: 800,
+          columns: [
+            { name: 'product_id', type: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'product_name', type: 'varchar(255)', nullable: false, isPrimaryKey: false },
+            { name: 'price', type: 'decimal(10,2)', nullable: false, isPrimaryKey: false },
+            { name: 'category', type: 'varchar(50)', nullable: true, isPrimaryKey: false }
+          ]
+        }
+      ]
+    };
+  }
+
+  private static async getPostgreSQLSchema(config: DatabaseConnectionConfig): Promise<any> {
+    // Mock PostgreSQL schema - in real implementation, would use pg driver
+    return {
+      schemas: ['public', 'analytics'],
+      tables: [
+        {
+          name: 'users',
+          schema: 'public',
+          type: 'table' as const,
+          rowCount: 1200,
+          columns: [
+            { name: 'id', type: 'serial', nullable: false, isPrimaryKey: true },
+            { name: 'username', type: 'varchar(255)', nullable: false, isPrimaryKey: false },
+            { name: 'email', type: 'varchar(255)', nullable: false, isPrimaryKey: false },
+            { name: 'created_at', type: 'timestamp', nullable: true, isPrimaryKey: false }
+          ]
+        },
+        {
+          name: 'products',
+          schema: 'public',
+          type: 'table' as const,
+          rowCount: 800,
+          columns: [
+            { name: 'id', type: 'serial', nullable: false, isPrimaryKey: true },
+            { name: 'name', type: 'varchar(255)', nullable: false, isPrimaryKey: false },
+            { name: 'price', type: 'numeric(10,2)', nullable: false, isPrimaryKey: false },
+            { name: 'description', type: 'text', nullable: true, isPrimaryKey: false }
+          ]
+        },
+        {
+          name: 'sales_summary',
+          schema: 'analytics',
+          type: 'view' as const,
+          columns: [
+            { name: 'month', type: 'date', nullable: false, isPrimaryKey: false },
+            { name: 'total_sales', type: 'numeric', nullable: true, isPrimaryKey: false },
+            { name: 'order_count', type: 'integer', nullable: true, isPrimaryKey: false }
+          ]
+        }
+      ]
+    };
+  }
+
+  private static async getSQLServerSchema(config: DatabaseConnectionConfig): Promise<any> {
+    // Mock SQL Server schema - in real implementation, would use tedious driver
+    return {
+      schemas: ['dbo', 'analytics'],
+      tables: [
+        {
+          name: 'Employees',
+          schema: 'dbo',
+          type: 'table' as const,
+          rowCount: 500,
+          columns: [
+            { name: 'EmployeeID', type: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'FirstName', type: 'nvarchar(50)', nullable: false, isPrimaryKey: false },
+            { name: 'LastName', type: 'nvarchar(50)', nullable: false, isPrimaryKey: false },
+            { name: 'Department', type: 'nvarchar(100)', nullable: true, isPrimaryKey: false },
+            { name: 'HireDate', type: 'datetime2', nullable: true, isPrimaryKey: false }
+          ]
+        },
+        {
+          name: 'Sales',
+          schema: 'dbo',
+          type: 'table' as const,
+          rowCount: 25000,
+          columns: [
+            { name: 'SaleID', type: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'EmployeeID', type: 'int', nullable: false, isPrimaryKey: false },
+            { name: 'SaleDate', type: 'datetime2', nullable: false, isPrimaryKey: false },
+            { name: 'Amount', type: 'money', nullable: false, isPrimaryKey: false },
+            { name: 'Region', type: 'nvarchar(50)', nullable: true, isPrimaryKey: false }
+          ]
+        },
+        {
+          name: 'Customers',
+          schema: 'dbo',
+          type: 'table' as const,
+          rowCount: 1800,
+          columns: [
+            { name: 'CustomerID', type: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'CompanyName', type: 'nvarchar(100)', nullable: false, isPrimaryKey: false },
+            { name: 'ContactEmail', type: 'nvarchar(255)', nullable: true, isPrimaryKey: false },
+            { name: 'Country', type: 'nvarchar(50)', nullable: true, isPrimaryKey: false }
+          ]
+        }
+      ]
+    };
+  }
+
+  private static async getOracleSchema(config: DatabaseConnectionConfig): Promise<any> {
+    // Mock Oracle schema
+    return {
+      schemas: [config.username?.toUpperCase() || 'SCHEMA'],
+      tables: [
+        {
+          name: 'CUSTOMERS',
+          schema: config.username?.toUpperCase() || 'SCHEMA',
+          type: 'table' as const,
+          rowCount: 3000,
+          columns: [
+            { name: 'CUSTOMER_ID', type: 'NUMBER', nullable: false, isPrimaryKey: true },
+            { name: 'CUSTOMER_NAME', type: 'VARCHAR2(100)', nullable: false, isPrimaryKey: false },
+            { name: 'EMAIL', type: 'VARCHAR2(255)', nullable: true, isPrimaryKey: false }
+          ]
+        }
+      ]
+    };
+  }
+
+  private static async getSQLiteSchema(config: DatabaseConnectionConfig): Promise<any> {
+    // Mock SQLite schema
+    return {
+      schemas: ['main'],
+      tables: [
+        {
+          name: 'local_data',
+          schema: 'main',
+          type: 'table' as const,
+          rowCount: 100,
+          columns: [
+            { name: 'id', type: 'INTEGER', nullable: false, isPrimaryKey: true },
+            { name: 'data', type: 'TEXT', nullable: true, isPrimaryKey: false }
+          ]
+        }
+      ]
     };
   }
 }

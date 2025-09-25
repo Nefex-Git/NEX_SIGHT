@@ -20,11 +20,18 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
+import TableSelectionModal from "@/components/table-selection-modal";
 
 export default function WarehousePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [isConnectorModalOpen, setIsConnectorModalOpen] = useState(false);
   const [isCreatingConnection, setIsCreatingConnection] = useState(false);
+  const [isTableSelectionOpen, setIsTableSelectionOpen] = useState(false);
+  const [pendingConnection, setPendingConnection] = useState<{
+    name: string;
+    type: string;
+    config: any;
+  } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -73,34 +80,26 @@ export default function WarehousePage() {
     },
   });
 
-  // Create database connection mutation
-  const createDatabaseConnectionMutation = useMutation({
-    mutationFn: async ({ name, type, config }: { name: string; type: string; config: any }) => {
-      return apiRequest('POST', '/api/data-sources/database', { name, type, config });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Connection successful",
-        description: "Your database connection has been established.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/data-sources"] });
-      setIsConnectorModalOpen(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Connection failed",
-        description: error instanceof Error ? error.message : 'Failed to create connection',
-        variant: "destructive",
-      });
-    },
-    onSettled: () => {
-      setIsCreatingConnection(false);
-    },
-  });
-
   const handleDatabaseConnectionSubmit = (name: string, type: string, config: any) => {
-    setIsCreatingConnection(true);
-    createDatabaseConnectionMutation.mutate({ name, type, config });
+    // Store the connection details and show table selection modal
+    setPendingConnection({ name, type, config });
+    setIsConnectorModalOpen(false);
+    setIsTableSelectionOpen(true);
+  };
+
+  const handleTablesSelected = (selectedTables: string[]) => {
+    toast({
+      title: "Tables imported successfully",
+      description: `${selectedTables.length} table(s) have been added to your datasets.`,
+    });
+    queryClient.invalidateQueries({ queryKey: ["/api/data-sources"] });
+    setIsTableSelectionOpen(false);
+    setPendingConnection(null);
+  };
+
+  const handleTableSelectionClose = () => {
+    setIsTableSelectionOpen(false);
+    setPendingConnection(null);
   };
 
   const handleFileUpload = (files: FileList | null) => {
@@ -383,6 +382,18 @@ export default function WarehousePage() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Table Selection Modal */}
+      {pendingConnection && (
+        <TableSelectionModal
+          isOpen={isTableSelectionOpen}
+          onClose={handleTableSelectionClose}
+          connectionName={pendingConnection.name}
+          databaseType={pendingConnection.type}
+          connectionConfig={pendingConnection.config}
+          onTablesSelected={handleTablesSelected}
+        />
+      )}
     </div>
   );
 }
