@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DatabaseConnectorForm from "@/components/database-connector-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDataSources, uploadDataSource, deleteDataSource } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -17,11 +18,13 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import ConnectorModal from "@/components/connectors/connector-modal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function WarehousePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [isConnectorModalOpen, setIsConnectorModalOpen] = useState(false);
+  const [isCreatingConnection, setIsCreatingConnection] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -69,6 +72,39 @@ export default function WarehousePage() {
       });
     },
   });
+
+  // Create database connection mutation
+  const createDatabaseConnectionMutation = useMutation({
+    mutationFn: async ({ name, type, config }: { name: string; type: string; config: any }) => {
+      return apiRequest('/api/data-sources/database', {
+        method: 'POST',
+        body: { name, type, config },
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Connection successful",
+        description: "Your database connection has been established.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/data-sources"] });
+      setIsConnectorModalOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Connection failed",
+        description: error instanceof Error ? error.message : 'Failed to create connection',
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setIsCreatingConnection(false);
+    },
+  });
+
+  const handleDatabaseConnectionSubmit = (name: string, type: string, config: any) => {
+    setIsCreatingConnection(true);
+    createDatabaseConnectionMutation.mutate({ name, type, config });
+  };
 
   const handleFileUpload = (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -339,14 +375,17 @@ export default function WarehousePage() {
         </Card>
       )}
       
-      <ConnectorModal
-        isOpen={isConnectorModalOpen}
-        onClose={() => setIsConnectorModalOpen(false)}
-        onConnectorAdded={() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/data-sources"] });
-          setIsConnectorModalOpen(false);
-        }}
-      />
+      <Dialog open={isConnectorModalOpen} onOpenChange={setIsConnectorModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Connect to Database</DialogTitle>
+          </DialogHeader>
+          <DatabaseConnectorForm
+            onSubmit={handleDatabaseConnectionSubmit}
+            isLoading={isCreatingConnection}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

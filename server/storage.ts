@@ -29,7 +29,7 @@ export interface IStorage {
   // Data source operations
   getDataSources(userId: string): Promise<DataSource[]>;
   getDataSource(id: string): Promise<DataSource | undefined>;
-  createDataSource(dataSource: InsertDataSource): Promise<DataSource>;
+  createDataSource(dataSource: InsertDataSource & { connectionConfig?: any }): Promise<DataSource>;
   updateDataSource(id: string, updates: Partial<DataSource>): Promise<DataSource | undefined>;
   deleteDataSource(id: string): Promise<boolean>;
   
@@ -118,7 +118,7 @@ export class MemStorage implements IStorage {
     return this.dataSources.get(id);
   }
 
-  async createDataSource(insertDataSource: InsertDataSource): Promise<DataSource> {
+  async createDataSource(insertDataSource: InsertDataSource & { connectionConfig?: any }): Promise<DataSource> {
     const id = randomUUID();
     const now = new Date();
     const dataSource: DataSource = {

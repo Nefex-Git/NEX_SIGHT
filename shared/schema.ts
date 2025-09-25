@@ -38,7 +38,7 @@ export const dataSources = pgTable("data_sources", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
-  type: text("type").notNull(), // 'csv', 'mysql', 'postgresql', 'sqlserver', 'sqlite', 'mongodb', 'redis', 'rest', 'graphql', 'sftp', etc.
+  type: text("type").notNull(), // Database connector types: see DatabaseConnectorType
   filename: text("filename"), // For file-based sources
   size: integer("size"),
   rowCount: integer("row_count"),
@@ -140,6 +140,102 @@ export const insertViewSchema = createInsertSchema(views).omit({
   updatedAt: true,
   lastExecuted: true,
 });
+
+// Database connector types (similar to Apache Superset)
+export const DatabaseConnectorType = {
+  // Relational Databases
+  MYSQL: 'mysql',
+  POSTGRESQL: 'postgresql', 
+  SQLSERVER: 'sqlserver',
+  ORACLE: 'oracle',
+  SQLITE: 'sqlite',
+  
+  // Cloud Data Warehouses
+  BIGQUERY: 'bigquery',
+  SNOWFLAKE: 'snowflake',
+  REDSHIFT: 'redshift',
+  DATABRICKS: 'databricks',
+  AZURE_SYNAPSE: 'azure_synapse',
+  
+  // Columnar & OLAP
+  CLICKHOUSE: 'clickhouse',
+  VERTICA: 'vertica',
+  DRUID: 'druid',
+  
+  // Big Data & Analytics
+  PRESTO: 'presto',
+  TRINO: 'trino',
+  SPARK: 'spark',
+  HIVE: 'hive',
+  
+  // Document & NoSQL (via proxy)
+  MONGODB: 'mongodb', // via Apache Drill
+  ELASTICSEARCH: 'elasticsearch',
+  
+  // Time Series
+  INFLUXDB: 'influxdb',
+  
+  // File-based
+  CSV: 'csv',
+  EXCEL: 'excel',
+  JSON: 'json',
+  
+  // APIs
+  REST_API: 'rest_api',
+  GRAPHQL: 'graphql',
+} as const;
+
+export type DatabaseConnectorTypeValues = typeof DatabaseConnectorType[keyof typeof DatabaseConnectorType];
+
+// Database connection configuration interface
+export interface DatabaseConnectionConfig {
+  host?: string;
+  port?: number;
+  database?: string;
+  username?: string;
+  password?: string;
+  
+  // SSL/TLS Configuration
+  sslMode?: 'require' | 'prefer' | 'allow' | 'disable';
+  sslCert?: string;
+  sslKey?: string;
+  sslRootCert?: string;
+  
+  // Cloud-specific configs
+  projectId?: string; // BigQuery
+  keyFile?: string; // BigQuery Service Account
+  account?: string; // Snowflake
+  region?: string; // AWS, etc.
+  warehouse?: string; // Snowflake
+  role?: string; // Snowflake, Redshift
+  
+  // MongoDB specific (via Drill)
+  drillHost?: string;
+  drillPort?: number;
+  
+  // Connection options
+  options?: Record<string, any>;
+  
+  // File upload configs
+  filePath?: string;
+  
+  // API configs
+  baseUrl?: string;
+  apiKey?: string;
+  headers?: Record<string, string>;
+}
+
+// Connection test result
+export interface ConnectionTestResult {
+  success: boolean;
+  message: string;
+  latency?: number;
+  metadata?: {
+    serverVersion?: string;
+    schemas?: string[];
+    tables?: Array<{ schema: string; table: string; }>;
+  };
+}
 
 // Types
 export type User = typeof users.$inferSelect;
