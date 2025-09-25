@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getDataSources, deleteDataSource } from "@/lib/api";
+import { getDataSources, deleteDataSource, previewDataSource, getViews, createView, updateView, deleteView, executeView } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Table, 
   TableBody, 
@@ -17,13 +19,17 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Database, 
   Search, 
-  Filter,
+  Play,
+  Save,
   Trash2, 
   Eye,
   Download,
   Calendar,
   FileText,
-  MoreVertical
+  MoreVertical,
+  Code,
+  TableProperties,
+  Plus
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -32,10 +38,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-export default function DatasetsPage() {
+// Datasets Tab Component
+const DatasetsTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [previewData, setPreviewData] = useState<any>(null);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -108,23 +125,29 @@ export default function DatasetsPage() {
     }
   };
 
-  return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">NEX House</h2>
-          <p className="text-muted-foreground">
-            Browse and manage your data tables and sources
-          </p>
-        </div>
-        <Button className="bg-primary hover:bg-primary/90" data-testid="button-add-dataset">
-          <Database className="mr-2 h-4 w-4" />
-          Add Dataset
-        </Button>
-      </div>
+  const previewMutation = useMutation({
+    mutationFn: (sourceId: string) => previewDataSource(sourceId, 10),
+    onSuccess: (data) => {
+      setPreviewData(data);
+      setPreviewDialogOpen(true);
+    },
+    onError: (error) => {
+      toast({
+        title: "Preview failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
+  const handlePreviewData = (source: any) => {
+    previewMutation.mutate(source.id);
+  };
+
+  return (
+    <div className="space-y-6">
       {/* Search and Filter Bar */}
-      <Card className="mb-6">
+      <Card>
         <CardContent className="p-4">
           <div className="flex gap-4 items-center">
             <div className="relative flex-1 max-w-sm">
@@ -153,15 +176,15 @@ export default function DatasetsPage() {
                 onClick={() => setFilterType("csv")}
                 data-testid="filter-csv"
               >
-                CSV
+                CSV Files
               </Button>
               <Button
-                variant={filterType === "mysql" ? "default" : "outline"}
+                variant={filterType === "database" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setFilterType("mysql")}
-                data-testid="filter-mysql"
+                onClick={() => setFilterType("database")}
+                data-testid="filter-database"
               >
-                Database
+                Databases
               </Button>
             </div>
           </div>
@@ -171,149 +194,576 @@ export default function DatasetsPage() {
       {/* Datasets Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>All Datasets ({filteredDataSources.length})</span>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter className="h-4 w-4" />
-              <span>Filter & Sort</span>
-            </div>
+          <CardTitle className="flex items-center gap-2">
+            <TableProperties className="h-5 w-5" />
+            Available Datasets ({filteredDataSources.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
-                  <Skeleton className="h-10 w-10" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-8 w-8" />
-                </div>
-              ))}
-            </div>
-          ) : filteredDataSources.length > 0 ? (
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Records</TableHead>
                   <TableHead>Size</TableHead>
-                  <TableHead>Rows</TableHead>
-                  <TableHead>Columns</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDataSources.map((source) => (
-                  <TableRow key={source.id} className="hover:bg-muted/50">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary/20">
-                          {getTypeIcon(source.type)}
-                        </div>
-                        <div>
-                          <div className="font-medium">{source.name}</div>
-                          {source.filename && (
-                            <div className="text-sm text-muted-foreground">
-                              {source.filename}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">
-                        {source.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant="outline" 
-                        className={getStatusColor(source.status)}
-                      >
-                        {source.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatFileSize(source.size)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {source.rowCount?.toLocaleString() || '—'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {source.columnCount || '—'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(source.createdAt)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            data-testid={`button-actions-${source.id}`}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className="mr-2 h-4 w-4" />
-                            Download
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => deleteMutation.mutate(source.id)}
-                            disabled={deleteMutation.isPending}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : filteredDataSources.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      {searchTerm || filterType !== "all" ? "No datasets match your search criteria" : "No datasets available"}
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredDataSources.map((source) => (
+                    <TableRow key={source.id} className="group">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {getTypeIcon(source.type)}
+                          <div>
+                            <div className="font-medium">{source.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {source.type.toUpperCase()}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="capitalize">
+                          {source.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-mono text-sm">
+                          {source.rowCount?.toLocaleString() || "—"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-mono text-sm">
+                          {formatFileSize(source.size)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(source.status)}>
+                          {source.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-muted-foreground">
+                          <Calendar className="inline h-3 w-3 mr-1" />
+                          {formatDate(source.createdAt)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePreviewData(source)}
+                            data-testid={`button-preview-${source.id}`}
+                          >
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="sm" variant="outline" data-testid={`button-menu-${source.id}`}>
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handlePreviewData(source)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Preview Data
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Download className="mr-2 h-4 w-4" />
+                                Export
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => deleteMutation.mutate(source.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
-          ) : (
-            <div className="text-center py-12">
-              <Database className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">
-                {searchTerm || filterType !== "all" 
-                  ? "No datasets found" 
-                  : "No datasets yet"
-                }
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                {searchTerm || filterType !== "all"
-                  ? "Try adjusting your search or filter criteria."
-                  : "Upload your first dataset to get started with data analysis."
-                }
-              </p>
-              {(!searchTerm && filterType === "all") && (
-                <Button data-testid="button-upload-first-dataset">
-                  <Database className="mr-2 h-4 w-4" />
-                  Upload Dataset
-                </Button>
-              )}
-            </div>
-          )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Data Preview Dialog */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Data Preview: {previewData?.name}</DialogTitle>
+          </DialogHeader>
+          {previewData && (
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                Showing first 3 rows of {previewData.totalRows} total records
+              </div>
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {previewData.columns.map((column: string, index: number) => (
+                        <TableHead key={index}>{column}</TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {previewData.rows.map((row: string[], rowIndex: number) => (
+                      <TableRow key={rowIndex}>
+                        {row.map((cell: string, cellIndex: number) => (
+                          <TableCell key={cellIndex} className="font-mono text-sm">
+                            {cell}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+// Views Tab Component
+const ViewsTab = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: views = [], isLoading } = useQuery({
+    queryKey: ["/api/views"],
+    queryFn: () => getViews(),
+  });
+
+  const deleteViewMutation = useMutation({
+    mutationFn: deleteView,
+    onSuccess: () => {
+      toast({
+        title: "View deleted",
+        description: "The view has been removed successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/views"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const executeViewMutation = useMutation({
+    mutationFn: executeView,
+    onSuccess: (result) => {
+      toast({
+        title: "Query executed",
+        description: `Returned ${result.rowCount} rows in ${result.executionTime}ms`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/views"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Execution failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Eye className="h-5 w-5" />
+            Saved Views ({views.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Records</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Last Executed</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: 2 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : views.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No views created yet. Use the SQL Engine to create your first view.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  views.map((view) => (
+                    <TableRow key={view.id} className="group">
+                      <TableCell>
+                        <div className="font-medium">{view.name}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-muted-foreground max-w-xs truncate">
+                          {view.description}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-mono text-sm">
+                          {view.rowCount.toLocaleString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-muted-foreground">
+                          {formatDate(view.createdAt)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-muted-foreground">
+                          {view.lastExecuted ? formatDate(view.lastExecuted) : 'Never'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => executeViewMutation.mutate(view.id)}
+                            disabled={executeViewMutation.isPending}
+                            data-testid={`button-run-view-${view.id}`}
+                          >
+                            <Play className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            data-testid={`button-edit-view-${view.id}`}
+                          >
+                            <Code className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => deleteViewMutation.mutate(view.id)}
+                            disabled={deleteViewMutation.isPending}
+                            data-testid={`button-delete-view-${view.id}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// SQL Engine Tab Component
+const SQLEngineTab = () => {
+  const [sqlQuery, setSqlQuery] = useState("SELECT * FROM sales_data LIMIT 10;");
+  const [queryResults, setQueryResults] = useState<any>(null);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [viewName, setViewName] = useState("");
+  const [viewDescription, setViewDescription] = useState("");
+
+  const { data: dataSources = [] } = useQuery({
+    queryKey: ["/api/data-sources"],
+    queryFn: () => getDataSources(),
+  });
+
+  const handleExecuteQuery = () => {
+    setIsExecuting(true);
+    
+    // Simulate query execution
+    setTimeout(() => {
+      setQueryResults({
+        columns: ['ID', 'Product', 'Sales', 'Date'],
+        rows: [
+          ['1', 'Widget A', '$1,234.56', '2024-01-01'],
+          ['2', 'Widget B', '$2,345.67', '2024-01-02'],
+          ['3', 'Widget C', '$3,456.78', '2024-01-03'],
+          ['4', 'Widget D', '$4,567.89', '2024-01-04'],
+          ['5', 'Widget E', '$5,678.90', '2024-01-05'],
+        ],
+        rowCount: 25,
+        executionTime: 127
+      });
+      setIsExecuting(false);
+    }, 1000);
+  };
+
+  const handleSaveView = () => {
+    if (!viewName.trim()) {
+      alert("Please enter a view name");
+      return;
+    }
+    
+    // Here you would save the view to the backend
+    alert(`View "${viewName}" saved successfully!`);
+    setViewName("");
+    setViewDescription("");
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Data Sources Reference */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            Available Data Sources
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {dataSources.map((source) => (
+              <div
+                key={source.id}
+                className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => setSqlQuery(`SELECT * FROM ${source.name.toLowerCase().replace(/\s+/g, '_')} LIMIT 10;`)}
+                data-testid={`source-${source.id}`}
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <div>
+                    <div className="font-medium text-sm">{source.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {source.rowCount?.toLocaleString()} rows
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* SQL Query Editor */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Code className="h-5 w-5" />
+            SQL Query Editor
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Textarea
+              placeholder="Enter your SQL query here..."
+              value={sqlQuery}
+              onChange={(e) => setSqlQuery(e.target.value)}
+              className="font-mono min-h-32"
+              data-testid="textarea-sql-query"
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <Button
+              onClick={handleExecuteQuery}
+              disabled={isExecuting || !sqlQuery.trim()}
+              data-testid="button-execute-query"
+            >
+              <Play className="mr-2 h-4 w-4" />
+              {isExecuting ? 'Executing...' : 'Execute Query'}
+            </Button>
+            
+            {queryResults && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" data-testid="button-save-as-view">
+                    <Save className="mr-2 h-4 w-4" />
+                    Save as View
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Save Query as View</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">View Name</label>
+                      <Input
+                        placeholder="Enter view name..."
+                        value={viewName}
+                        onChange={(e) => setViewName(e.target.value)}
+                        data-testid="input-view-name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Description (Optional)</label>
+                      <Textarea
+                        placeholder="Describe what this view shows..."
+                        value={viewDescription}
+                        onChange={(e) => setViewDescription(e.target.value)}
+                        data-testid="textarea-view-description"
+                      />
+                    </div>
+                    <Button onClick={handleSaveView} className="w-full" data-testid="button-confirm-save-view">
+                      Save View
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Query Results */}
+      {queryResults && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TableProperties className="h-5 w-5" />
+              Query Results
+            </CardTitle>
+            <div className="text-sm text-muted-foreground">
+              {queryResults.rowCount} rows returned in {queryResults.executionTime}ms
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {queryResults.columns.map((column: string, index: number) => (
+                      <TableHead key={index}>{column}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {queryResults.rows.map((row: string[], rowIndex: number) => (
+                    <TableRow key={rowIndex}>
+                      {row.map((cell: string, cellIndex: number) => (
+                        <TableCell key={cellIndex} className="font-mono text-sm">
+                          {cell}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            {queryResults.rowCount > queryResults.rows.length && (
+              <div className="text-center text-sm text-muted-foreground mt-4">
+                Showing {queryResults.rows.length} of {queryResults.rowCount} rows
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+// Main NEX House Component
+export default function DatasetsPage() {
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">NEX House</h2>
+          <p className="text-muted-foreground">
+            Data management, views, and SQL query engine
+          </p>
+        </div>
+        <Button className="bg-primary hover:bg-primary/90" data-testid="button-add-dataset">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Dataset
+        </Button>
+      </div>
+
+      <Tabs defaultValue="datasets" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="datasets" data-testid="tab-datasets">
+            <Database className="mr-2 h-4 w-4" />
+            Datasets
+          </TabsTrigger>
+          <TabsTrigger value="views" data-testid="tab-views">
+            <Eye className="mr-2 h-4 w-4" />
+            Views
+          </TabsTrigger>
+          <TabsTrigger value="sql-engine" data-testid="tab-sql-engine">
+            <Code className="mr-2 h-4 w-4" />
+            SQL Engine
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="datasets" className="mt-6">
+          <DatasetsTab />
+        </TabsContent>
+        
+        <TabsContent value="views" className="mt-6">
+          <ViewsTab />
+        </TabsContent>
+        
+        <TabsContent value="sql-engine" className="mt-6">
+          <SQLEngineTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

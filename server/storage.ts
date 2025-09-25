@@ -8,7 +8,9 @@ import {
   type KPI,
   type InsertKPI,
   type Chart,
-  type InsertChart
+  type InsertChart,
+  type View,
+  type InsertView
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
@@ -48,6 +50,13 @@ export interface IStorage {
   updateChart(id: string, updates: Partial<Chart>): Promise<Chart | undefined>;
   deleteChart(id: string): Promise<boolean>;
   
+  // View operations
+  getViews(userId: string): Promise<View[]>;
+  getView(id: string): Promise<View | undefined>;
+  createView(view: InsertView): Promise<View>;
+  updateView(id: string, updates: Partial<View>): Promise<View | undefined>;
+  deleteView(id: string): Promise<boolean>;
+  
   // Session store
   sessionStore: Store;
 }
@@ -58,6 +67,7 @@ export class MemStorage implements IStorage {
   private aiQueries: Map<string, AiQuery>;
   private kpis: Map<string, KPI>;
   private charts: Map<string, Chart>;
+  private views: Map<string, View>;
   public sessionStore: Store;
 
   constructor() {
@@ -66,6 +76,7 @@ export class MemStorage implements IStorage {
     this.aiQueries = new Map();
     this.kpis = new Map();
     this.charts = new Map();
+    this.views = new Map();
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24 hours
     });
@@ -230,6 +241,47 @@ export class MemStorage implements IStorage {
 
   async deleteChart(id: string): Promise<boolean> {
     return this.charts.delete(id);
+  }
+
+  // View operations
+  async getViews(userId: string): Promise<View[]> {
+    return Array.from(this.views.values()).filter(view => view.userId === userId);
+  }
+
+  async getView(id: string): Promise<View | undefined> {
+    return this.views.get(id);
+  }
+
+  async createView(insertView: InsertView): Promise<View> {
+    const id = randomUUID();
+    const now = new Date();
+    const view: View = {
+      ...insertView,
+      description: insertView.description || null,
+      dataSourceId: insertView.dataSourceId || null,
+      resultData: insertView.resultData || null,
+      columns: insertView.columns || null,
+      rowCount: insertView.rowCount || null,
+      lastExecuted: null,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.views.set(id, view);
+    return view;
+  }
+
+  async updateView(id: string, updates: Partial<View>): Promise<View | undefined> {
+    const view = this.views.get(id);
+    if (!view) return undefined;
+    
+    const updated = { ...view, ...updates, updatedAt: new Date() };
+    this.views.set(id, updated);
+    return updated;
+  }
+
+  async deleteView(id: string): Promise<boolean> {
+    return this.views.delete(id);
   }
 }
 

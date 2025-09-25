@@ -87,6 +87,22 @@ export const charts = pgTable("charts", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Views table - for SQL Engine created views
+export const views = pgTable("views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  sqlQuery: text("sql_query").notNull(),
+  dataSourceId: varchar("data_source_id").references(() => dataSources.id),
+  resultData: jsonb("result_data"), // Cache query results
+  columns: jsonb("columns"), // Column metadata for the view
+  rowCount: integer("row_count"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  lastExecuted: timestamp("last_executed"),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -118,6 +134,13 @@ export const insertChartSchema = createInsertSchema(charts).omit({
   updatedAt: true,
 });
 
+export const insertViewSchema = createInsertSchema(views).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastExecuted: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -129,3 +152,5 @@ export type KPI = typeof kpis.$inferSelect;
 export type InsertKPI = z.infer<typeof insertKpiSchema>;
 export type Chart = typeof charts.$inferSelect;
 export type InsertChart = z.infer<typeof insertChartSchema>;
+export type View = typeof views.$inferSelect;
+export type InsertView = z.infer<typeof insertViewSchema>;

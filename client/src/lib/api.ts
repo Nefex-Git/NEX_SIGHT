@@ -157,3 +157,53 @@ export async function updateChart(id: string, updates: Partial<Chart>): Promise<
 export async function deleteChart(id: string): Promise<void> {
   await apiRequest('DELETE', `/api/charts/${id}`);
 }
+
+// Data Preview API
+export async function previewDataSource(id: string, limit = 10): Promise<any> {
+  const response = await apiRequest('GET', `/api/data-sources/${id}/preview?limit=${limit}`);
+  return response.json();
+}
+
+// Views API
+export interface View {
+  id: string;
+  name: string;
+  description?: string;
+  sqlQuery: string;
+  dataSourceId?: string;
+  resultData?: any;
+  columns?: any;
+  rowCount?: number;
+  createdAt: string;
+  updatedAt: string;
+  lastExecuted?: string;
+}
+
+export async function getViews(): Promise<View[]> {
+  const response = await apiRequest('GET', '/api/views');
+  return response.json();
+}
+
+export async function getView(id: string): Promise<View> {
+  const response = await apiRequest('GET', `/api/views/${id}`);
+  return response.json();
+}
+
+export async function createView(view: Omit<View, 'id' | 'createdAt' | 'updatedAt' | 'lastExecuted'>): Promise<View> {
+  const response = await apiRequest('POST', '/api/views', view);
+  return response.json();
+}
+
+export async function updateView(id: string, updates: Partial<View>): Promise<View> {
+  const response = await apiRequest('PUT', `/api/views/${id}`, updates);
+  return response.json();
+}
+
+export async function deleteView(id: string): Promise<void> {
+  await apiRequest('DELETE', `/api/views/${id}`);
+}
+
+export async function executeView(id: string): Promise<any> {
+  const response = await apiRequest('POST', `/api/views/${id}/execute`);
+  return response.json();
+}
