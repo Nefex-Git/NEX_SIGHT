@@ -242,6 +242,33 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type DataSource = typeof dataSources.$inferSelect;
 export type InsertDataSource = z.infer<typeof insertDataSourceSchema>;
+
+// Table dataset metadata type for type safety
+export interface TableDatasetMetadata {
+  isTableDataset: true;
+  connectorType: string;
+  connectionName: string;
+  tableName: string;
+  schemaName: string;
+  tableType: 'table' | 'view';
+  columns: Array<{
+    name: string;
+    type: string;
+    nullable: boolean;
+    isPrimaryKey: boolean;
+    defaultValue?: string;
+  }>;
+  parentConnection: string;
+}
+
+// Standard dataset metadata type  
+export interface StandardDatasetMetadata {
+  isTableDataset?: false;
+  connectorType?: string;
+  columns?: string[];
+  sampleData?: any[];
+  [key: string]: any;
+}
 export type AiQuery = typeof aiQueries.$inferSelect;
 export type InsertAiQuery = z.infer<typeof insertAiQuerySchema>;
 export type KPI = typeof kpis.$inferSelect;

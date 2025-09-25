@@ -777,6 +777,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create data source from specific database table
+  app.post('/api/data-sources/table', requireAuth, async (req: any, res) => {
+    try {
+      const { 
+        connectionName, 
+        databaseType, 
+        connectionConfig, 
+        tableName, 
+        schemaName, 
+        tableMetadata 
+      } = req.body;
+      
+      if (!connectionName || !databaseType || !connectionConfig || !tableName || !schemaName) {
+        return res.status(400).json({ 
+          message: 'Connection name, database type, config, table name, and schema name are required' 
+        });
+      }
+
+      // Encrypt the connection config for storage
+      const encryptedConfig = DatabaseConnectorService.encryptConfig(connectionConfig);
+
+      // Create a data source for this specific table
+      const dataSource = await storage.createDataSource({
+        userId: req.user.id,
+        name: `${connectionName} - ${schemaName}.${tableName}`,
+        type: databaseType,
+        status: 'ready',
+        connectionConfig: encryptedConfig,
+        rowCount: tableMetadata?.rowCount,
+        columnCount: tableMetadata?.columns?.length || 0,
+        metadata: {
+          connectorType: databaseType,
+          connectionName,
+          tableName,
+          schemaName,
+          tableType: tableMetadata?.type || 'table',
+          columns: tableMetadata?.columns || [],
+          isTableDataset: true, // Flag to identify table-based datasets
+          parentConnection: connectionName,
+        }
+      });
+
+      res.json(dataSource);
+    } catch (error) {
+      console.error('Table data source creation error:', error);
+      res.status(500).json({ 
+        message: 'Failed to create table data source',
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
