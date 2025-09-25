@@ -28,27 +28,27 @@ const navigation = [
   },
   {
     id: "warehouse",
-    name: "Warehouse", 
+    name: "NEX Connect", 
     icon: Database,
     description: "Data sources"
   },
   {
     id: "assistant",
-    name: "AI Assistant",
+    name: "NEX AI",
     icon: Bot,
     description: "Chat with your data"
   },
   {
     id: "charts",
-    name: "Charts",
+    name: "NEX-VIZ",
     icon: BarChart3,
     description: "Visualizations"
   },
   {
     id: "datasets",
-    name: "Datasets",
+    name: "NEX House",
     icon: Table,
-    description: "Browse tables"
+    description: "Data & Views"
   }
 ];
 
@@ -88,7 +88,7 @@ export default function Sidebar({ currentPage, onPageChange, isOpen, onToggle }:
                 <Brain className="text-white text-lg" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">NEX-AI</h1>
+                <h1 className="text-xl font-bold">NEX Sight</h1>
                 <p className="text-xs text-muted-foreground">Business Intelligence</p>
               </div>
             </div>

@@ -193,7 +193,7 @@ export default function AssistantPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">NEX-AI Assistant</h2>
+        <h2 className="text-2xl font-bold mb-2">NEX AI</h2>
         <p className="text-muted-foreground">
           Ask questions about your data using voice or text
         </p>
@@ -265,7 +265,7 @@ export default function AssistantPage() {
           {messages.length === 0 && (
             <div className="text-center text-muted-foreground py-8">
               <Brain className="mx-auto h-12 w-12 mb-4 text-primary" />
-              <p className="text-lg font-medium mb-2">Welcome to NEX-AI Assistant</p>
+              <p className="text-lg font-medium mb-2">Welcome to NEX AI</p>
               <p>Ask me anything about your data. I can help you analyze trends, create charts, and generate insights.</p>
             </div>
           )}

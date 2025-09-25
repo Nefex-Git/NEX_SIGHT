@@ -63,7 +63,7 @@ export default function ChartsPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold">Charts</h2>
+          <h2 className="text-2xl font-bold">NEX-VIZ</h2>
           <p className="text-muted-foreground">
             Create and manage your data visualizations
           </p>

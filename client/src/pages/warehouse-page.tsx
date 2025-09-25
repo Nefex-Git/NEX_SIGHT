@@ -213,7 +213,7 @@ export default function WarehousePage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold">Data Warehouse</h2>
+          <h2 className="text-2xl font-bold">NEX Connect</h2>
           <p className="text-muted-foreground">
             Manage your datasets and external data sources
           </p>
