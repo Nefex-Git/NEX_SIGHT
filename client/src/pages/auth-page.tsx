@@ -49,7 +49,7 @@ export default function AuthPage() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mx-auto mb-4">
               <Brain className="text-white text-2xl" />
             </div>
-            <h1 className="text-3xl font-bold">Welcome to NEX-AI</h1>
+            <h1 className="text-3xl font-bold">Welcome to NEX Sight</h1>
             <p className="text-muted-foreground mt-2">
               Next-generation voice-powered business intelligence
             </p>

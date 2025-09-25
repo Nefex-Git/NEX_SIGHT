@@ -12,10 +12,10 @@ interface TopBarProps {
 
 const pageLabels: Record<string, string> = {
   dashboard: "Dashboard Overview",
-  warehouse: "Data Warehouse", 
-  assistant: "AI Assistant",
-  charts: "Charts & Visualizations",
-  datasets: "Datasets & Tables"
+  warehouse: "NEX Connect", 
+  assistant: "NEX AI",
+  charts: "NEX-VIZ",
+  datasets: "NEX House"
 };
 
 export default function TopBar({ currentPage, onSidebarToggle }: TopBarProps) {

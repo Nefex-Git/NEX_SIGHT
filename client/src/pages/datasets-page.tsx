@@ -112,7 +112,7 @@ export default function DatasetsPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold">Datasets</h2>
+          <h2 className="text-2xl font-bold">NEX House</h2>
           <p className="text-muted-foreground">
             Browse and manage your data tables and sources
           </p>

@@ -1,6 +1,6 @@
 # Overview
 
-This is a full-stack business intelligence application called NEX-AI that enables users to analyze data through AI-powered conversations and visualizations. The application combines data warehousing capabilities with natural language processing to make business intelligence accessible through chat interfaces and voice interactions.
+This is a full-stack business intelligence application called NEX Sight that enables users to analyze data through AI-powered conversations and visualizations. The application combines data warehousing capabilities with natural language processing to make business intelligence accessible through chat interfaces and voice interactions.
 
 The system allows users to upload datasets (primarily CSV files), ask questions about their data in natural language or voice, and receive intelligent responses with charts, KPIs, and insights. It features a modern dashboard with data source management, chart creation, and an AI assistant that can interpret business questions and generate appropriate visualizations.
 
