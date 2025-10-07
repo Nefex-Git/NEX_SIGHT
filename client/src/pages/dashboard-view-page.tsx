@@ -21,7 +21,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import KpiCard from "@/components/dashboard/kpi-card";
 import { DrillDownModal } from "@/components/chart/DrillDownModal";
-import type { Dashboard, KPI, Chart, DashboardChart } from "@shared/schema";
+import type { Dashboard, Chart, DashboardChart } from "@shared/schema";
+import type { KPI } from "@/lib/api";
 
 interface DashboardWithKpis extends Dashboard {
   kpis: KPI[];
@@ -297,7 +298,17 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
       {dashboard?.kpis && dashboard.kpis.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {dashboard.kpis.map((kpi) => (
-            <KpiCard key={kpi.id} kpi={{...kpi, unit: kpi.unit ?? undefined} as KPI} />
+            <KpiCard 
+              key={kpi.id} 
+              kpi={{
+                ...kpi,
+                unit: kpi.unit ?? undefined,
+                changePercent: kpi.changePercent ?? undefined,
+                visualType: kpi.visualType ?? undefined,
+                prefix: kpi.prefix ?? undefined,
+                format: kpi.format ?? undefined,
+              } as KPI} 
+            />
           ))}
         </div>
       ) : (
