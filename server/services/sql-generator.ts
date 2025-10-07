@@ -58,8 +58,11 @@ Return your response in JSON format:
 {
   "sql": "The complete SQL query",
   "explanation": "Brief explanation of what the query does",
-  "resultType": "single_value" (for COUNT, SUM, etc.) or "table" (for SELECT with rows) or "aggregation" (for GROUP BY)
-}`;
+  "resultType": "single_value" (for COUNT, SUM, etc.) or "table" (for SELECT with rows) or "aggregation" (for GROUP BY)",
+  "visualizationHint": "bar" or "line" or "pie" or "table" (suggest best visualization for the data)
+}
+
+Note: If user requests "heatmap", generate a GROUP BY query and suggest "table" or "bar" visualization as we don't support heatmaps yet.`;
 
   const userPrompt = `${schemaDescription}
 
