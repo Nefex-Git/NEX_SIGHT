@@ -135,6 +135,18 @@ function performLocalAnalysis(question: string, data: any[], schema: any): any {
     }
   }
   
+  // If data has multiple rows with a string column and a numeric column (likely GROUP BY result)
+  if (data.length > 1 && Object.keys(data[0]).length === 2) {
+    const keys = Object.keys(data[0]);
+    const stringKey = keys.find(k => typeof data[0][k] === 'string');
+    const numKey = keys.find(k => typeof data[0][k] === 'number');
+    
+    if (stringKey && numKey) {
+      // This is grouped data from SQL - return it directly for charting
+      return data; // Return array directly for chart preparation
+    }
+  }
+  
   if (q.includes('total') || q.includes('sum')) return calculateSum(data, schema);
   if (q.includes('average') || q.includes('mean')) return calculateAverage(data, schema);
   if (q.includes('count') || q.includes('how many') || q.includes('distinct')) return { kpiValue: data.length.toString(), unit: 'records' };
@@ -210,98 +222,40 @@ function calculateGroupBy(data: any[], schema: any): any {
 }
 
 /**
- * Prepare Superset-style chart configuration
- * Following Apache Superset's JSON chart specification format
+ * Prepare chart data in the format expected by the frontend
+ * Returns array with { name, value } structure for Recharts
  */
-function prepareChartData(chartType: string, analysisResult: any, schema: any): any {
-  // Superset-style chart configuration
-  const chartConfig: any = {
-    type: chartType,
-    datasource: 'analysis_result',
-    viz_type: chartType,
-    metrics: [],
-    groupby: [],
-    time_range: 'No filter',
-    granularity_sqla: null,
-    show_legend: true,
-    rich_tooltip: true,
-  };
-
+function prepareChartData(chartType: string, analysisResult: any, schema: any): any[] {
   // For trend/time series data
   if (analysisResult.trendData) {
-    chartConfig.datasource = {
-      type: 'table',
-      data: analysisResult.trendData
-    };
-    chartConfig.x_axis = analysisResult.dateColumn;
-    chartConfig.metrics = [analysisResult.valueColumn];
-    chartConfig.time_grain_sqla = 'P1D';
-    
-    // Chart.js compatible format
-    chartConfig.chartData = {
-      labels: analysisResult.trendData.map((d: any) => d.date),
-      datasets: [{
-        label: analysisResult.valueColumn,
-        data: analysisResult.trendData.map((d: any) => d.value),
-        borderColor: '#1f77b4',
-        backgroundColor: 'rgba(31, 119, 180, 0.2)',
-        tension: 0.4
-      }]
-    };
-    
-    return chartConfig;
+    return analysisResult.trendData.map((d: any) => ({
+      name: d.date || d[analysisResult.dateColumn],
+      value: d.value || d[analysisResult.valueColumn]
+    }));
   }
   
   // For grouped/categorical data
   if (analysisResult.groupedData) {
-    const categories = Object.keys(analysisResult.groupedData);
-    const values = Object.values(analysisResult.groupedData);
-    
-    chartConfig.datasource = {
-      type: 'table',
-      data: categories.map((cat, idx) => ({
-        [analysisResult.categoryColumn]: cat,
-        [analysisResult.valueColumn]: values[idx]
-      }))
-    };
-    chartConfig.groupby = [analysisResult.categoryColumn];
-    chartConfig.metrics = [analysisResult.valueColumn];
-    
-    // Chart.js compatible format
-    chartConfig.chartData = {
-      labels: categories,
-      datasets: [{
-        label: analysisResult.valueColumn,
-        data: values,
-        backgroundColor: [
-          'rgba(31, 119, 180, 0.8)',
-          'rgba(255, 127, 14, 0.8)',
-          'rgba(44, 160, 44, 0.8)',
-          'rgba(214, 39, 40, 0.8)',
-          'rgba(148, 103, 189, 0.8)',
-          'rgba(140, 86, 75, 0.8)',
-          'rgba(227, 119, 194, 0.8)',
-          'rgba(127, 127, 127, 0.8)'
-        ],
-        borderWidth: 1
-      }]
-    };
-    
-    return chartConfig;
+    return Object.entries(analysisResult.groupedData).map(([key, val]) => ({
+      name: key,
+      value: val as number
+    }));
   }
   
-  // For single value/KPI
-  if (analysisResult.kpiValue) {
-    chartConfig.viz_type = 'big_number';
-    chartConfig.metric = analysisResult.unit || 'value';
-    chartConfig.chartData = {
-      value: analysisResult.kpiValue,
-      unit: analysisResult.unit,
-      type: 'kpi'
-    };
+  // Try to detect chart data from any row-based result
+  if (Array.isArray(analysisResult) && analysisResult.length > 0) {
+    const firstRow = analysisResult[0];
+    const keys = Object.keys(firstRow);
     
-    return chartConfig;
+    // Find name/category field (string) and value field (number)
+    const nameField = keys.find(k => typeof firstRow[k] === 'string') || keys[0];
+    const valueField = keys.find(k => typeof firstRow[k] === 'number') || keys[1];
+    
+    return analysisResult.map(row => ({
+      name: row[nameField],
+      value: parseFloat(row[valueField]) || 0
+    }));
   }
   
-  return null;
+  return [];
 }
