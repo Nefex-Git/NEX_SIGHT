@@ -35,14 +35,17 @@ export function DrillDownModal({
 }: DrillDownModalProps) {
   const { toast } = useToast();
 
-  const { data, isLoading } = useQuery<{ data: any[]; query: string; chartTitle: string }>({
+  const { data, isLoading, isError, error } = useQuery<{ data: any[]; query: string; chartTitle: string }>({
     queryKey: ["/api/charts", chartId, "drill-down"],
     queryFn: async () => {
       const response = await fetch(`/api/charts/${chartId}/drill-down`, {
         method: "POST",
         credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to fetch data");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Failed to fetch data" }));
+        throw new Error(errorData.message || "Failed to fetch data");
+      }
       return response.json();
     },
     enabled: isOpen,
@@ -103,6 +106,11 @@ export function DrillDownModal({
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : isError ? (
+          <div className="text-center py-12 text-destructive">
+            <p className="font-medium">Error loading data</p>
+            <p className="text-sm mt-2">{error?.message || "Failed to fetch chart data"}</p>
           </div>
         ) : rows.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
