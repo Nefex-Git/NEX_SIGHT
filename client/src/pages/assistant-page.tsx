@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { submitAiQuery, transcribeAudio, getDataSources, createKpiFromQuery } from "@/lib/api";
+import { submitAiQuery, transcribeAudio, getDataSources, createKpi } from "@/lib/api";
 import { VoiceRecorder, SpeechRecognition } from "@/lib/voice";
 import VoiceButton from "@/components/voice/voice-button";
 import VoiceStatus from "@/components/voice/voice-status";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Brain, Send, User, Pin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ChartContainer from "@/components/dashboard/chart-container";
+import { KPICustomizationDialog, type KPIConfig } from "@/components/kpi/kpi-customization-dialog";
 
 interface ChatMessage {
   id: string;
@@ -32,6 +33,8 @@ export default function AssistantPage() {
   const [selectedDataSource, setSelectedDataSource] = useState("all");
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
+  const [pendingKpi, setPendingKpi] = useState<{ question: string; answer: string } | null>(null);
   const voiceRecorderRef = useRef<VoiceRecorder | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -77,14 +80,29 @@ export default function AssistantPage() {
   });
 
   const kpiMutation = useMutation({
-    mutationFn: ({ question, answer }: { question: string; answer: string }) => 
-      createKpiFromQuery(question, answer),
+    mutationFn: ({ question, value, config }: { question: string; value: string; config: KPIConfig }) => 
+      createKpi({
+        question,
+        value,
+        unit: undefined,
+        changePercent: undefined,
+        dashboardId: config.dashboardId || undefined,
+        visualType: config.visualType,
+        format: config.format,
+        decimalPlaces: config.decimalPlaces,
+        currencyCode: config.currencyCode,
+        prefix: config.prefix || undefined,
+        suffix: config.suffix || undefined,
+      }),
     onSuccess: () => {
       toast({
         title: "KPI Created",
-        description: "Question has been saved as a KPI on your dashboard.",
+        description: "Your KPI has been added to the dashboard.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/kpis"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboards"] });
+      setKpiDialogOpen(false);
+      setPendingKpi(null);
     },
     onError: (error) => {
       toast({
@@ -189,7 +207,21 @@ export default function AssistantPage() {
   };
 
   const handleCreateKpi = (question: string, answer: string) => {
-    kpiMutation.mutate({ question, answer });
+    setPendingKpi({ question, answer });
+    setKpiDialogOpen(true);
+  };
+
+  const handleSaveKpi = (config: KPIConfig) => {
+    if (!pendingKpi) return;
+    
+    const numMatch = pendingKpi.answer.match(/[\d,]+\.?\d*/);
+    const value = numMatch ? numMatch[0].replace(/,/g, '') : '0';
+    
+    kpiMutation.mutate({ 
+      question: pendingKpi.question, 
+      value,
+      config 
+    });
   };
 
   return (
@@ -391,6 +423,18 @@ export default function AssistantPage() {
           </form>
         </div>
       </Card>
+
+      {/* KPI Customization Dialog */}
+      {pendingKpi && (
+        <KPICustomizationDialog
+          open={kpiDialogOpen}
+          onOpenChange={setKpiDialogOpen}
+          question={pendingKpi.question}
+          answer={pendingKpi.answer}
+          onSave={handleSaveKpi}
+          isPending={kpiMutation.isPending}
+        />
+      )}
     </div>
   );
 }
