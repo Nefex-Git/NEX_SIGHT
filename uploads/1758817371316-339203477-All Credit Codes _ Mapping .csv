@@ -1,0 +1,46 @@
+ID,Description,Status,Subcategory
+adjfc,Adjustment  Finance Charge,Active,Adjustments
+DOTH,Adjustment Discount,Active,Adjustments
+adjm,Adjustment Medicare HMO,Active,Adjustments
+ADJI,Adjustment- Insurance,Active,Adjustments
+ACHA,Adjustment-Champus/Champva,Active,Adjustments
+AMCD,Adjustment-Medicaid,Active,Adjustments
+AMCR,Adjustment-Medicare,Active,Adjustments
+wsaver,Ambulance Saver Subscriber,Active,Adjustments
+DBCS,Discount-Blue Cross/Shield,Active,Adjustments
+DCON,Discount-Contract Hospital,Active,Adjustments
+PPCC,Payment  Credit Card,Active,Payments
+WPCC,Payment online credit card,Active,Payments
+pormc,Payment ormc,Active,Payments
+PBCS,Payment-Blue Cross/Shield,Active,Payments
+PCHP,Payment-Contract Hospital,Active,Payments
+PAIN,Payment-Insurance-Auto,Active,Payments
+PPIN,Payment-Insurance-Primary,Active,Payments
+PSIN,Payment-Insurance-Secondary,Active,Payments
+PMCD,Payment-Medicaid,Active,Payments
+PMCP,Payment-Medicare-From Patient,Active,Payments
+PMCB,Payment-Medicare-Part B,Active,Payments
+PMA,Payment PMA,Active,Payments
+PPINCC,Payment-Primary Insurance CC,Active,Payments
+pcash,Payment-Private-Cash,Active,Payments
+PPCH,Payment-Private-Check,Active,Payments
+rppch,payment-remote check,Active,Payments
+ppva,Primary Payment VA,Active,Payments
+rppva,Remote Primary Pay VA Insuranc,Active,Payments
+RPPIN,Payment-Remote Primary Insuran,Active,Payments
+RPSIN,Payment-Remote Secondary Insur,Active,Payments
+psincc,Payment-Secondary Insurance CC,Active,Payments
+PSPE,Payment-Special Source,Active,Payments
+RFIN,Refund-Insurance,Active,Refunds
+RFCA,Refund-Medicaid,Active,Refunds
+RFCR,Refund-Medicare,Active,Refunds
+RFOT,Refund-Other,Active,Refunds
+RFPT,Refund-Patient,Active,Refunds
+TRAN,Transfered Balance,Active,Write Offs
+WBAD,Write Off-Bad Debt,Active,Write Offs
+WBAN,Write Off-Bankruptcy,Active,Write Offs
+WCOL,Write Off-Collection Expense,Active,Write Offs
+WHAR,Write Off-Hardship,Active,Write Offs
+WSML,Write Off-Legal,Active,Write Offs
+WMGT,Write Off-Per Management,Active,Write Offs
+WBadx,Write-off Bad Debt Xpress,Active,Write Offs
