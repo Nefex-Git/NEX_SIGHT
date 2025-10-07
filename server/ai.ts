@@ -2,10 +2,11 @@ import OpenAI from "openai";
 import * as fs from "fs";
 import * as path from "path";
 import csv from "csv-parser";
+import { extractDataSchema, createPrivacySafeDataSummary, generateDummyData } from "./services/data-masking";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key" 
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 interface DataAnalysisRequest {
