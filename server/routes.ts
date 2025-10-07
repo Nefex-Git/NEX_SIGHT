@@ -25,6 +25,7 @@ import {
   insertAiQuerySchema, 
   insertKpiSchema, 
   insertChartSchema,
+  insertDashboardChartSchema,
   insertViewSchema,
   insertDashboardSchema,
   DatabaseConnectionConfig 
@@ -649,6 +650,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: 'Chart deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Failed to delete chart' });
+    }
+  });
+
+  // Dashboard Chart endpoints
+  app.get('/api/dashboards/:dashboardId/charts', requireAuth, async (req: any, res) => {
+    try {
+      const dashboard = await storage.getDashboard(req.params.dashboardId);
+      
+      if (!dashboard || dashboard.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Dashboard not found' });
+      }
+
+      const dashboardCharts = await storage.getDashboardCharts(req.params.dashboardId);
+      
+      const chartsWithDetails = [];
+      
+      for (const dc of dashboardCharts) {
+        const chart = await storage.getChart(dc.chartId);
+        if (!chart || chart.userId !== req.user.id) {
+          await storage.deleteDashboardChart(dc.id);
+          continue;
+        }
+        chartsWithDetails.push({ ...dc, chart });
+      }
+
+      res.json(chartsWithDetails);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch dashboard charts' });
+    }
+  });
+
+  app.post('/api/dashboards/:dashboardId/charts', requireAuth, async (req: any, res) => {
+    try {
+      const dashboard = await storage.getDashboard(req.params.dashboardId);
+      
+      if (!dashboard || dashboard.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Dashboard not found' });
+      }
+
+      const validation = insertDashboardChartSchema.safeParse({
+        ...req.body,
+        dashboardId: req.params.dashboardId
+      });
+
+      if (!validation.success) {
+        return res.status(400).json({ message: 'Invalid dashboard chart data', errors: validation.error.issues });
+      }
+
+      const chart = await storage.getChart(validation.data.chartId);
+      if (!chart || chart.userId !== req.user.id) {
+        return res.status(403).json({ message: 'Chart not found or unauthorized' });
+      }
+
+      const dashboardChart = await storage.createDashboardChart(validation.data);
+      res.json(dashboardChart);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to add chart to dashboard' });
+    }
+  });
+
+  app.put('/api/dashboard-charts/:id', requireAuth, async (req: any, res) => {
+    try {
+      const dashboardChart = await storage.getDashboardChart(req.params.id);
+      
+      if (!dashboardChart) {
+        return res.status(404).json({ message: 'Dashboard chart not found' });
+      }
+
+      const dashboard = await storage.getDashboard(dashboardChart.dashboardId);
+      if (!dashboard || dashboard.userId !== req.user.id) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      const updated = await storage.updateDashboardChart(req.params.id, req.body);
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update dashboard chart' });
+    }
+  });
+
+  app.delete('/api/dashboard-charts/:id', requireAuth, async (req: any, res) => {
+    try {
+      const dashboardChart = await storage.getDashboardChart(req.params.id);
+      
+      if (!dashboardChart) {
+        return res.status(404).json({ message: 'Dashboard chart not found' });
+      }
+
+      const dashboard = await storage.getDashboard(dashboardChart.dashboardId);
+      if (!dashboard || dashboard.userId !== req.user.id) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      await storage.deleteDashboardChart(req.params.id);
+      res.json({ message: 'Chart removed from dashboard successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to remove chart from dashboard' });
+    }
+  });
+
+  // Chart drill-down endpoint - fetches detailed data for a chart
+  app.post('/api/charts/:id/drill-down', requireAuth, async (req: any, res) => {
+    try {
+      const chart = await storage.getChart(req.params.id);
+      
+      if (!chart || chart.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Chart not found' });
+      }
+
+      if (!chart.query) {
+        return res.status(400).json({ message: 'Chart does not have an associated query' });
+      }
+
+      const result = await executeUserSQLQuery(chart.query, req.user.id);
+      
+      res.json({
+        data: result,
+        query: chart.query,
+        chartTitle: chart.title
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: 'Failed to fetch drill-down data', error: error.message });
     }
   });
 

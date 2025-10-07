@@ -113,10 +113,23 @@ export const charts = pgTable("charts", {
   userId: varchar("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   type: text("type").notNull(), // 'line', 'bar', 'pie', etc.
-  config: jsonb("config").notNull(),
-  dataSourceId: varchar("data_source_id").references(() => dataSources.id),
+  config: jsonb("config").notNull(), // Chart-specific configuration (columns, aggregations, colors, etc.)
+  query: text("query"), // Optional: SQL query used to generate the chart data
+  dataSourceIds: text("data_source_ids").array(), // Support multiple data sources for joins
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Dashboard Charts junction table - for positioning charts on dashboards
+export const dashboardCharts = pgTable("dashboard_charts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  dashboardId: varchar("dashboard_id").notNull().references(() => dashboards.id),
+  chartId: varchar("chart_id").notNull().references(() => charts.id),
+  x: integer("x").notNull().default(0), // Grid X position
+  y: integer("y").notNull().default(0), // Grid Y position
+  w: integer("w").notNull().default(4), // Grid width (columns)
+  h: integer("h").notNull().default(3), // Grid height (rows)
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Views table - for SQL Engine created views
@@ -164,6 +177,11 @@ export const insertChartSchema = createInsertSchema(charts).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertDashboardChartSchema = createInsertSchema(dashboardCharts).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertViewSchema = createInsertSchema(views).omit({
@@ -320,6 +338,8 @@ export type KPI = typeof kpis.$inferSelect;
 export type InsertKPI = z.infer<typeof insertKpiSchema>;
 export type Chart = typeof charts.$inferSelect;
 export type InsertChart = z.infer<typeof insertChartSchema>;
+export type DashboardChart = typeof dashboardCharts.$inferSelect;
+export type InsertDashboardChart = z.infer<typeof insertDashboardChartSchema>;
 export type View = typeof views.$inferSelect;
 export type InsertView = z.infer<typeof insertViewSchema>;
 export type Connection = typeof connections.$inferSelect;
