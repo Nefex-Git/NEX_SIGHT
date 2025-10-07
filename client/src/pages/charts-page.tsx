@@ -124,10 +124,7 @@ export default function ChartsPage() {
   }, [selectedCategory, searchQuery]);
 
   const handleChartClick = (chart: ChartType) => {
-    // Navigate to chart builder with selected chart type
-    // For now, we'll just log it - you can implement navigation to chart builder
-    console.log("Selected chart:", chart);
-    // setLocation(`/chart-builder?type=${chart.id}`);
+    setLocation(`/chart-builder?type=${chart.id}`);
   };
 
   const getChartIcon = (chartId: string) => {
