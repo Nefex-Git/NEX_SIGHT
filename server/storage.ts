@@ -9,6 +9,8 @@ import {
   type InsertKPI,
   type Chart,
   type InsertChart,
+  type DashboardChart,
+  type InsertDashboardChart,
   type View,
   type InsertView,
   type Connection,
@@ -76,6 +78,14 @@ export interface IStorage {
   updateDashboard(id: string, updates: Partial<Dashboard>): Promise<Dashboard | undefined>;
   deleteDashboard(id: string): Promise<boolean>;
   
+  // Dashboard Chart operations
+  getDashboardCharts(dashboardId: string): Promise<DashboardChart[]>;
+  getDashboardChart(id: string): Promise<DashboardChart | undefined>;
+  createDashboardChart(dashboardChart: InsertDashboardChart): Promise<DashboardChart>;
+  updateDashboardChart(id: string, updates: Partial<DashboardChart>): Promise<DashboardChart | undefined>;
+  deleteDashboardChart(id: string): Promise<boolean>;
+  deleteDashboardChartsByChartId(chartId: string): Promise<boolean>;
+  
   // Session store
   sessionStore: Store;
 }
@@ -89,6 +99,7 @@ export class MemStorage implements IStorage {
   private views: Map<string, View>;
   private connections: Map<string, Connection>;
   private dashboards: Map<string, Dashboard>;
+  private dashboardCharts: Map<string, DashboardChart>;
   public sessionStore: Store;
 
   constructor() {
@@ -100,6 +111,7 @@ export class MemStorage implements IStorage {
     this.views = new Map();
     this.connections = new Map();
     this.dashboards = new Map();
+    this.dashboardCharts = new Map();
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24 hours
     });
@@ -252,7 +264,8 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const chart: Chart = {
       ...insertChart,
-      dataSourceId: insertChart.dataSourceId || null,
+      query: insertChart.query || null,
+      dataSourceIds: insertChart.dataSourceIds || null,
       id,
       createdAt: now,
       updatedAt: now
@@ -271,6 +284,7 @@ export class MemStorage implements IStorage {
   }
 
   async deleteChart(id: string): Promise<boolean> {
+    await this.deleteDashboardChartsByChartId(id);
     return this.charts.delete(id);
   }
 
@@ -396,7 +410,64 @@ export class MemStorage implements IStorage {
   }
 
   async deleteDashboard(id: string): Promise<boolean> {
+    const chartsToDelete = Array.from(this.dashboardCharts.values()).filter(
+      dc => dc.dashboardId === id
+    );
+    chartsToDelete.forEach(dc => this.dashboardCharts.delete(dc.id));
+    
+    const kpisToDelete = Array.from(this.kpis.values()).filter(
+      kpi => kpi.dashboardId === id
+    );
+    kpisToDelete.forEach(kpi => this.kpis.delete(kpi.id));
+    
     return this.dashboards.delete(id);
+  }
+
+  // Dashboard Chart operations
+  async getDashboardCharts(dashboardId: string): Promise<DashboardChart[]> {
+    return Array.from(this.dashboardCharts.values()).filter(
+      dc => dc.dashboardId === dashboardId
+    );
+  }
+
+  async getDashboardChart(id: string): Promise<DashboardChart | undefined> {
+    return this.dashboardCharts.get(id);
+  }
+
+  async createDashboardChart(insertDashboardChart: InsertDashboardChart): Promise<DashboardChart> {
+    const id = randomUUID();
+    const dashboardChart: DashboardChart = {
+      ...insertDashboardChart,
+      x: insertDashboardChart.x ?? 0,
+      y: insertDashboardChart.y ?? 0,
+      w: insertDashboardChart.w ?? 4,
+      h: insertDashboardChart.h ?? 3,
+      id,
+      createdAt: new Date()
+    };
+    this.dashboardCharts.set(id, dashboardChart);
+    return dashboardChart;
+  }
+
+  async updateDashboardChart(id: string, updates: Partial<DashboardChart>): Promise<DashboardChart | undefined> {
+    const dashboardChart = this.dashboardCharts.get(id);
+    if (!dashboardChart) return undefined;
+    
+    const updated = { ...dashboardChart, ...updates };
+    this.dashboardCharts.set(id, updated);
+    return updated;
+  }
+
+  async deleteDashboardChart(id: string): Promise<boolean> {
+    return this.dashboardCharts.delete(id);
+  }
+
+  async deleteDashboardChartsByChartId(chartId: string): Promise<boolean> {
+    const chartsToDelete = Array.from(this.dashboardCharts.values()).filter(
+      dc => dc.chartId === chartId
+    );
+    chartsToDelete.forEach(dc => this.dashboardCharts.delete(dc.id));
+    return chartsToDelete.length > 0;
   }
 }
 
