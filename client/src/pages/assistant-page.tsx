@@ -6,9 +6,9 @@ import VoiceButton from "@/components/voice/voice-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Brain, Send, User, Pin, Database } from "lucide-react";
+import { Brain, Send, User, Pin, Check, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ChartContainer from "@/components/dashboard/chart-container";
 import { KPICustomizationDialog, type KPIConfig } from "@/components/kpi/kpi-customization-dialog";
@@ -243,59 +243,101 @@ export default function AssistantPage() {
               </p>
             </CardHeader>
             <div className="space-y-3">
-              {/* Multi-select checkboxes */}
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {dataSources.map((source) => (
-                  <div key={source.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded-lg transition-colors">
-                    <Checkbox
-                      id={`source-${source.id}`}
-                      checked={selectedDataSources.includes(source.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedDataSources([...selectedDataSources, source.id]);
-                        } else {
-                          setSelectedDataSources(selectedDataSources.filter(id => id !== source.id));
-                        }
-                      }}
-                      data-testid={`checkbox-dataset-${source.id}`}
-                    />
-                    <label
-                      htmlFor={`source-${source.id}`}
-                      className="flex-1 flex items-center justify-between cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Database className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">{source.name}</span>
+              {/* Multi-select dropdown */}
+              <div className="relative">
+                <Select
+                  value={selectedDataSources.length > 0 ? "multi" : ""}
+                  onValueChange={(value) => {
+                    if (value === "all") {
+                      setSelectedDataSources(dataSources.map(ds => ds.id));
+                    } else if (value === "clear") {
+                      setSelectedDataSources([]);
+                    }
+                  }}
+                  data-testid="select-data-source"
+                >
+                  <SelectTrigger className="max-w-full">
+                    <SelectValue placeholder="Select datasets...">
+                      {selectedDataSources.length === 0 ? (
+                        "Select datasets..."
+                      ) : selectedDataSources.length === dataSources.length ? (
+                        `All Datasets (${dataSources.length})`
+                      ) : (
+                        `${selectedDataSources.length} dataset${selectedDataSources.length > 1 ? 's' : ''} selected`
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" data-testid="select-all-datasets">
+                      Select All Datasets
+                    </SelectItem>
+                    {selectedDataSources.length > 0 && (
+                      <SelectItem value="clear" data-testid="clear-datasets">
+                        Clear Selection
+                      </SelectItem>
+                    )}
+                    <div className="border-t my-1" />
+                    {dataSources.map((source) => (
+                      <div
+                        key={source.id}
+                        className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-muted rounded-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (selectedDataSources.includes(source.id)) {
+                            setSelectedDataSources(selectedDataSources.filter(id => id !== source.id));
+                          } else {
+                            setSelectedDataSources([...selectedDataSources, source.id]);
+                          }
+                        }}
+                        data-testid={`select-dataset-${source.id}`}
+                      >
+                        <div className={`h-4 w-4 border rounded flex items-center justify-center ${
+                          selectedDataSources.includes(source.id) ? 'bg-primary border-primary' : 'border-input'
+                        }`}>
+                          {selectedDataSources.includes(source.id) && (
+                            <Check className="h-3 w-3 text-primary-foreground" />
+                          )}
+                        </div>
+                        <span className="flex-1 text-sm">{source.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {source.type}
+                        </span>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {source.type} • {source.rowCount || '?'} rows
-                      </div>
-                    </label>
-                  </div>
-                ))}
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
-              {/* Selected datasets info */}
+              {/* Selected datasets tags */}
               {selectedDataSources.length > 0 && (
-                <div className="text-sm p-3 bg-primary/10 rounded-lg border border-primary/30" data-testid="selected-datasets-info">
-                  <div className="font-medium text-primary mb-1">
-                    {selectedDataSources.length} {selectedDataSources.length === 1 ? 'Dataset' : 'Datasets'} Selected
+                <div className="flex flex-wrap gap-2">
+                  {selectedDataSources.map(id => {
+                    const source = dataSources.find(ds => ds.id === id);
+                    return source ? (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 border border-primary/30 text-xs"
+                      >
+                        <span className="font-medium">{source.name}</span>
+                        <button
+                          onClick={() => setSelectedDataSources(selectedDataSources.filter(sid => sid !== id))}
+                          className="hover:bg-primary/20 rounded-sm p-0.5"
+                          data-testid={`remove-dataset-${id}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
+              
+              {/* Info message */}
+              {selectedDataSources.length > 1 && (
+                <div className="text-sm p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="text-blue-700 dark:text-blue-300">
+                    💡 NEX AI will automatically detect relationships and join tables as needed
                   </div>
-                  <div className="text-muted-foreground flex flex-wrap gap-1">
-                    {selectedDataSources.map(id => {
-                      const source = dataSources.find(ds => ds.id === id);
-                      return source ? (
-                        <span key={id} className="inline-flex items-center px-2 py-0.5 rounded bg-primary/20 text-xs">
-                          {source.name}
-                        </span>
-                      ) : null;
-                    })}
-                  </div>
-                  {selectedDataSources.length > 1 && (
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      💡 NEX AI will automatically detect relationships and join tables as needed
-                    </div>
-                  )}
                 </div>
               )}
               
