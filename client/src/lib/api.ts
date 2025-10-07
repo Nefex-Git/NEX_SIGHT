@@ -33,7 +33,23 @@ export interface KPI {
   value: string;
   unit?: string;
   changePercent?: string;
+  dashboardId?: string;
+  visualType?: string;
+  format?: string;
+  decimalPlaces?: number;
+  currencyCode?: string;
+  prefix?: string;
+  suffix?: string;
   lastUpdated: string;
+}
+
+export interface Dashboard {
+  id: string;
+  name: string;
+  description?: string;
+  kpiCount?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Chart {
@@ -239,4 +255,29 @@ export async function getConnection(id: string): Promise<Connection> {
 export async function getConnectionTables(connectionId: string): Promise<DataSource[]> {
   const response = await apiRequest('GET', `/api/connections/${connectionId}/tables`);
   return response.json();
+}
+
+// Dashboard API
+export async function getDashboards(): Promise<Dashboard[]> {
+  const response = await apiRequest('GET', '/api/dashboards');
+  return response.json();
+}
+
+export async function getDashboard(id: string): Promise<Dashboard> {
+  const response = await apiRequest('GET', `/api/dashboards/${id}`);
+  return response.json();
+}
+
+export async function createDashboard(dashboard: Omit<Dashboard, 'id' | 'createdAt' | 'updatedAt' | 'kpiCount'>): Promise<Dashboard> {
+  const response = await apiRequest('POST', '/api/dashboards', dashboard);
+  return response.json();
+}
+
+export async function updateDashboard(id: string, updates: Partial<Dashboard>): Promise<Dashboard> {
+  const response = await apiRequest('PUT', `/api/dashboards/${id}`, updates);
+  return response.json();
+}
+
+export async function deleteDashboard(id: string): Promise<void> {
+  await apiRequest('DELETE', `/api/dashboards/${id}`);
 }
