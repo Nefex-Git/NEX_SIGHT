@@ -16,10 +16,11 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { Heatmap } from "@/components/charts/heatmap";
 
 interface ChartContainerProps {
   title: string;
-  type: "line" | "bar" | "pie" | "table";
+  type: "line" | "bar" | "pie" | "table" | "heatmap";
   data: any[];
   showTitle?: boolean;
   onExpand?: () => void;
@@ -43,10 +44,6 @@ export default function ChartContainer({
   showTitle = true,
   onExpand 
 }: ChartContainerProps) {
-  // If heatmap or unsupported type requested with data, default to table
-  if (!['line', 'bar', 'pie', 'table'].includes(type) && data && data.length > 0) {
-    type = 'table';
-  }
   const formatValue = (value: any) => {
     if (typeof value === 'number') {
       if (value >= 1000000) {
@@ -197,6 +194,9 @@ export default function ChartContainer({
             </table>
           </div>
         );
+
+      case "heatmap":
+        return <Heatmap data={data} />;
 
       default:
         return (

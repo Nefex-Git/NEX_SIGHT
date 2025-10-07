@@ -69,8 +69,15 @@ User Question: ${question}`;
     context += `\n\nProvide response in JSON:
 {
   "answer": "Natural language answer stating the actual result value. Be direct and clear.",
-  "chartType": "Suggested chart type: bar, line, pie, area, or null"
-}`;
+  "chartType": "Suggested chart type: bar, line, pie, heatmap, table, or null"
+}
+
+Chart type selection guidelines:
+- Use "heatmap" for 2D data comparisons (e.g., country+state, category+subcategory)
+- Use "bar" for simple category comparisons
+- Use "line" for trends over time
+- Use "pie" for proportional/percentage breakdowns
+- Use "table" for detailed data viewing`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
