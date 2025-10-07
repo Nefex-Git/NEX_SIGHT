@@ -6,9 +6,9 @@ import VoiceButton from "@/components/voice/voice-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Brain, Send, User, Pin } from "lucide-react";
+import { Brain, Send, User, Pin, Database } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ChartContainer from "@/components/dashboard/chart-container";
 import { KPICustomizationDialog, type KPIConfig } from "@/components/kpi/kpi-customization-dialog";
@@ -29,7 +29,7 @@ interface ChatMessage {
 export default function AssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [selectedDataSource, setSelectedDataSource] = useState("all");
+  const [selectedDataSources, setSelectedDataSources] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [kpiDialogOpen, setKpiDialogOpen] = useState(false);
@@ -46,11 +46,11 @@ export default function AssistantPage() {
   });
 
   const aiQueryMutation = useMutation({
-    mutationFn: ({ question, dataSourceId, isVoiceQuery }: { 
+    mutationFn: ({ question, dataSourceIds, isVoiceQuery }: { 
       question: string; 
-      dataSourceId?: string; 
+      dataSourceIds?: string[]; 
       isVoiceQuery?: boolean;
-    }) => submitAiQuery(question, dataSourceId, isVoiceQuery),
+    }) => submitAiQuery(question, dataSourceIds, isVoiceQuery),
     onSuccess: (response) => {
       const assistantMessage: ChatMessage = {
         id: response.id,
@@ -135,10 +135,10 @@ export default function AssistantPage() {
     
     setMessages(prev => [...prev, userMessage]);
 
-    // Submit to AI
+    // Submit to AI with selected data sources
     aiQueryMutation.mutate({
       question: question.trim(),
-      dataSourceId: selectedDataSource === "all" ? undefined : selectedDataSource,
+      dataSourceIds: selectedDataSources.length > 0 ? selectedDataSources : undefined,
       isVoiceQuery,
     });
 
@@ -239,43 +239,70 @@ export default function AssistantPage() {
             <CardHeader className="p-0 pb-4">
               <CardTitle className="text-base">Dataset Selection</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Choose which datasets to analyze. Questions will be answered based on selected data only.
+                Select one or more datasets to analyze. NEX AI will automatically join related tables to answer your questions.
               </p>
             </CardHeader>
             <div className="space-y-3">
-              <Select value={selectedDataSource} onValueChange={setSelectedDataSource} data-testid="select-data-source">
-                <SelectTrigger className="max-w-md">
-                  <SelectValue placeholder="Select target dataset" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Available Datasets</SelectItem>
-                  {dataSources.map((source) => (
-                    <SelectItem key={source.id} value={source.id}>
-                      {source.name} ({source.type})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Multi-select checkboxes */}
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {dataSources.map((source) => (
+                  <div key={source.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded-lg transition-colors">
+                    <Checkbox
+                      id={`source-${source.id}`}
+                      checked={selectedDataSources.includes(source.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedDataSources([...selectedDataSources, source.id]);
+                        } else {
+                          setSelectedDataSources(selectedDataSources.filter(id => id !== source.id));
+                        }
+                      }}
+                      data-testid={`checkbox-dataset-${source.id}`}
+                    />
+                    <label
+                      htmlFor={`source-${source.id}`}
+                      className="flex-1 flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{source.name}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {source.type} • {source.rowCount || '?'} rows
+                      </div>
+                    </label>
+                  </div>
+                ))}
+              </div>
               
-              {selectedDataSource !== "all" && (
-                <div className="text-sm p-3 bg-muted/50 rounded-lg border" data-testid="selected-dataset-info">
-                  <div className="font-medium text-primary">
-                    Analyzing: {dataSources.find(ds => ds.id === selectedDataSource)?.name}
+              {/* Selected datasets info */}
+              {selectedDataSources.length > 0 && (
+                <div className="text-sm p-3 bg-primary/10 rounded-lg border border-primary/30" data-testid="selected-datasets-info">
+                  <div className="font-medium text-primary mb-1">
+                    {selectedDataSources.length} {selectedDataSources.length === 1 ? 'Dataset' : 'Datasets'} Selected
                   </div>
-                  <div className="text-muted-foreground mt-1">
-                    Type: {dataSources.find(ds => ds.id === selectedDataSource)?.type} • 
-                    Records: {dataSources.find(ds => ds.id === selectedDataSource)?.rowCount || 'Unknown'}
+                  <div className="text-muted-foreground flex flex-wrap gap-1">
+                    {selectedDataSources.map(id => {
+                      const source = dataSources.find(ds => ds.id === id);
+                      return source ? (
+                        <span key={id} className="inline-flex items-center px-2 py-0.5 rounded bg-primary/20 text-xs">
+                          {source.name}
+                        </span>
+                      ) : null;
+                    })}
                   </div>
+                  {selectedDataSources.length > 1 && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      💡 NEX AI will automatically detect relationships and join tables as needed
+                    </div>
+                  )}
                 </div>
               )}
               
-              {selectedDataSource === "all" && dataSources.length > 1 && (
-                <div className="text-sm p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800" data-testid="all-datasets-info">
-                  <div className="font-medium text-blue-700 dark:text-blue-300">
-                    Analyzing All Datasets ({dataSources.length} sources)
-                  </div>
-                  <div className="text-blue-600 dark:text-blue-400 mt-1">
-                    Questions will be answered using data from all available sources
+              {selectedDataSources.length === 0 && (
+                <div className="text-sm p-3 bg-muted/50 rounded-lg border" data-testid="no-selection-info">
+                  <div className="text-muted-foreground">
+                    No datasets selected. Select at least one dataset to start analyzing.
                   </div>
                 </div>
               )}
