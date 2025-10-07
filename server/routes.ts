@@ -324,6 +324,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let csvData = [];
       let dataSourceMetadata = {};
+      let sqlQueryGenerated = null;
+      let sqlResults = null;
 
       // Load data if data source is specified
       if (dataSourceId) {
@@ -348,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               csvData = await parseCSVFile(filePath);
             }
           }
-          // Check if it's a database table dataset
+          // Check if it's a database table dataset - USE SQL GENERATION
           else if ((dataSource.metadata as any)?.isTableDataset) {
             try {
               const metadata = dataSource.metadata as any;
@@ -360,27 +362,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 password: metadata.password
               };
               
+              // First, get schema information (sample data for column types)
               const tableName = `${metadata.schemaName}.${metadata.tableName}`;
-              const query = `SELECT TOP 1000 * FROM ${tableName}`; // Limit to 1000 rows for analysis
+              const sampleQuery = metadata.connectionType === 'sqlserver' 
+                ? `SELECT TOP 10 * FROM ${tableName}`
+                : `SELECT * FROM ${tableName} LIMIT 10`;
               
-              const result = await DatabaseConnectorService.executeQuery(
+              const sampleResult = await DatabaseConnectorService.executeQuery(
                 metadata.connectionType || dataSource.type,
                 connectionConfig,
-                query
+                sampleQuery
               );
               
-              // Convert result to CSV-like format
-              if (result.rows && result.columns) {
-                csvData = result.rows.map((row: any[]) => {
+              // Extract column information from sample
+              let columns: Array<{ name: string; type: string }> = [];
+              if (sampleResult.rows && sampleResult.rows.length > 0 && sampleResult.columns) {
+                const sampleRow = sampleResult.rows[0];
+                columns = sampleResult.columns.map((colName: string, idx: number) => {
+                  const value = sampleRow[idx];
+                  let type = 'string';
+                  
+                  if (value === null || value === undefined) {
+                    type = 'unknown';
+                  } else if (typeof value === 'number') {
+                    type = Number.isInteger(value) ? 'integer' : 'float';
+                  } else if (value instanceof Date) {
+                    type = 'date';
+                  } else if (typeof value === 'boolean') {
+                    type = 'boolean';
+                  }
+                  
+                  return { name: colName, type };
+                });
+              }
+              
+              // Generate SQL query using AI (privacy-safe, schema only)
+              const { generateSQLQuery } = await import('./services/sql-generator');
+              const sqlGeneration = await generateSQLQuery({
+                question,
+                tableName: metadata.tableName,
+                schemaName: metadata.schemaName,
+                columns,
+                databaseType: metadata.connectionType || dataSource.type
+              });
+              
+              sqlQueryGenerated = sqlGeneration.sql;
+              console.log('Generated SQL query:', sqlQueryGenerated);
+              
+              // Execute the generated SQL on the REAL database
+              const queryResult = await DatabaseConnectorService.executeQuery(
+                metadata.connectionType || dataSource.type,
+                connectionConfig,
+                sqlQueryGenerated
+              );
+              
+              sqlResults = queryResult;
+              
+              // Convert results to a format the AI can understand
+              if (queryResult.rows && queryResult.columns) {
+                csvData = queryResult.rows.map((row: any[]) => {
                   const obj: any = {};
-                  result.columns.forEach((col: string, idx: number) => {
+                  queryResult.columns.forEach((col: string, idx: number) => {
                     obj[col] = row[idx];
                   });
                   return obj;
                 });
               }
+              
             } catch (dbError) {
-              console.error('Error loading database table data for AI analysis:', dbError);
+              console.error('Error executing SQL query for AI analysis:', dbError);
+              throw dbError;
             }
           }
         }
@@ -402,7 +453,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dataSourceId: dataSourceId || null,
         metadata: {
           chartData: analysis.chartData,
-          chartType: analysis.chartType
+          chartType: analysis.chartType,
+          sqlQuery: sqlQueryGenerated,
+          sqlResults: sqlResults ? { rowCount: sqlResults.rowCount } : null
         }
       });
 
@@ -414,6 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chartType: analysis.chartType,
         kpiValue: analysis.kpiValue,
         unit: analysis.unit,
+        sqlQuery: sqlQueryGenerated,
         createdAt: aiQuery.createdAt
       });
 
