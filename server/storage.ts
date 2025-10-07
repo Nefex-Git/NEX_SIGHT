@@ -211,6 +211,12 @@ export class MemStorage implements IStorage {
       dashboardId: insertKpi.dashboardId || null,
       unit: insertKpi.unit || null,
       changePercent: insertKpi.changePercent || null,
+      visualType: insertKpi.visualType || null,
+      format: insertKpi.format || null,
+      decimalPlaces: insertKpi.decimalPlaces ?? null,
+      currencyCode: insertKpi.currencyCode || null,
+      prefix: insertKpi.prefix || null,
+      suffix: insertKpi.suffix || null,
       id,
       lastUpdated: now,
       createdAt: now
