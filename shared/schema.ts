@@ -78,16 +78,48 @@ export const aiQueries = pgTable("ai_queries", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// KPIs table
+// KPIs table - Apache Superset style
 export const kpis = pgTable("kpis", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  question: text("question").notNull(),
+  dataSourceId: varchar("data_source_id").references(() => dataSources.id),
+  
+  // Basic info
+  title: text("title").notNull(),
+  description: text("description"),
+  type: text("type").notNull().default('big_number'), // 'big_number', 'big_number_trendline', 'gauge'
+  
+  // Value and metric
   value: text("value").notNull(),
-  unit: text("unit"),
-  changePercent: text("change_percent"),
+  sqlQuery: text("sql_query"), // SQL used to generate this KPI
+  metric: text("metric"), // Metric name (COUNT, SUM, AVG, etc.)
+  
+  // Formatting
+  format: text("format").default('number'), // 'number', 'currency', 'percentage'
+  prefix: text("prefix"),
+  suffix: text("suffix"),
+  
+  // Comparison and time
+  previousValue: text("previous_value"),
+  comparisonType: text("comparison_type").default('percentage'), // 'percentage', 'absolute'
+  comparisonPeriod: text("comparison_period"), // 'vs. last week', 'vs. last month'
+  timeGrain: text("time_grain"), // 'day', 'week', 'month', 'quarter', 'year'
+  
+  // Target and thresholds
+  target: text("target"), // Goal value
+  thresholds: jsonb("thresholds"), // { good: 80, warning: 50, bad: 0 } (percentages)
+  
+  // Trend data for trendline visualization
+  trendData: jsonb("trend_data"), // Array of { value, date }
+  
+  // Additional metadata
+  subheader: text("subheader"),
+  metadata: jsonb("metadata"),
+  
+  // Timestamps
   lastUpdated: timestamp("last_updated").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Charts table
@@ -141,6 +173,7 @@ export const insertKpiSchema = createInsertSchema(kpis).omit({
   id: true,
   createdAt: true,
   lastUpdated: true,
+  updatedAt: true,
 });
 
 export const insertChartSchema = createInsertSchema(charts).omit({
