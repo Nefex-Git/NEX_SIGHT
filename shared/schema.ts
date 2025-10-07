@@ -97,6 +97,12 @@ export const kpis = pgTable("kpis", {
   value: text("value").notNull(),
   unit: text("unit"),
   changePercent: text("change_percent"),
+  visualType: text("visual_type").default('big-number'), // 'big-number' | 'big-number-trendline'
+  format: text("format").default('number'), // 'number' | 'currency' | 'percentage'
+  decimalPlaces: integer("decimal_places").default(0),
+  currencyCode: text("currency_code").default('USD'),
+  prefix: text("prefix"),
+  suffix: text("suffix"),
   lastUpdated: timestamp("last_updated").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
