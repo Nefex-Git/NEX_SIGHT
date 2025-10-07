@@ -53,7 +53,14 @@ User Question: ${question}`;
       // CRITICAL: Do NOT send real analysis results to OpenAI
       // But we DO need to tell the AI what the answer is so it can format it properly
       if (analysisResult) {
-        if (analysisResult.kpiValue) {
+        if (analysisResult.isMultiColumn && analysisResult.allColumns) {
+          // For multi-column results (e.g., product name + amount), provide ALL columns
+          const columnDetails = Object.entries(analysisResult.allColumns)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(', ');
+          context += `\n\nAnalysis Complete: Query returned the following result - ${columnDetails}`;
+          context += `\n\nIMPORTANT: Include ALL these values in your natural language answer, not just the numeric value.`;
+        } else if (analysisResult.kpiValue) {
           // For SQL results and aggregations, provide the actual answer
           context += `\n\nAnalysis Complete: The answer is ${analysisResult.kpiValue}${analysisResult.unit ? ' ' + analysisResult.unit : ''}.`;
         } else if (analysisResult.trendData) {
@@ -164,17 +171,34 @@ function performLocalAnalysis(question: string, data: any[], schema: any): any {
     };
   }
   
-  // If data has a single numeric column (aggregation)
-  if (data.length === 1 && Object.keys(data[0]).length <= 3) {
-    const firstKey = Object.keys(data[0])[0];
-    const firstValue = data[0][firstKey];
-    if (typeof firstValue === 'number' || !isNaN(Number(firstValue))) {
-      return { 
-        kpiValue: firstValue?.toString() || '0', 
-        unit: firstKey,
-        isSQLResult: true 
-      };
-    }
+  // If data is a single row with multiple columns (e.g., product name + amount)
+  if (data.length === 1 && Object.keys(data[0]).length >= 2) {
+    const keys = Object.keys(data[0]);
+    const values: Record<string, any> = {};
+    let numericKey: string | null = null;
+    let numericValue: any = null;
+    
+    // Extract all column values and find the numeric one for KPI
+    keys.forEach(key => {
+      const value = data[0][key];
+      values[key] = value;
+      
+      // Find the numeric column for KPI display
+      if ((typeof value === 'number' || !isNaN(Number(value))) && numericKey === null) {
+        numericKey = key;
+        numericValue = value;
+      }
+    });
+    
+    console.log('✅ Single row multi-column result detected:', values);
+    
+    return {
+      kpiValue: numericValue?.toString() || '',
+      unit: numericKey || '',
+      allColumns: values,  // Include ALL column values
+      isSQLResult: true,
+      isMultiColumn: true
+    };
   }
   
   if (q.includes('total') || q.includes('sum')) return calculateSum(data, schema);
