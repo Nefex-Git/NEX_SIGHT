@@ -87,6 +87,13 @@ User Question: ${question}`;
     let chartData = null;
     if (result.chartType && analysisResult) {
       chartData = prepareChartData(result.chartType, analysisResult, dataSchema);
+      console.log('Prepared chart data:', JSON.stringify(chartData, null, 2));
+    }
+    
+    // If analysisResult is an array (grouped data), prepare it for charting
+    if (Array.isArray(analysisResult) && analysisResult.length > 0 && result.chartType) {
+      chartData = prepareChartData(result.chartType, analysisResult, dataSchema);
+      console.log('Prepared chart data from array:', JSON.stringify(chartData, null, 2));
     }
     
     return {
@@ -111,6 +118,20 @@ User Question: ${question}`;
 function performLocalAnalysis(question: string, data: any[], schema: any): any {
   const q = question.toLowerCase();
   
+  // PRIORITY: Check for grouped data FIRST (before keyword matching)
+  // If data has multiple rows with a string column and a numeric column (likely GROUP BY result)
+  if (data.length > 1 && Object.keys(data[0]).length >= 2) {
+    const keys = Object.keys(data[0]);
+    const stringKey = keys.find(k => typeof data[0][k] === 'string');
+    const numKey = keys.find(k => typeof data[0][k] === 'number');
+    
+    if (stringKey && numKey) {
+      // This is grouped data from SQL - return it directly for charting
+      console.log('Detected grouped data for charting:', { stringKey, numKey });
+      return data; // Return array directly for chart preparation
+    }
+  }
+  
   // If data is a single row with a single column (likely an aggregation result from SQL)
   if (data.length === 1 && Object.keys(data[0]).length === 1) {
     const key = Object.keys(data[0])[0];
@@ -132,18 +153,6 @@ function performLocalAnalysis(question: string, data: any[], schema: any): any {
         unit: firstKey,
         isSQLResult: true 
       };
-    }
-  }
-  
-  // If data has multiple rows with a string column and a numeric column (likely GROUP BY result)
-  if (data.length > 1 && Object.keys(data[0]).length === 2) {
-    const keys = Object.keys(data[0]);
-    const stringKey = keys.find(k => typeof data[0][k] === 'string');
-    const numKey = keys.find(k => typeof data[0][k] === 'number');
-    
-    if (stringKey && numKey) {
-      // This is grouped data from SQL - return it directly for charting
-      return data; // Return array directly for chart preparation
     }
   }
   
