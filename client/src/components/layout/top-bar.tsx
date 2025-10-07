@@ -56,9 +56,9 @@ export default function TopBar({ currentPage, onSidebarToggle }: TopBarProps) {
             </h2>
           </div>
           
-          {/* Voice/Text prompt interface - Hidden on dashboard */}
+          {/* Voice/Text prompt interface - Hidden on dashboard and assistant page */}
           <div className="flex items-center gap-4">
-            {currentPage !== "dashboard" && (
+            {currentPage !== "dashboard" && currentPage !== "assistant" && (
               <>
                 {/* Voice Input Button */}
                 <VoiceButton
@@ -94,8 +94,8 @@ export default function TopBar({ currentPage, onSidebarToggle }: TopBarProps) {
           </div>
         </div>
         
-        {/* Voice Status Component - Hidden on dashboard */}
-        {currentPage !== "dashboard" && (
+        {/* Voice Status Component - Hidden on dashboard and assistant page */}
+        {currentPage !== "dashboard" && currentPage !== "assistant" && (
           <VoiceStatus 
             isRecording={isRecording}
             isTranscribing={isTranscribing}
