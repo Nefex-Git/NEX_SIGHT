@@ -1,24 +1,156 @@
-import { useQuery } from "@tanstack/react-query";
-import { getKpis, getAiQueries } from "@/lib/api";
-import KpiCard from "@/components/dashboard/kpi-card";
-import ChartContainer from "@/components/dashboard/chart-container";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Brain, Mic, Eye, MoreHorizontal, Plus } from "lucide-react";
+import { Plus, LayoutDashboard, Eye, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import type { Dashboard } from "@shared/schema";
 
-export default function DashboardPage() {
-  const { data: kpis = [], isLoading: kpisLoading } = useQuery({
-    queryKey: ["/api/kpis"],
-    queryFn: () => getKpis(),
+interface DashboardWithCount extends Dashboard {
+  kpiCount: number;
+}
+
+interface DashboardPageProps {
+  onNavigateToDashboard?: (dashboardId: string) => void;
+}
+
+export default function DashboardPage({ onNavigateToDashboard }: DashboardPageProps) {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingDashboard, setEditingDashboard] = useState<Dashboard | null>(null);
+  const [newDashboardName, setNewDashboardName] = useState("");
+  const [newDashboardDescription, setNewDashboardDescription] = useState("");
+  const { toast } = useToast();
+
+  const { data: dashboards = [], isLoading } = useQuery<DashboardWithCount[]>({
+    queryKey: ["/api/dashboards"],
   });
 
-  const { data: recentQueries = [], isLoading: queriesLoading } = useQuery({
-    queryKey: ["/api/ai/queries"],
-    queryFn: () => getAiQueries(5),
+  const createMutation = useMutation({
+    mutationFn: async (data: { name: string; description?: string }) => {
+      return apiRequest("POST", "/api/dashboards", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboards"] });
+      setCreateDialogOpen(false);
+      setNewDashboardName("");
+      setNewDashboardDescription("");
+      toast({
+        title: "Success",
+        description: "Dashboard created successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create dashboard",
+        variant: "destructive",
+      });
+    },
   });
 
-  const formatTimeAgo = (dateString: string) => {
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Dashboard> }) => {
+      return apiRequest("PUT", `/api/dashboards/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboards"] });
+      setEditingDashboard(null);
+      setNewDashboardName("");
+      setNewDashboardDescription("");
+      toast({
+        title: "Success",
+        description: "Dashboard updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update dashboard",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/dashboards/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboards"] });
+      toast({
+        title: "Success",
+        description: "Dashboard deleted successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete dashboard",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateDashboard = () => {
+    if (!newDashboardName.trim()) {
+      toast({
+        title: "Error",
+        description: "Dashboard name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    createMutation.mutate({
+      name: newDashboardName,
+      description: newDashboardDescription || undefined,
+    });
+  };
+
+  const handleUpdateDashboard = () => {
+    if (!editingDashboard || !newDashboardName.trim()) {
+      toast({
+        title: "Error",
+        description: "Dashboard name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateMutation.mutate({
+      id: editingDashboard.id,
+      data: {
+        name: newDashboardName,
+        description: newDashboardDescription || null,
+      },
+    });
+  };
+
+  const openEditDialog = (dashboard: Dashboard) => {
+    setEditingDashboard(dashboard);
+    setNewDashboardName(dashboard.name);
+    setNewDashboardDescription(dashboard.description || "");
+  };
+
+  const formatTimeAgo = (dateString: string | Date) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -32,271 +164,202 @@ export default function DashboardPage() {
     return `${diffDays}d ago`;
   };
 
-  // Mock dashboard data - in real implementation, this would come from API
-  const dashboards = [
-    {
-      id: "1",
-      name: "Sales Overview",
-      description: "Revenue trends and sales KPIs",
-      createdAt: "2024-01-15T10:30:00Z",
-      lastViewed: "2024-01-20T15:45:00Z",
-      chartCount: 4,
-      kpiCount: 6,
-      thumbnail: "/api/dashboards/1/thumbnail" // placeholder path
-    },
-    {
-      id: "2", 
-      name: "Product Analytics",
-      description: "Product performance and inventory insights",
-      createdAt: "2024-01-18T14:20:00Z",
-      lastViewed: "2024-01-22T09:15:00Z",
-      chartCount: 3,
-      kpiCount: 4,
-      thumbnail: "/api/dashboards/2/thumbnail"
-    },
-    {
-      id: "3",
-      name: "Customer Insights", 
-      description: "Customer behavior and satisfaction metrics",
-      createdAt: "2024-01-20T16:45:00Z",
-      lastViewed: "2024-01-21T11:30:00Z",
-      chartCount: 5,
-      kpiCount: 3,
-      thumbnail: "/api/dashboards/3/thumbnail"
-    }
-  ];
-
-  const handleDashboardClick = (dashboardId: string) => {
-    // In a real implementation, this would navigate to the specific dashboard
-    console.log(`Opening dashboard: ${dashboardId}`);
-    // For now, we'll just show an alert - in reality this would navigate to the dashboard
-    alert(`Opening dashboard: ${dashboards.find(d => d.id === dashboardId)?.name}`);
-  };
-
   return (
     <div className="p-6 space-y-6">
-      {/* Dashboard Previews */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold">Your Dashboards</h2>
-            <p className="text-muted-foreground">
-              Click on any dashboard to open it
-            </p>
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Dashboards</h2>
+          <p className="text-muted-foreground">
+            Create and manage your custom dashboards
+          </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {dashboards.map((dashboard) => (
-            <Card 
-              key={dashboard.id} 
-              className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105"
-              onClick={() => handleDashboardClick(dashboard.id)}
-              data-testid={`dashboard-preview-${dashboard.id}`}
-            >
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg mb-1">{dashboard.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{dashboard.description}</p>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log(`Dashboard options: ${dashboard.id}`);
-                    }}
-                    data-testid={`dashboard-options-${dashboard.id}`}
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
+        <Dialog 
+          open={createDialogOpen || editingDashboard !== null} 
+          onOpenChange={(open) => {
+            if (!open) {
+              setCreateDialogOpen(false);
+              setEditingDashboard(null);
+              setNewDashboardName("");
+              setNewDashboardDescription("");
+            } else {
+              setCreateDialogOpen(true);
+            }
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button data-testid="button-create-dashboard">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Dashboard
+            </Button>
+          </DialogTrigger>
+          <DialogContent data-testid="dialog-create-dashboard">
+            <DialogHeader>
+              <DialogTitle>
+                {editingDashboard ? "Edit Dashboard" : "Create New Dashboard"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingDashboard 
+                  ? "Update your dashboard details" 
+                  : "Add a new dashboard to organize your KPIs"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="dashboard-name">Dashboard Name</Label>
+                <Input
+                  id="dashboard-name"
+                  data-testid="input-dashboard-name"
+                  placeholder="e.g., Sales Overview"
+                  value={newDashboardName}
+                  onChange={(e) => setNewDashboardName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dashboard-description">Description (Optional)</Label>
+                <Textarea
+                  id="dashboard-description"
+                  data-testid="input-dashboard-description"
+                  placeholder="Describe what this dashboard tracks..."
+                  value={newDashboardDescription}
+                  onChange={(e) => setNewDashboardDescription(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCreateDialogOpen(false);
+                  setEditingDashboard(null);
+                  setNewDashboardName("");
+                  setNewDashboardDescription("");
+                }}
+                data-testid="button-cancel-dashboard"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={editingDashboard ? handleUpdateDashboard : handleCreateDashboard}
+                disabled={createMutation.isPending || updateMutation.isPending}
+                data-testid="button-save-dashboard"
+              >
+                {editingDashboard ? "Update" : "Create"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Dashboards Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-full" />
               </CardHeader>
               <CardContent>
-                {/* Dashboard thumbnail/preview area */}
-                <div className="w-full h-32 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg mb-4 flex items-center justify-center border-2 border-dashed border-border">
-                  <div className="text-center">
-                    <Eye className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Dashboard Preview</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-                  <span>{dashboard.chartCount} charts</span>
-                  <span>{dashboard.kpiCount} KPIs</span>
-                </div>
-                
-                <div className="text-xs text-muted-foreground">
-                  <p>Created: {formatTimeAgo(dashboard.createdAt)}</p>
-                  <p>Last viewed: {formatTimeAgo(dashboard.lastViewed)}</p>
+                <Skeleton className="h-32 w-full mb-4" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-2/3" />
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      </div>
-
-      {/* Current Dashboard KPIs */}
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Current Dashboard KPIs</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpisLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="p-6">
-              <Skeleton className="h-8 w-8 mb-4" />
-              <Skeleton className="h-8 w-24 mb-2" />
-              <Skeleton className="h-4 w-32" />
+      ) : dashboards.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {dashboards.map((dashboard) => (
+            <Card 
+              key={dashboard.id} 
+              className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105"
+              onClick={() => onNavigateToDashboard?.(dashboard.id)}
+              data-testid={`dashboard-card-${dashboard.id}`}
+            >
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg mb-1">{dashboard.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {dashboard.description || "No description"}
+                    </p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                        data-testid={`button-dashboard-options-${dashboard.id}`}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditDialog(dashboard);
+                        }}
+                        data-testid={`button-edit-dashboard-${dashboard.id}`}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm("Are you sure you want to delete this dashboard?")) {
+                            deleteMutation.mutate(dashboard.id);
+                          }
+                        }}
+                        className="text-destructive"
+                        data-testid={`button-delete-dashboard-${dashboard.id}`}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Dashboard preview area */}
+                <div className="w-full h-32 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg mb-4 flex items-center justify-center border-2 border-dashed border-border">
+                  <div className="text-center">
+                    <LayoutDashboard className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      {dashboard.kpiCount} {dashboard.kpiCount === 1 ? "KPI" : "KPIs"}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>Created: {dashboard.createdAt ? formatTimeAgo(dashboard.createdAt) : 'N/A'}</p>
+                  <p>Updated: {dashboard.updatedAt ? formatTimeAgo(dashboard.updatedAt) : 'N/A'}</p>
+                </div>
+              </CardContent>
             </Card>
-          ))
-        ) : kpis.length > 0 ? (
-          kpis.map((kpi) => (
-            <KpiCard key={kpi.id} kpi={kpi} />
-          ))
-        ) : (
-          <Card className="col-span-full p-8 text-center">
-            <div className="text-muted-foreground">
-              <TrendingUp className="mx-auto h-8 w-8 mb-4" />
-              <p>No KPIs yet. Create some by asking questions to the AI assistant.</p>
-            </div>
-          </Card>
-        )}
-      </div>
-      </div>
-
-      {/* Current Dashboard Charts */}
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Current Dashboard Charts</h3>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartContainer
-          title="Revenue Trends"
-          type="line"
-          data={[
-            { name: "Jan", value: 400000 },
-            { name: "Feb", value: 650000 },
-            { name: "Mar", value: 800000 },
-            { name: "Apr", value: 550000 },
-            { name: "May", value: 1245000 },
-            { name: "Jun", value: 750000 },
-          ]}
-        />
-        
-        <ChartContainer
-          title="Top Products"
-          type="bar"
-          data={[
-            { name: "SKU-AX910", value: 245000 },
-            { name: "SKU-BX820", value: 189500 },
-            { name: "SKU-CX730", value: 152200 },
-            { name: "SKU-DX640", value: 98750 },
-          ]}
-        />
-      </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent AI Queries */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Recent AI Queries
-                <Button variant="link" size="sm" data-testid="link-view-all-queries">
-                  View All
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {queriesLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex gap-4 p-4 border rounded-lg">
-                      <Skeleton className="h-8 w-8 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-4 w-1/2" />
-                        <Skeleton className="h-3 w-16" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : recentQueries.length > 0 ? (
-                <div className="space-y-4">
-                  {recentQueries.map((query) => (
-                    <div key={query.id} className="flex gap-4 p-4 rounded-lg bg-muted/30 border border-border/50">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                        {query.isVoiceQuery === 'true' ? (
-                          <Mic className="h-4 w-4 text-white" />
-                        ) : (
-                          <Brain className="h-4 w-4 text-white" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-muted-foreground">Q: {query.question}</p>
-                        <p className="text-sm font-medium mt-1">
-                          A: {query.answer.slice(0, 100)}
-                          {query.answer.length > 100 && "..."}
-                        </p>
-                        <span className="text-xs text-muted-foreground">
-                          {formatTimeAgo(query.createdAt)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-muted-foreground py-8">
-                  <Brain className="mx-auto h-8 w-8 mb-4" />
-                  <p>No questions yet. Ask something in NEX Assistant.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          ))}
         </div>
-
-        {/* Quick Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Stats</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Data Sources</span>
-                <span className="text-lg font-semibold" data-testid="text-data-sources-count">
-                  {/* This would be populated from actual data */}
-                  0
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Active Dashboards</span>
-                <span className="text-lg font-semibold" data-testid="text-dashboards-count">1</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Queries Today</span>
-                <span className="text-lg font-semibold" data-testid="text-queries-count">
-                  {recentQueries.length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Voice Queries</span>
-                <span className="text-lg font-semibold" data-testid="text-voice-queries-count">
-                  {recentQueries.filter(q => q.isVoiceQuery === 'true').length}
-                </span>
-              </div>
-            </div>
-            
-            <div className="mt-6 pt-4 border-t border-border">
-              <Button className="w-full bg-primary/20 text-primary hover:bg-primary/30" data-testid="button-quick-setup">
-                <Plus className="mr-2 h-4 w-4" />
-                Quick Setup
-              </Button>
-            </div>
-          </CardContent>
+      ) : (
+        <Card className="p-12 text-center">
+          <div className="text-muted-foreground">
+            <LayoutDashboard className="mx-auto h-12 w-12 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Dashboards Yet</h3>
+            <p className="mb-4">Create your first dashboard to start organizing your KPIs</p>
+            <Button onClick={() => setCreateDialogOpen(true)} data-testid="button-create-first-dashboard">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Dashboard
+            </Button>
+          </div>
         </Card>
-      </div>
+      )}
     </div>
   );
 }
