@@ -71,6 +71,17 @@ export const CHART_CATALOG: ChartType[] = [
       thresholds: { type: 'array' }
     }
   },
+  {
+    id: 'multi_value_card',
+    name: 'Multi-Value Card',
+    description: 'Display multiple related metrics in a single card',
+    category: ['KPI', 'Popular'],
+    tags: ['2D', 'metric', 'kpi', 'multi-metric'],
+    configSchema: {
+      values: { type: 'columns', required: true, multiple: true },
+      labels: { type: 'array' }
+    }
+  },
 
   // Bar Charts
   {

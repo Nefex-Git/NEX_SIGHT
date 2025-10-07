@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { BigNumber } from "@/components/kpi/big-number";
 import { BigNumberTrendline } from "@/components/kpi/big-number-trendline";
+import { MultiValueCard } from "@/components/kpi/multi-value-card";
 
 interface KpiCardProps {
   kpi: KPI;
@@ -41,6 +42,36 @@ export default function KpiCard({ kpi, onEdit, onDelete }: KpiCardProps) {
   const formattedValue = formatValue(kpi.value);
   const prefix = kpi.prefix || '';
   const suffix = kpi.suffix || '';
+
+  // Parse multi-value data if present
+  const parseMultiValue = (): Array<{label: string, value: string}> | null => {
+    try {
+      // Check if value contains labeled data (e.g., "Product: XYZ, Units: 100, Amount: $500")
+      const labeledPattern = /([^:]+):\s*([^,\n]+)/g;
+      const matches = Array.from(kpi.value.matchAll(labeledPattern));
+      
+      if (matches.length > 1) {
+        return matches.map(match => ({
+          label: match[1].trim(),
+          value: match[2].trim()
+        }));
+      }
+      
+      // Check if it's a comma/newline separated list
+      const lines = kpi.value.split(/[,\n]/).map(l => l.trim()).filter(l => l);
+      if (lines.length > 1 && lines.length <= 5) {
+        return lines.map((line, i) => ({
+          label: `Value ${i + 1}`,
+          value: line
+        }));
+      }
+    } catch (e) {
+      console.error('Error parsing multi-value:', e);
+    }
+    return null;
+  };
+
+  const multiValues = visualType === 'multi-value' ? parseMultiValue() : null;
 
   const cardContent = (
     <div className="relative group">
@@ -77,7 +108,23 @@ export default function KpiCard({ kpi, onEdit, onDelete }: KpiCardProps) {
         </div>
       )}
       
-      {visualType === 'big-number-trendline' ? (
+      {visualType === 'multi-value' && multiValues ? (
+        <MultiValueCard
+          title={kpi.question}
+          values={multiValues.map(v => {
+            const numVal = parseFloat(v.value);
+            const isNumeric = !isNaN(numVal);
+            
+            return {
+              label: v.label,
+              value: isNumeric ? formatValue(v.value) : v.value,
+              prefix: isNumeric ? prefix : '',
+              suffix: isNumeric ? suffix : '',
+              highlight: false
+            };
+          })}
+        />
+      ) : visualType === 'big-number-trendline' ? (
         <BigNumberTrendline
           title={kpi.question}
           value={formattedValue}

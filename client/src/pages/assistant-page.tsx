@@ -81,7 +81,7 @@ export default function AssistantPage() {
   const kpiMutation = useMutation({
     mutationFn: ({ question, value, config }: { question: string; value: string; config: KPIConfig }) => 
       createKpi({
-        question,
+        question: config.title || question,
         value,
         unit: undefined,
         changePercent: undefined,
