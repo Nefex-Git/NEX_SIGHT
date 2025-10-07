@@ -418,6 +418,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               sqlResults = queryResult;
               
+              console.log('SQL Query Result:', JSON.stringify(queryResult, null, 2));
+              
               // Convert results to a format the AI can understand
               if (queryResult.rows && queryResult.columns) {
                 csvData = queryResult.rows.map((row: any[]) => {
@@ -427,6 +429,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   });
                   return obj;
                 });
+                
+                console.log('Converted CSV Data:', JSON.stringify(csvData, null, 2));
               }
               
             } catch (dbError) {
