@@ -7,8 +7,9 @@ import AssistantPage from "./assistant-page";
 import WarehousePage from "./warehouse-page";
 import ChartsPage from "./charts-page";
 import DatasetsPage from "./datasets-page";
+import KPIDashboard from "./kpi-dashboard";
 
-type Page = "dashboard" | "assistant" | "warehouse" | "charts" | "datasets";
+type Page = "dashboard" | "assistant" | "warehouse" | "charts" | "datasets" | "kpis";
 
 export default function HomePage() {
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
@@ -18,6 +19,8 @@ export default function HomePage() {
     switch (currentPage) {
       case "dashboard":
         return <DashboardPage />;
+      case "kpis":
+        return <KPIDashboard />;
       case "assistant":
         return <AssistantPage />;
       case "warehouse":
@@ -35,7 +38,7 @@ export default function HomePage() {
     <div className="flex min-h-screen bg-background">
       <Sidebar 
         currentPage={currentPage} 
-        onPageChange={setCurrentPage}
+        onPageChange={(page) => setCurrentPage(page as Page)}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
