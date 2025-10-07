@@ -13,6 +13,7 @@ import DashboardPage from "@/pages/dashboard-page";
 import DatasetsPage from "@/pages/datasets-page";
 import KPIDashboard from "@/pages/kpi-dashboard";
 import ChartsPage from "@/pages/charts-page";
+import ChartBuilderPage from "@/pages/chart-builder-page";
 
 function Router() {
   return (
@@ -23,6 +24,7 @@ function Router() {
       <ProtectedRoute path="/datasets" component={DatasetsPage} />
       <ProtectedRoute path="/kpis" component={KPIDashboard} />
       <ProtectedRoute path="/charts" component={ChartsPage} />
+      <ProtectedRoute path="/chart-builder" component={ChartBuilderPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/login" component={AuthPage} />
       <Route component={NotFound} />
