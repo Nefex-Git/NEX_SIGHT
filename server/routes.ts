@@ -317,150 +317,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI query endpoints
   app.post('/api/ai/query', requireAuth, async (req: any, res) => {
     try {
-      const { question, dataSourceId, isVoiceQuery } = req.body;
+      const { question, dataSourceIds, dataSourceId, isVoiceQuery } = req.body;
 
       if (!question) {
         return res.status(400).json({ message: 'Question is required' });
       }
 
-      let csvData = [];
-      let dataSourceMetadata = {};
-      let sqlQueryGenerated = null;
-      let sqlResults = null;
-
-      // Load data if data source is specified
-      if (dataSourceId) {
-        const dataSource = await storage.getDataSource(dataSourceId);
-        
-        if (dataSource && dataSource.userId === req.user.id) {
-          // Sanitize metadata - NEVER send credentials to AI
-          const rawMetadata = dataSource.metadata || {};
-          dataSourceMetadata = {
-            name: dataSource.name,
-            type: dataSource.type,
-            isTableDataset: (rawMetadata as any)?.isTableDataset,
-            tableName: (rawMetadata as any)?.tableName,
-            schemaName: (rawMetadata as any)?.schemaName,
-            // Explicitly exclude: password, username, host, port, database credentials
-          };
-          
-          // Check if it's a CSV file dataset
-          if (dataSource.filename) {
-            const filePath = path.join(process.cwd(), 'uploads', dataSource.filename);
-            if (fs.existsSync(filePath)) {
-              csvData = await parseCSVFile(filePath);
-            }
-          }
-          // Check if it's a database table dataset - USE SQL GENERATION
-          else if ((dataSource.metadata as any)?.isTableDataset) {
-            try {
-              const metadata = dataSource.metadata as any;
-              const connectionConfig = {
-                host: metadata.host,
-                port: metadata.port,
-                database: metadata.database,
-                username: metadata.username,
-                password: metadata.password
-              };
-              
-              // First, get schema information (sample data for column types)
-              const tableName = `${metadata.schemaName}.${metadata.tableName}`;
-              const sampleQuery = metadata.connectionType === 'sqlserver' 
-                ? `SELECT TOP 10 * FROM ${tableName}`
-                : `SELECT * FROM ${tableName} LIMIT 10`;
-              
-              const sampleResult = await DatabaseConnectorService.executeQuery(
-                metadata.connectionType || dataSource.type,
-                connectionConfig,
-                sampleQuery
-              );
-              
-              // Extract column information from sample
-              let columns: Array<{ name: string; type: string }> = [];
-              if (sampleResult.rows && sampleResult.rows.length > 0 && sampleResult.columns) {
-                const sampleRow = sampleResult.rows[0];
-                columns = sampleResult.columns.map((colName: string, idx: number) => {
-                  const value = sampleRow[idx];
-                  let type = 'string';
-                  
-                  if (value === null || value === undefined) {
-                    type = 'unknown';
-                  } else if (typeof value === 'number') {
-                    type = Number.isInteger(value) ? 'integer' : 'float';
-                  } else if (value instanceof Date) {
-                    type = 'date';
-                  } else if (typeof value === 'boolean') {
-                    type = 'boolean';
-                  }
-                  
-                  return { name: colName, type };
-                });
-              }
-              
-              // Generate SQL query using AI (privacy-safe, schema only)
-              const { generateSQLQuery } = await import('./services/sql-generator');
-              const sqlGeneration = await generateSQLQuery({
-                question,
-                tableName: metadata.tableName,
-                schemaName: metadata.schemaName,
-                columns,
-                databaseType: metadata.connectionType || dataSource.type
-              });
-              
-              sqlQueryGenerated = sqlGeneration.sql;
-              console.log('Generated SQL query:', sqlQueryGenerated);
-              
-              // Execute the generated SQL on the REAL database
-              const queryResult = await DatabaseConnectorService.executeQuery(
-                metadata.connectionType || dataSource.type,
-                connectionConfig,
-                sqlQueryGenerated
-              );
-              
-              sqlResults = queryResult;
-              
-              console.log('SQL Query Result:', JSON.stringify(queryResult, null, 2));
-              
-              // Convert results to a format the AI can understand
-              if (queryResult.rows && queryResult.columns) {
-                csvData = queryResult.rows.map((row: any[]) => {
-                  const obj: any = {};
-                  queryResult.columns.forEach((col: string, idx: number) => {
-                    obj[col] = row[idx];
-                  });
-                  return obj;
-                });
-                
-                console.log('Converted CSV Data:', JSON.stringify(csvData, null, 2));
-              }
-              
-            } catch (dbError) {
-              console.error('Error executing SQL query for AI analysis:', dbError);
-              throw dbError;
-            }
-          }
-        }
+      // Handle backward compatibility: convert single dataSourceId to array
+      let sourceIds: string[] = [];
+      if (dataSourceIds && Array.isArray(dataSourceIds)) {
+        sourceIds = dataSourceIds;
+      } else if (dataSourceId) {
+        // Backward compatibility with old API
+        sourceIds = [dataSourceId];
       }
 
-      // Analyze with PRIVACY-PRESERVING AI (no real data sent to OpenAI)
-      const analysis = await analyzeDataWithPrivacy({
+      // Import and use the AI Query Service
+      const { AiQueryService } = await import('./services/ai-query-service');
+      
+      const result = await AiQueryService.processQuery({
         question,
-        csvData,
-        dataSourceMetadata
+        dataSourceIds: sourceIds,
+        userId: req.user.id,
+        isVoiceQuery
       });
 
-      // Save the query
+      // Save the query to history
       const aiQuery = await storage.createAiQuery({
         userId: req.user.id,
         question,
-        answer: analysis.answer,
+        answer: result.answer,
         isVoiceQuery: isVoiceQuery ? 'true' : 'false',
-        dataSourceId: dataSourceId || null,
+        dataSourceId: sourceIds.length > 0 ? sourceIds[0] : null,
         metadata: {
-          chartData: analysis.chartData,
-          chartType: analysis.chartType,
-          sqlQuery: sqlQueryGenerated,
-          sqlResults: sqlResults ? { rowCount: sqlResults.rowCount } : null
+          chartData: result.chartData,
+          chartType: result.chartType,
+          sqlQuery: result.sqlQuery,
+          relationships: result.relationships,
+          ...(result.metadata || {})
         }
       });
 
@@ -468,11 +362,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: aiQuery.id,
         question: aiQuery.question,
         answer: aiQuery.answer,
-        chartData: analysis.chartData,
-        chartType: analysis.chartType,
-        kpiValue: analysis.kpiValue,
-        unit: analysis.unit,
-        sqlQuery: sqlQueryGenerated,
+        chartData: result.chartData,
+        chartType: result.chartType,
+        kpiValue: result.kpiValue,
+        unit: result.unit,
+        sqlQuery: result.sqlQuery,
+        relationships: result.relationships,
         createdAt: aiQuery.createdAt
       });
 
