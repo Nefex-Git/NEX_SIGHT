@@ -43,6 +43,10 @@ export default function ChartContainer({
   showTitle = true,
   onExpand 
 }: ChartContainerProps) {
+  // If heatmap or unsupported type requested with data, default to table
+  if (!['line', 'bar', 'pie', 'table'].includes(type) && data && data.length > 0) {
+    type = 'table';
+  }
   const formatValue = (value: any) => {
     if (typeof value === 'number') {
       if (value >= 1000000) {
