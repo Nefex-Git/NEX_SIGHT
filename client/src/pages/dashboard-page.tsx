@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import type { Dashboard } from "@shared/schema";
+import { motion } from "framer-motion";
 
 interface DashboardWithCount extends Dashboard {
   kpiCount: number;
@@ -165,9 +166,19 @@ export default function DashboardPage({ onNavigateToDashboard }: DashboardPagePr
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <motion.div 
+      className="p-6 space-y-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div 
+        className="flex items-center justify-between"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.4 }}
+      >
         <div>
           <h2 className="text-2xl font-bold">Dashboards</h2>
           <p className="text-muted-foreground">
@@ -250,7 +261,7 @@ export default function DashboardPage({ onNavigateToDashboard }: DashboardPagePr
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
       {/* Dashboards Grid */}
       {isLoading ? (
@@ -273,13 +284,18 @@ export default function DashboardPage({ onNavigateToDashboard }: DashboardPagePr
         </div>
       ) : dashboards.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dashboards.map((dashboard) => (
-            <Card 
-              key={dashboard.id} 
-              className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105"
-              onClick={() => onNavigateToDashboard?.(dashboard.id)}
-              data-testid={`dashboard-card-${dashboard.id}`}
+          {dashboards.map((dashboard, index) => (
+            <motion.div
+              key={dashboard.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * index, duration: 0.4 }}
             >
+              <Card 
+                className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105"
+                onClick={() => onNavigateToDashboard?.(dashboard.id)}
+                data-testid={`dashboard-card-${dashboard.id}`}
+              >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -344,22 +360,29 @@ export default function DashboardPage({ onNavigateToDashboard }: DashboardPagePr
                   <p>Updated: {dashboard.updatedAt ? formatTimeAgo(dashboard.updatedAt) : 'N/A'}</p>
                 </div>
               </CardContent>
-            </Card>
+              </Card>
+            </motion.div>
           ))}
         </div>
       ) : (
-        <Card className="p-12 text-center">
-          <div className="text-muted-foreground">
-            <LayoutDashboard className="mx-auto h-12 w-12 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Dashboards Yet</h3>
-            <p className="mb-4">Create your first dashboard to start organizing your KPIs</p>
-            <Button onClick={() => setCreateDialogOpen(true)} data-testid="button-create-first-dashboard">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Dashboard
-            </Button>
-          </div>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+        >
+          <Card className="p-12 text-center">
+            <div className="text-muted-foreground">
+              <LayoutDashboard className="mx-auto h-12 w-12 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Dashboards Yet</h3>
+              <p className="mb-4">Create your first dashboard to start organizing your KPIs</p>
+              <Button onClick={() => setCreateDialogOpen(true)} data-testid="button-create-first-dashboard">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Dashboard
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
