@@ -87,28 +87,69 @@ export function KPICustomizationDialog({
 
   // Extract values from answer - supports both numeric and text
   const extractValues = (): { type: 'single' | 'multi', value: string, multiValues?: Array<{label: string, value: string}> } => {
-    // Try to detect if this is a multi-value response
-    const lines = answer.split(/[,\n]/).map(l => l.trim()).filter(l => l);
+    // Try splitting by newlines first for line-by-line values
+    const lines = answer.split(/\n/).map(l => l.trim()).filter(l => l);
     
-    // Check if answer contains multiple labeled values (e.g., "Product: XYZ, Units: 100, Amount: $500")
-    const labeledPattern = /([^:]+):\s*([^,\n]+)/g;
-    const labeledMatches = Array.from(answer.matchAll(labeledPattern));
-    
-    if (labeledMatches.length > 1) {
-      const multiValues = labeledMatches.map(match => ({
-        label: match[1].trim(),
-        value: match[2].trim()
-      }));
-      return { type: 'multi', value: answer, multiValues };
+    // Check for newline-separated labeled values
+    if (lines.length > 1 && lines.length <= 5) {
+      const hasLabels = lines.every(line => line.includes(':'));
+      if (hasLabels) {
+        const multiValues = lines.map(line => {
+          const colonIndex = line.indexOf(':');
+          return {
+            label: line.substring(0, colonIndex).trim(),
+            value: line.substring(colonIndex + 1).trim()
+          };
+        });
+        return { type: 'multi', value: answer, multiValues };
+      } else {
+        const multiValues = lines.map((line, i) => ({
+          label: `Value ${i + 1}`,
+          value: line
+        }));
+        return { type: 'multi', value: answer, multiValues };
+      }
     }
     
-    // Check if answer is just a list of values
-    if (lines.length > 1 && lines.length <= 5) {
-      const multiValues = lines.map((line, i) => ({
-        label: `Value ${i + 1}`,
-        value: line
-      }));
-      return { type: 'multi', value: answer, multiValues };
+    // Parse comma-separated labeled values using smarter detection
+    // Only treat as a new label if: comma followed by word characters (including spaces) and then colon
+    // This avoids false positives like "Meeting, 2:00 PM"
+    const segments: Array<{label: string, value: string}> = [];
+    const labelPattern = /([A-Za-z][\w\s]*?):\s*/g;
+    let lastIndex = 0;
+    let match;
+    const matches: Array<{label: string, start: number, end: number}> = [];
+    
+    // Find all potential label positions
+    while ((match = labelPattern.exec(answer)) !== null) {
+      matches.push({
+        label: match[1].trim(),
+        start: match.index,
+        end: labelPattern.lastIndex
+      });
+    }
+    
+    // Extract values between labels
+    if (matches.length > 1) {
+      matches.forEach((m, i) => {
+        const nextMatch = matches[i + 1];
+        let valueEnd = nextMatch ? nextMatch.start : answer.length;
+        
+        // Trim trailing comma if present
+        let valueText = answer.substring(m.end, valueEnd).trim();
+        if (valueText.endsWith(',')) {
+          valueText = valueText.slice(0, -1).trim();
+        }
+        
+        segments.push({
+          label: m.label,
+          value: valueText
+        });
+      });
+      
+      if (segments.length > 1) {
+        return { type: 'multi', value: answer, multiValues: segments };
+      }
     }
     
     // Single value - try numeric extraction first, fallback to text

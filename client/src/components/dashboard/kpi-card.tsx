@@ -46,24 +46,65 @@ export default function KpiCard({ kpi, onEdit, onDelete }: KpiCardProps) {
   // Parse multi-value data if present
   const parseMultiValue = (): Array<{label: string, value: string}> | null => {
     try {
-      // Check if value contains labeled data (e.g., "Product: XYZ, Units: 100, Amount: $500")
-      const labeledPattern = /([^:]+):\s*([^,\n]+)/g;
-      const matches = Array.from(kpi.value.matchAll(labeledPattern));
+      // Try splitting by newlines first for line-by-line values
+      const lines = kpi.value.split(/\n/).map(l => l.trim()).filter(l => l);
       
-      if (matches.length > 1) {
-        return matches.map(match => ({
-          label: match[1].trim(),
-          value: match[2].trim()
-        }));
+      // Check for newline-separated labeled values
+      if (lines.length > 1 && lines.length <= 5) {
+        const hasLabels = lines.every(line => line.includes(':'));
+        if (hasLabels) {
+          return lines.map(line => {
+            const colonIndex = line.indexOf(':');
+            return {
+              label: line.substring(0, colonIndex).trim(),
+              value: line.substring(colonIndex + 1).trim()
+            };
+          });
+        } else {
+          return lines.map((line, i) => ({
+            label: `Value ${i + 1}`,
+            value: line
+          }));
+        }
       }
       
-      // Check if it's a comma/newline separated list
-      const lines = kpi.value.split(/[,\n]/).map(l => l.trim()).filter(l => l);
-      if (lines.length > 1 && lines.length <= 5) {
-        return lines.map((line, i) => ({
-          label: `Value ${i + 1}`,
-          value: line
-        }));
+      // Parse comma-separated labeled values using smarter detection
+      // Only treat as a new label if: word characters (including spaces) followed by colon
+      const segments: Array<{label: string, value: string}> = [];
+      const labelPattern = /([A-Za-z][\w\s]*?):\s*/g;
+      let match;
+      const matches: Array<{label: string, start: number, end: number}> = [];
+      
+      // Find all potential label positions
+      while ((match = labelPattern.exec(kpi.value)) !== null) {
+        matches.push({
+          label: match[1].trim(),
+          start: match.index,
+          end: labelPattern.lastIndex
+        });
+      }
+      
+      // Extract values between labels
+      if (matches.length > 1) {
+        matches.forEach((m, i) => {
+          const nextMatch = matches[i + 1];
+          let valueEnd = nextMatch ? nextMatch.start : kpi.value.length;
+          
+          // Trim trailing comma if present
+          let valueText = kpi.value.substring(m.end, valueEnd).trim();
+          if (valueText.endsWith(',')) {
+            valueText = valueText.slice(0, -1).trim();
+          }
+          
+          segments.push({
+            label: m.label,
+            value: valueText
+          });
+        });
+        
+        if (segments.length > 1) {
+          return segments;
+        }
       }
     } catch (e) {
       console.error('Error parsing multi-value:', e);
