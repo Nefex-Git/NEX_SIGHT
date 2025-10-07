@@ -78,10 +78,21 @@ export const aiQueries = pgTable("ai_queries", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Dashboards table
+export const dashboards = pgTable("dashboards", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // KPIs table
 export const kpis = pgTable("kpis", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
+  dashboardId: varchar("dashboard_id").references(() => dashboards.id),
   question: text("question").notNull(),
   value: text("value").notNull(),
   unit: text("unit"),
@@ -161,6 +172,12 @@ export const insertConnectionSchema = createInsertSchema(connections).omit({
   createdAt: true,
   updatedAt: true,
   lastTestedAt: true,
+});
+
+export const insertDashboardSchema = createInsertSchema(dashboards).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Database connector types (similar to Apache Superset)
@@ -301,3 +318,5 @@ export type View = typeof views.$inferSelect;
 export type InsertView = z.infer<typeof insertViewSchema>;
 export type Connection = typeof connections.$inferSelect;
 export type InsertConnection = z.infer<typeof insertConnectionSchema>;
+export type Dashboard = typeof dashboards.$inferSelect;
+export type InsertDashboard = z.infer<typeof insertDashboardSchema>;

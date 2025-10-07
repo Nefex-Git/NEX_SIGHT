@@ -12,7 +12,9 @@ import {
   type View,
   type InsertView,
   type Connection,
-  type InsertConnection
+  type InsertConnection,
+  type Dashboard,
+  type InsertDashboard
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import session from "express-session";
@@ -67,6 +69,13 @@ export interface IStorage {
   deleteConnection(id: string): Promise<boolean>;
   getConnectionByNameAndUser(userId: string, name: string): Promise<Connection | undefined>;
   
+  // Dashboard operations
+  getDashboards(userId: string): Promise<Dashboard[]>;
+  getDashboard(id: string): Promise<Dashboard | undefined>;
+  createDashboard(dashboard: InsertDashboard): Promise<Dashboard>;
+  updateDashboard(id: string, updates: Partial<Dashboard>): Promise<Dashboard | undefined>;
+  deleteDashboard(id: string): Promise<boolean>;
+  
   // Session store
   sessionStore: Store;
 }
@@ -79,6 +88,7 @@ export class MemStorage implements IStorage {
   private charts: Map<string, Chart>;
   private views: Map<string, View>;
   private connections: Map<string, Connection>;
+  private dashboards: Map<string, Dashboard>;
   public sessionStore: Store;
 
   constructor() {
@@ -89,6 +99,7 @@ export class MemStorage implements IStorage {
     this.charts = new Map();
     this.views = new Map();
     this.connections = new Map();
+    this.dashboards = new Map();
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24 hours
     });
@@ -343,6 +354,42 @@ export class MemStorage implements IStorage {
     return Array.from(this.connections.values()).find(
       connection => connection.userId === userId && connection.name === name
     );
+  }
+
+  // Dashboard operations
+  async getDashboards(userId: string): Promise<Dashboard[]> {
+    return Array.from(this.dashboards.values()).filter(dashboard => dashboard.userId === userId);
+  }
+
+  async getDashboard(id: string): Promise<Dashboard | undefined> {
+    return this.dashboards.get(id);
+  }
+
+  async createDashboard(insertDashboard: InsertDashboard): Promise<Dashboard> {
+    const id = randomUUID();
+    const now = new Date();
+    const dashboard: Dashboard = {
+      ...insertDashboard,
+      description: insertDashboard.description || null,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.dashboards.set(id, dashboard);
+    return dashboard;
+  }
+
+  async updateDashboard(id: string, updates: Partial<Dashboard>): Promise<Dashboard | undefined> {
+    const dashboard = this.dashboards.get(id);
+    if (!dashboard) return undefined;
+    
+    const updated = { ...dashboard, ...updates, updatedAt: new Date() };
+    this.dashboards.set(id, updated);
+    return updated;
+  }
+
+  async deleteDashboard(id: string): Promise<boolean> {
+    return this.dashboards.delete(id);
   }
 }
 
