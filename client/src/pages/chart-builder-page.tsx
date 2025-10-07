@@ -27,6 +27,10 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { CHART_CATALOG, type ChartType } from "@/lib/chart-catalog";
 import type { DataSource } from "@shared/schema";
+import { BigNumberConfig } from "@/components/chart-config/BigNumberConfig";
+import { BarChartConfig } from "@/components/chart-config/BarChartConfig";
+import { LineChartConfig } from "@/components/chart-config/LineChartConfig";
+import { PieChartConfig } from "@/components/chart-config/PieChartConfig";
 
 export default function ChartBuilderPage() {
   const [, setLocation] = useLocation();
@@ -42,6 +46,64 @@ export default function ChartBuilderPage() {
   const [title, setTitle] = useState(`New ${chartType?.name || "Chart"}`);
   const [selectedDatasets, setSelectedDatasets] = useState<string[]>([]);
   const [config, setConfig] = useState<Record<string, any>>({});
+  
+  // Initialize config with defaults based on chart type
+  useEffect(() => {
+    const getDefaultConfig = (type: string) => {
+      switch (type) {
+        case "big_number":
+        case "big_number_trendline":
+        case "gauge":
+          return {
+            metric: "",
+            format: "number",
+            decimals: "0",
+            currency: "USD",
+            prefix: "",
+            suffix: "",
+          };
+        case "bar":
+        case "stacked_bar":
+        case "grouped_bar":
+        case "horizontal_bar":
+          return {
+            xAxis: "",
+            yAxis: "",
+            aggregation: "sum",
+            limit: "",
+            sortOrder: "desc",
+          };
+        case "line":
+        case "multi_line":
+        case "smooth_line":
+        case "stepped_line":
+        case "area":
+        case "stacked_area":
+          return {
+            xAxis: "",
+            yAxis: "",
+            groupBy: "",
+            lineStyle: "linear",
+            showDataPoints: false,
+            showArea: false,
+          };
+        case "pie":
+        case "donut":
+          return {
+            category: "",
+            value: "",
+            limit: "",
+            donutMode: type === "donut",
+            showLabels: true,
+            showPercentages: false,
+          };
+        default:
+          return {};
+      }
+    };
+    
+    setConfig(getDefaultConfig(chartTypeId));
+  }, [chartTypeId]);
   
   // Fetch data sources
   const { data: dataSources = [], isLoading: isLoadingDataSources } = useQuery<DataSource[]>({
@@ -119,6 +181,42 @@ export default function ChartBuilderPage() {
       config,
       dataSourceIds: selectedDatasets,
     });
+  };
+  
+  const renderChartConfig = () => {
+    const configMap: Record<string, any> = {
+      big_number: BigNumberConfig,
+      big_number_trendline: BigNumberConfig,
+      gauge: BigNumberConfig,
+      bar: BarChartConfig,
+      stacked_bar: BarChartConfig,
+      grouped_bar: BarChartConfig,
+      horizontal_bar: BarChartConfig,
+      line: LineChartConfig,
+      multi_line: LineChartConfig,
+      smooth_line: LineChartConfig,
+      stepped_line: LineChartConfig,
+      area: LineChartConfig,
+      stacked_area: LineChartConfig,
+      pie: PieChartConfig,
+      donut: PieChartConfig,
+    };
+    
+    const ConfigComponent = configMap[chartTypeId];
+    
+    if (!ConfigComponent) {
+      return (
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground">
+              Configuration options for this chart type are coming soon.
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    return <ConfigComponent config={config} onChange={setConfig} />;
   };
   
   return (
@@ -257,16 +355,10 @@ export default function ChartBuilderPage() {
             
             <Separator />
             
-            {/* Chart Configuration Placeholder */}
+            {/* Chart Configuration */}
             <div className="space-y-3">
               <Label>Chart Configuration</Label>
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">
-                    Chart-specific configuration options will appear here based on the selected chart type.
-                  </p>
-                </CardContent>
-              </Card>
+              {renderChartConfig()}
             </div>
           </div>
         </ScrollArea>
