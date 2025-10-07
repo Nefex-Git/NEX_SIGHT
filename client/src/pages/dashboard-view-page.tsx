@@ -297,7 +297,7 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
       {dashboard?.kpis && dashboard.kpis.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {dashboard.kpis.map((kpi) => (
-            <KpiCard key={kpi.id} kpi={{...kpi, unit: kpi.unit || undefined} as KPI} />
+            <KpiCard key={kpi.id} kpi={{...kpi, unit: kpi.unit ?? undefined} as KPI} />
           ))}
         </div>
       ) : (
@@ -333,17 +333,39 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
               <div key={dc.id} className="bg-card border border-border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-medium">{dc.chart?.title || "Chart"}</h4>
-                  {isEditMode && (
-                    <div className="drag-handle cursor-move">
-                      <GripVertical className="h-4 w-4" />
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSelectedChartId(dc.chart?.id || null)}
+                      data-testid={`button-drill-down-${dc.chart?.id}`}
+                    >
+                      View Data
+                    </Button>
+                    {isEditMode && (
+                      <div className="drag-handle cursor-move">
+                        <GripVertical className="h-4 w-4" />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground">Type: {dc.chart?.type}</p>
               </div>
             ))}
           </GridLayout>
         </div>
+      )}
+
+      {/* Drill-Down Modal */}
+      {selectedChartId && (
+        <DrillDownModal
+          isOpen={!!selectedChartId}
+          onClose={() => setSelectedChartId(null)}
+          chartId={selectedChartId}
+          chartTitle={
+            dashboardCharts.find((dc) => dc.chart?.id === selectedChartId)?.chart?.title || "Chart"
+          }
+        />
       )}
     </div>
   );
