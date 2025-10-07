@@ -26,11 +26,14 @@ interface ChartContainerProps {
 }
 
 const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--secondary))', 
-  'hsl(var(--accent))',
-  'hsl(var(--destructive))',
-  'hsl(var(--muted))',
+  '#3b82f6', // Blue
+  '#10b981', // Green
+  '#f59e0b', // Amber
+  '#ef4444', // Red
+  '#8b5cf6', // Purple
+  '#ec4899', // Pink
+  '#06b6d4', // Cyan
+  '#84cc16', // Lime
 ];
 
 export default function ChartContainer({ 
@@ -67,32 +70,33 @@ export default function ChartContainer({
         return (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis 
                 dataKey="name" 
-                stroke="hsl(var(--muted-foreground))"
+                stroke="#6b7280"
                 fontSize={12}
               />
               <YAxis 
-                stroke="hsl(var(--muted-foreground))"
+                stroke="#6b7280"
                 fontSize={12}
                 tickFormatter={formatValue}
               />
               <Tooltip 
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
                   borderRadius: '6px',
+                  color: '#1f2937'
                 }}
                 formatter={(value: any) => [formatValue(value), 'Value']}
               />
               <Line 
                 type="monotone" 
                 dataKey="value" 
-                stroke="hsl(var(--primary))"
+                stroke="#3b82f6"
                 strokeWidth={2}
-                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "hsl(var(--primary))", strokeWidth: 2 }}
+                dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -102,28 +106,29 @@ export default function ChartContainer({
         return (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis 
                 dataKey="name" 
-                stroke="hsl(var(--muted-foreground))"
+                stroke="#6b7280"
                 fontSize={12}
               />
               <YAxis 
-                stroke="hsl(var(--muted-foreground))"
+                stroke="#6b7280"
                 fontSize={12}
                 tickFormatter={formatValue}
               />
               <Tooltip 
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
                   borderRadius: '6px',
+                  color: '#1f2937'
                 }}
                 formatter={(value: any) => [formatValue(value), 'Value']}
               />
               <Bar 
                 dataKey="value" 
-                fill="hsl(var(--primary))"
+                fill="#3b82f6"
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>
@@ -148,7 +153,15 @@ export default function ChartContainer({
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: any) => [formatValue(value), 'Value']} />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '6px',
+                  color: '#1f2937'
+                }}
+                formatter={(value: any) => [formatValue(value), 'Value']} 
+              />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -210,7 +223,10 @@ export default function ChartContainer({
         </CardHeader>
       )}
       <CardContent className={showTitle ? "pt-2" : "p-6"}>
-        {renderChart()}
+        {/* Light background for better chart visibility on dark theme */}
+        <div className="bg-white dark:bg-gray-100 p-4 rounded-lg">
+          {renderChart()}
+        </div>
         {showTitle && (
           <div className="mt-3 text-sm text-muted-foreground">
             Last updated 2 minutes ago
