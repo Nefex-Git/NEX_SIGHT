@@ -23,6 +23,7 @@ export interface AiQuery {
   chartType?: string;
   kpiValue?: string;
   unit?: string;
+  sqlQuery?: string;
   createdAt: string;
 }
 
