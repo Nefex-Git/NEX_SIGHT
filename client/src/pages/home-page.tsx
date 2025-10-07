@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import TopBar from "@/components/layout/top-bar";
 import DashboardPage from "./dashboard-page";
+import DashboardViewPage from "./dashboard-view-page";
 import AssistantPage from "./assistant-page";
 import WarehousePage from "./warehouse-page";
 import ChartsPage from "./charts-page";
@@ -13,11 +14,30 @@ type Page = "dashboard" | "assistant" | "warehouse" | "charts" | "datasets";
 export default function HomePage() {
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [viewingDashboardId, setViewingDashboardId] = useState<string | null>(null);
+
+  const handleNavigateToDashboard = (dashboardId: string) => {
+    setViewingDashboardId(dashboardId);
+  };
+
+  const handleBackToDashboards = () => {
+    setViewingDashboardId(null);
+  };
 
   const renderPage = () => {
+    if (currentPage === "dashboard") {
+      if (viewingDashboardId) {
+        return (
+          <DashboardViewPage 
+            dashboardId={viewingDashboardId} 
+            onBack={handleBackToDashboards}
+          />
+        );
+      }
+      return <DashboardPage onNavigateToDashboard={handleNavigateToDashboard} />;
+    }
+
     switch (currentPage) {
-      case "dashboard":
-        return <DashboardPage />;
       case "assistant":
         return <AssistantPage />;
       case "warehouse":
@@ -27,7 +47,7 @@ export default function HomePage() {
       case "datasets":
         return <DatasetsPage />;
       default:
-        return <DashboardPage />;
+        return <DashboardPage onNavigateToDashboard={handleNavigateToDashboard} />;
     }
   };
 
@@ -35,7 +55,10 @@ export default function HomePage() {
     <div className="flex min-h-screen bg-background">
       <Sidebar 
         currentPage={currentPage} 
-        onPageChange={(page) => setCurrentPage(page as Page)}
+        onPageChange={(page) => {
+          setCurrentPage(page as Page);
+          setViewingDashboardId(null); // Reset dashboard view when changing pages
+        }}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
