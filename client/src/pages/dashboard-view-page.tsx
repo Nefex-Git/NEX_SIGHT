@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, ArrowLeft, LayoutDashboard, TrendingUp } from "lucide-react";
+import { Plus, ArrowLeft, LayoutDashboard, TrendingUp, Settings, GripVertical } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import GridLayout, { type Layout } from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
 import {
   Dialog,
   DialogContent,
@@ -17,10 +20,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import KpiCard from "@/components/dashboard/kpi-card";
-import type { Dashboard, KPI } from "@shared/schema";
+import { DrillDownModal } from "@/components/chart/DrillDownModal";
+import type { Dashboard, KPI, Chart, DashboardChart } from "@shared/schema";
 
 interface DashboardWithKpis extends Dashboard {
   kpis: KPI[];
+}
+
+interface DashboardChartWithDetails extends DashboardChart {
+  chart: Chart | null;
 }
 
 interface DashboardViewPageProps {
@@ -33,16 +41,74 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
   const [kpiQuestion, setKpiQuestion] = useState("");
   const [kpiValue, setKpiValue] = useState("");
   const [kpiUnit, setKpiUnit] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: dashboard, isLoading } = useQuery<DashboardWithKpis>({
     queryKey: ["/api/dashboards", dashboardId],
     queryFn: async () => {
-      const response = await fetch(`/api/dashboards/${dashboardId}`);
+      const response = await fetch(`/api/dashboards/${dashboardId}`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch dashboard");
       return response.json();
     },
   });
+  
+  // Fetch dashboard charts
+  const { data: dashboardCharts = [] } = useQuery<DashboardChartWithDetails[]>({
+    queryKey: ["/api/dashboards", dashboardId, "charts"],
+    queryFn: async () => {
+      const response = await fetch(`/api/dashboards/${dashboardId}/charts`, { credentials: "include" });
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+  
+  // Grid layout configuration
+  const layout: Layout[] = useMemo(() => {
+    return dashboardCharts.map((dc) => ({
+      i: dc.id,
+      x: dc.x,
+      y: dc.y,
+      w: dc.w,
+      h: dc.h,
+      minW: 2,
+      minH: 2,
+    }));
+  }, [dashboardCharts]);
+  
+  const updateLayoutMutation = useMutation({
+    mutationFn: async (updates: { id: string; x: number; y: number; w: number; h: number }[]) => {
+      await Promise.all(
+        updates.map((update) =>
+          apiRequest("PUT", `/api/dashboard-charts/${update.id}`, {
+            x: update.x,
+            y: update.y,
+            w: update.w,
+            h: update.h,
+          })
+        )
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboards", dashboardId, "charts"] });
+      toast({ title: "Success", description: "Layout updated" });
+    },
+  });
+  
+  const handleLayoutChange = (newLayout: Layout[]) => {
+    if (!isEditMode) return;
+    
+    const updates = newLayout.map((item) => {
+      const dc = dashboardCharts.find((c) => c.id === item.i);
+      if (!dc) return null;
+      return { id: dc.id, x: item.x, y: item.y, w: item.w, h: item.h };
+    }).filter((u) => u !== null) as { id: string; x: number; y: number; w: number; h: number }[];
+    
+    if (updates.length > 0) {
+      updateLayoutMutation.mutate(updates);
+    }
+  };
 
   const addKpiMutation = useMutation({
     mutationFn: async (data: { question: string; value: string; unit?: string; dashboardId: string }) => {
@@ -147,12 +213,24 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
             </p>
           </div>
         </div>
-        <Dialog open={addKpiDialogOpen} onOpenChange={setAddKpiDialogOpen}>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={isEditMode ? "default" : "outline"}
+            onClick={() => setIsEditMode(!isEditMode)}
+            data-testid="button-edit-mode"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            {isEditMode ? "Done" : "Edit Layout"}
+          </Button>
           <Button onClick={() => setAddKpiDialogOpen(true)} data-testid="button-add-kpi">
             <Plus className="mr-2 h-4 w-4" />
             Add KPI
           </Button>
-          <DialogContent data-testid="dialog-add-kpi">
+        </div>
+      </div>
+      
+      <Dialog open={addKpiDialogOpen} onOpenChange={setAddKpiDialogOpen}>
+        <DialogContent data-testid="dialog-add-kpi">
             <DialogHeader>
               <DialogTitle>Add New KPI</DialogTitle>
               <DialogDescription>
@@ -214,13 +292,12 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
       {/* KPIs Grid */}
-      {dashboard.kpis && dashboard.kpis.length > 0 ? (
+      {dashboard?.kpis && dashboard.kpis.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {dashboard.kpis.map((kpi) => (
-            <KpiCard key={kpi.id} kpi={kpi as KPI} />
+            <KpiCard key={kpi.id} kpi={{...kpi, unit: kpi.unit || undefined} as KPI} />
           ))}
         </div>
       ) : (
@@ -235,6 +312,38 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
             </Button>
           </div>
         </Card>
+      )}
+      
+      {/* Charts Grid Layout */}
+      {dashboardCharts.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-4">Charts</h3>
+          <GridLayout
+            className="layout"
+            layout={layout}
+            cols={12}
+            rowHeight={60}
+            width={1200}
+            isDraggable={isEditMode}
+            isResizable={isEditMode}
+            onLayoutChange={handleLayoutChange}
+            draggableHandle=".drag-handle"
+          >
+            {dashboardCharts.map((dc) => (
+              <div key={dc.id} className="bg-card border border-border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium">{dc.chart?.title || "Chart"}</h4>
+                  {isEditMode && (
+                    <div className="drag-handle cursor-move">
+                      <GripVertical className="h-4 w-4" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">Type: {dc.chart?.type}</p>
+              </div>
+            ))}
+          </GridLayout>
+        </div>
       )}
     </div>
   );
