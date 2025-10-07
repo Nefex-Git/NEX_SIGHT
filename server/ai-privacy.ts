@@ -107,9 +107,33 @@ User Question: ${question}`;
 function performLocalAnalysis(question: string, data: any[], schema: any): any {
   const q = question.toLowerCase();
   
+  // If data is a single row with a single column (likely an aggregation result from SQL)
+  if (data.length === 1 && Object.keys(data[0]).length === 1) {
+    const key = Object.keys(data[0])[0];
+    const value = data[0][key];
+    return { 
+      kpiValue: value?.toString() || '0', 
+      unit: key,
+      isSQLResult: true 
+    };
+  }
+  
+  // If data has a single numeric column (aggregation)
+  if (data.length === 1 && Object.keys(data[0]).length <= 3) {
+    const firstKey = Object.keys(data[0])[0];
+    const firstValue = data[0][firstKey];
+    if (typeof firstValue === 'number' || !isNaN(Number(firstValue))) {
+      return { 
+        kpiValue: firstValue?.toString() || '0', 
+        unit: firstKey,
+        isSQLResult: true 
+      };
+    }
+  }
+  
   if (q.includes('total') || q.includes('sum')) return calculateSum(data, schema);
   if (q.includes('average') || q.includes('mean')) return calculateAverage(data, schema);
-  if (q.includes('count') || q.includes('how many')) return { kpiValue: data.length.toString(), unit: 'records' };
+  if (q.includes('count') || q.includes('how many') || q.includes('distinct')) return { kpiValue: data.length.toString(), unit: 'records' };
   if (q.includes('max') || q.includes('highest')) return calculateMax(data, schema);
   if (q.includes('min') || q.includes('lowest')) return calculateMin(data, schema);
   if (q.includes('trend') || q.includes('over time')) return calculateTrend(data, schema);
