@@ -118,18 +118,32 @@ User Question: ${question}`;
 function performLocalAnalysis(question: string, data: any[], schema: any): any {
   const q = question.toLowerCase();
   
+  console.log('performLocalAnalysis - data.length:', data.length, 'first row keys:', data[0] ? Object.keys(data[0]) : 'no data');
+  
   // PRIORITY: Check for grouped data FIRST (before keyword matching)
   // If data has multiple rows with a string column and a numeric column (likely GROUP BY result)
-  if (data.length > 1 && Object.keys(data[0]).length >= 2) {
+  if (data.length > 1 && data[0] && Object.keys(data[0]).length >= 2) {
     const keys = Object.keys(data[0]);
     const stringKey = keys.find(k => typeof data[0][k] === 'string');
     const numKey = keys.find(k => typeof data[0][k] === 'number');
     
+    console.log('Checking grouped data:', { 
+      dataLength: data.length, 
+      keys, 
+      stringKey, 
+      numKey,
+      firstRowTypes: keys.map(k => ({ [k]: typeof data[0][k] }))
+    });
+    
     if (stringKey && numKey) {
       // This is grouped data from SQL - return it directly for charting
-      console.log('Detected grouped data for charting:', { stringKey, numKey });
+      console.log('✅ Detected grouped data for charting - returning array');
       return data; // Return array directly for chart preparation
+    } else {
+      console.log('❌ Not grouped data - missing string or number key');
     }
+  } else {
+    console.log('❌ Not grouped data - length or keys check failed');
   }
   
   // If data is a single row with a single column (likely an aggregation result from SQL)
