@@ -22,7 +22,8 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BigNumber } from "./big-number";
-import { Sparkles, TrendingUp } from "lucide-react";
+import { MultiValueCard } from "./multi-value-card";
+import { Sparkles, TrendingUp, List } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface KPICustomizationDialogProps {
@@ -35,8 +36,9 @@ interface KPICustomizationDialogProps {
 }
 
 export interface KPIConfig {
+  title: string;
   dashboardId: string | null;
-  visualType: 'big-number' | 'big-number-trendline';
+  visualType: 'big-number' | 'big-number-trendline' | 'multi-value';
   format: 'number' | 'currency' | 'percentage';
   decimalPlaces: number;
   currencyCode: string;
@@ -63,6 +65,7 @@ export function KPICustomizationDialog({
   isPending = false,
 }: KPICustomizationDialogProps) {
   const [config, setConfig] = useState<KPIConfig>({
+    title: question,
     dashboardId: null,
     visualType: 'big-number',
     format: 'number',
@@ -72,18 +75,50 @@ export function KPICustomizationDialog({
     suffix: '',
   });
 
+  // Update title when question changes
+  useEffect(() => {
+    setConfig(prev => ({ ...prev, title: question }));
+  }, [question]);
+
   const { data: dashboards = [] } = useQuery<Dashboard[]>({
     queryKey: ["/api/dashboards"],
     queryFn: getDashboards,
   });
 
-  // Extract numeric value from answer
-  const extractValue = (): string => {
+  // Extract values from answer - supports both numeric and text
+  const extractValues = (): { type: 'single' | 'multi', value: string, multiValues?: Array<{label: string, value: string}> } => {
+    // Try to detect if this is a multi-value response
+    const lines = answer.split(/[,\n]/).map(l => l.trim()).filter(l => l);
+    
+    // Check if answer contains multiple labeled values (e.g., "Product: XYZ, Units: 100, Amount: $500")
+    const labeledPattern = /([^:]+):\s*([^,\n]+)/g;
+    const labeledMatches = Array.from(answer.matchAll(labeledPattern));
+    
+    if (labeledMatches.length > 1) {
+      const multiValues = labeledMatches.map(match => ({
+        label: match[1].trim(),
+        value: match[2].trim()
+      }));
+      return { type: 'multi', value: answer, multiValues };
+    }
+    
+    // Check if answer is just a list of values
+    if (lines.length > 1 && lines.length <= 5) {
+      const multiValues = lines.map((line, i) => ({
+        label: `Value ${i + 1}`,
+        value: line
+      }));
+      return { type: 'multi', value: answer, multiValues };
+    }
+    
+    // Single value - try numeric extraction first, fallback to text
     const numMatch = answer.match(/[\d,]+\.?\d*/);
-    return numMatch ? numMatch[0].replace(/,/g, '') : '0';
+    const value = numMatch ? numMatch[0].replace(/,/g, '') : answer.trim();
+    return { type: 'single', value };
   };
 
-  const value = extractValue();
+  const extractedData = extractValues();
+  const value = extractedData.value;
 
   // Auto-detect format from answer
   useEffect(() => {
@@ -130,6 +165,23 @@ export function KPICustomizationDialog({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           {/* Configuration Panel */}
           <div className="space-y-6">
+            {/* KPI Title */}
+            <div className="space-y-2">
+              <Label htmlFor="kpi-title" className="text-base font-semibold">
+                KPI Title
+              </Label>
+              <Input
+                id="kpi-title"
+                value={config.title}
+                onChange={(e) => setConfig({ ...config, title: e.target.value })}
+                placeholder="Enter a descriptive title for your KPI"
+                data-testid="input-kpi-title"
+              />
+              <p className="text-xs text-muted-foreground">
+                This will be displayed as the KPI card title on your dashboard
+              </p>
+            </div>
+
             {/* Dashboard Selection */}
             <div className="space-y-2">
               <Label htmlFor="dashboard" className="text-base font-semibold">
@@ -165,14 +217,21 @@ export function KPICustomizationDialog({
                 onValueChange={(value: any) => setConfig({ ...config, visualType: value })}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-1">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="big-number" data-testid="visual-type-big-number">
-                    Simple Card
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Single Value
+                  </TabsTrigger>
+                  <TabsTrigger value="multi-value" data-testid="visual-type-multi-value">
+                    <List className="h-3 w-3 mr-1" />
+                    Multi-Value
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
               <p className="text-xs text-muted-foreground">
-                More visual styles coming soon!
+                {config.visualType === 'multi-value' 
+                  ? 'Display multiple related values in one card'
+                  : 'Display a single metric prominently'}
               </p>
             </div>
 
@@ -302,21 +361,39 @@ export function KPICustomizationDialog({
 
             <Card className="border-2 border-dashed border-primary/50 bg-gradient-to-br from-background to-muted/20">
               <CardContent className="pt-6">
-                <BigNumber
-                  title={question}
-                  value={formatPreviewValue(value)}
-                  prefix={config.format === 'currency' ? '' : config.prefix}
-                  suffix={config.format === 'percentage' ? '' : config.suffix}
-                  format={config.format}
-                  showComparison={false}
-                />
+                {config.visualType === 'multi-value' && extractedData.multiValues ? (
+                  <MultiValueCard
+                    title={config.title}
+                    values={extractedData.multiValues.map(v => {
+                      const numVal = parseFloat(v.value);
+                      const isNumeric = !isNaN(numVal);
+                      
+                      return {
+                        label: v.label,
+                        value: isNumeric && config.format !== 'number' ? formatPreviewValue(v.value) : v.value,
+                        prefix: isNumeric ? (config.format === 'currency' ? '' : config.prefix) : '',
+                        suffix: isNumeric ? (config.format === 'percentage' ? '' : config.suffix) : '',
+                        highlight: false
+                      };
+                    })}
+                  />
+                ) : (
+                  <BigNumber
+                    title={config.title}
+                    value={formatPreviewValue(value)}
+                    prefix={config.format === 'currency' ? '' : config.prefix}
+                    suffix={config.format === 'percentage' ? '' : config.suffix}
+                    format={config.format}
+                    showComparison={false}
+                  />
+                )}
               </CardContent>
             </Card>
 
             <div className="p-4 bg-muted/50 rounded-lg space-y-2">
               <p className="text-sm font-medium">Preview Details:</p>
               <div className="space-y-1 text-xs text-muted-foreground">
-                <p>• Question: <span className="text-foreground">{question}</span></p>
+                <p>• Title: <span className="text-foreground">{config.title}</span></p>
                 <p>• Value: <span className="text-foreground">{config.prefix}{formatPreviewValue(value)}{config.suffix}</span></p>
                 <p>• Style: <span className="text-foreground">{config.visualType === 'big-number' ? 'Simple Card' : 'With Trendline'}</span></p>
               </div>
