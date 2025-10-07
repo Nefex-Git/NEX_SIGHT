@@ -11,6 +11,7 @@ import HomePage from "@/pages/home-page";
 import WarehousePage from "@/pages/warehouse-page";
 import DashboardPage from "@/pages/dashboard-page";
 import DatasetsPage from "@/pages/datasets-page";
+import KPIDashboard from "@/pages/kpi-dashboard";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/warehouse" component={WarehousePage} />
       <ProtectedRoute path="/datasets" component={DatasetsPage} />
+      <ProtectedRoute path="/kpis" component={KPIDashboard} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/login" component={AuthPage} />
       <Route component={NotFound} />
