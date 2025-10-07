@@ -11,6 +11,7 @@ import {
   parseCSVFile, 
   generateKPIFromQuestion 
 } from "./ai";
+import { analyzeDataWithPrivacy } from "./ai-privacy";
 import {
   testConnection,
   encryptConnectionConfig,
@@ -327,17 +328,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Load data if data source is specified
       if (dataSourceId) {
         const dataSource = await storage.getDataSource(dataSourceId);
-        if (dataSource && dataSource.userId === req.user.id && dataSource.filename) {
-          const filePath = path.join(process.cwd(), 'uploads', dataSource.filename);
-          if (fs.existsSync(filePath)) {
-            csvData = await parseCSVFile(filePath);
-            dataSourceMetadata = dataSource.metadata || {};
+        
+        if (dataSource && dataSource.userId === req.user.id) {
+          // Sanitize metadata - NEVER send credentials to AI
+          const rawMetadata = dataSource.metadata || {};
+          dataSourceMetadata = {
+            name: dataSource.name,
+            type: dataSource.type,
+            isTableDataset: (rawMetadata as any)?.isTableDataset,
+            tableName: (rawMetadata as any)?.tableName,
+            schemaName: (rawMetadata as any)?.schemaName,
+            // Explicitly exclude: password, username, host, port, database credentials
+          };
+          
+          // Check if it's a CSV file dataset
+          if (dataSource.filename) {
+            const filePath = path.join(process.cwd(), 'uploads', dataSource.filename);
+            if (fs.existsSync(filePath)) {
+              csvData = await parseCSVFile(filePath);
+            }
+          }
+          // Check if it's a database table dataset
+          else if ((dataSource.metadata as any)?.isTableDataset) {
+            try {
+              const metadata = dataSource.metadata as any;
+              const connectionConfig = {
+                host: metadata.host,
+                port: metadata.port,
+                database: metadata.database,
+                username: metadata.username,
+                password: metadata.password
+              };
+              
+              const tableName = `${metadata.schemaName}.${metadata.tableName}`;
+              const query = `SELECT TOP 1000 * FROM ${tableName}`; // Limit to 1000 rows for analysis
+              
+              const result = await DatabaseConnectorService.executeQuery(
+                metadata.connectionType || dataSource.type,
+                connectionConfig,
+                query
+              );
+              
+              // Convert result to CSV-like format
+              if (result.rows && result.columns) {
+                csvData = result.rows.map((row: any[]) => {
+                  const obj: any = {};
+                  result.columns.forEach((col: string, idx: number) => {
+                    obj[col] = row[idx];
+                  });
+                  return obj;
+                });
+              }
+            } catch (dbError) {
+              console.error('Error loading database table data for AI analysis:', dbError);
+            }
           }
         }
       }
 
-      // Analyze with AI
-      const analysis = await analyzeDataWithAI({
+      // Analyze with PRIVACY-PRESERVING AI (no real data sent to OpenAI)
+      const analysis = await analyzeDataWithPrivacy({
         question,
         csvData,
         dataSourceMetadata

@@ -540,8 +540,9 @@ export class DatabaseConnectorService {
         },
       };
 
-      // Fix the ConnectionPool constructor access
-      pool = new sql.default.ConnectionPool(sqlConfig);
+      // Properly instantiate ConnectionPool from mssql
+      const { ConnectionPool } = sql.default || sql;
+      pool = new ConnectionPool(sqlConfig);
       await pool.connect();
       
       const result = await pool.request().query(query);
