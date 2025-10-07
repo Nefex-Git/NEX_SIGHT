@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { submitAiQuery, transcribeAudio, getDataSources, createKpi } from "@/lib/api";
 import { VoiceRecorder, SpeechRecognition } from "@/lib/voice";
 import VoiceButton from "@/components/voice/voice-button";
-import VoiceStatus from "@/components/voice/voice-status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -284,13 +283,6 @@ export default function AssistantPage() {
           </Card>
         </div>
       )}
-
-      {/* Voice Status */}
-      <VoiceStatus 
-        isRecording={isRecording} 
-        isTranscribing={isTranscribing}
-        onStop={handleVoiceRecording}
-      />
 
       {/* Chat Interface */}
       <Card className="overflow-hidden">
