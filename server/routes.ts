@@ -26,6 +26,7 @@ import {
   insertKpiSchema, 
   insertChartSchema,
   insertViewSchema,
+  insertDashboardSchema,
   DatabaseConnectionConfig 
 } from "@shared/schema";
 import { DatabaseConnectorService } from './services/database-connectors';
@@ -591,6 +592,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: 'KPI deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Failed to delete KPI' });
+    }
+  });
+
+  // Dashboard endpoints
+  app.get('/api/dashboards', requireAuth, async (req: any, res) => {
+    try {
+      const dashboards = await storage.getDashboards(req.user.id);
+      
+      // Get KPI counts for each dashboard
+      const dashboardsWithCounts = await Promise.all(dashboards.map(async (dashboard) => {
+        const allKpis = await storage.getKpis(req.user.id);
+        const kpiCount = allKpis.filter(kpi => kpi.dashboardId === dashboard.id).length;
+        return {
+          ...dashboard,
+          kpiCount
+        };
+      }));
+      
+      res.json(dashboardsWithCounts);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch dashboards' });
+    }
+  });
+
+  app.get('/api/dashboards/:id', requireAuth, async (req: any, res) => {
+    try {
+      const dashboard = await storage.getDashboard(req.params.id);
+      
+      if (!dashboard || dashboard.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Dashboard not found' });
+      }
+
+      // Get KPIs for this dashboard
+      const allKpis = await storage.getKpis(req.user.id);
+      const dashboardKpis = allKpis.filter(kpi => kpi.dashboardId === dashboard.id);
+
+      res.json({
+        ...dashboard,
+        kpis: dashboardKpis
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch dashboard' });
+    }
+  });
+
+  app.post('/api/dashboards', requireAuth, async (req: any, res) => {
+    try {
+      const validation = insertDashboardSchema.safeParse({
+        ...req.body,
+        userId: req.user.id
+      });
+
+      if (!validation.success) {
+        return res.status(400).json({ message: 'Invalid dashboard data' });
+      }
+
+      const dashboard = await storage.createDashboard(validation.data);
+      res.json(dashboard);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to create dashboard' });
+    }
+  });
+
+  app.put('/api/dashboards/:id', requireAuth, async (req: any, res) => {
+    try {
+      const dashboard = await storage.getDashboard(req.params.id);
+      
+      if (!dashboard || dashboard.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Dashboard not found' });
+      }
+
+      const updated = await storage.updateDashboard(req.params.id, req.body);
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update dashboard' });
+    }
+  });
+
+  app.delete('/api/dashboards/:id', requireAuth, async (req: any, res) => {
+    try {
+      const dashboard = await storage.getDashboard(req.params.id);
+      
+      if (!dashboard || dashboard.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Dashboard not found' });
+      }
+
+      await storage.deleteDashboard(req.params.id);
+      res.json({ message: 'Dashboard deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to delete dashboard' });
     }
   });
 
