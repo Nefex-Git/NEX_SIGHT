@@ -12,8 +12,7 @@ import {
   Settings,
   LogOut,
   Pin,
-  PinOff,
-  Target
+  PinOff
 } from "lucide-react";
 import nexSightLogo from "@assets/nexsight_1758799902588.png";
 
@@ -30,12 +29,6 @@ const navigation = [
     name: "Dashboard",
     icon: BarChart3,
     description: "Overview & KPIs"
-  },
-  {
-    id: "kpis",
-    name: "KPI Dashboard",
-    icon: Target,
-    description: "Performance Metrics"
   },
   {
     id: "warehouse",
