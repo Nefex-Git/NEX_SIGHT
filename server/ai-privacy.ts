@@ -73,7 +73,29 @@ User Question: ${question}`;
       }
     }
 
-    context += `\n\nProvide response in JSON:
+    // Detect if user is asking for visualization
+    const questionLower = question.toLowerCase();
+    const isVisualizationRequest = 
+      questionLower.includes('chart') || 
+      questionLower.includes('graph') || 
+      questionLower.includes('visualize') || 
+      questionLower.includes('show me') ||
+      questionLower.includes('plot') ||
+      questionLower.includes('trend') ||
+      questionLower.includes('breakdown') ||
+      questionLower.includes('distribution') ||
+      questionLower.includes('compare');
+    
+    // Check if data is suitable for charting (multiple rows or grouped data)
+    const hasMultipleDataPoints = 
+      (Array.isArray(analysisResult) && analysisResult.length > 1) ||
+      analysisResult?.groupedData ||
+      analysisResult?.trendData;
+    
+    const shouldSuggestChart = isVisualizationRequest || hasMultipleDataPoints;
+
+    if (shouldSuggestChart) {
+      context += `\n\nProvide response in JSON:
 {
   "answer": "Natural language answer stating the actual result value. Be direct and clear.",
   "chartType": "Suggested chart type: bar, line, pie, heatmap, table, or null"
@@ -84,7 +106,17 @@ Chart type selection guidelines:
 - Use "bar" for simple category comparisons
 - Use "line" for trends over time
 - Use "pie" for proportional/percentage breakdowns
-- Use "table" for detailed data viewing`;
+- Use "table" for detailed data viewing
+- Use null if the result is a single value with no comparative data`;
+    } else {
+      context += `\n\nProvide response in JSON:
+{
+  "answer": "Natural language answer stating the actual result value. Be direct and clear.",
+  "chartType": null
+}
+
+IMPORTANT: The chartType field must be the JSON null value (not a string), since this is a simple answer with no visualization needed.`;
+    }
 
     const response = await openai.chat.completions.create({
       model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
