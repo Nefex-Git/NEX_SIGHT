@@ -34,7 +34,7 @@ export async function analyzeDataWithPrivacy(request: DataAnalysisRequest): Prom
   try {
     const { question, csvData, dataSourceMetadata } = request;
 
-    let context = `You are a business intelligence analyst. Answer the user's question based on analysis results.
+    let context = `You are a business intelligence analyst. Answer the user's question with the actual result value.
 
 User Question: ${question}`;
 
@@ -44,34 +44,38 @@ User Question: ${question}`;
     if (csvData && csvData.length > 0) {
       // Extract schema (NO REAL DATA)
       dataSchema = extractDataSchema(csvData);
-      const privacySafeSummary = createPrivacySafeDataSummary(csvData);
-      
-      context += `\n\n${privacySafeSummary}`;
       
       // Perform actual analysis locally on real data
       analysisResult = performLocalAnalysis(question, csvData, dataSchema);
       
+      console.log('Analysis Result:', JSON.stringify(analysisResult, null, 2));
+      
       // CRITICAL: Do NOT send real analysis results to OpenAI
-      // Only provide aggregation type hints, no actual values
+      // But we DO need to tell the AI what the answer is so it can format it properly
       if (analysisResult) {
-        const safeHint = analysisResult.kpiValue ? 'Analysis type: KPI value' : 
-                        analysisResult.trendData ? 'Analysis type: Time series trend' :
-                        analysisResult.groupedData ? 'Analysis type: Categorical breakdown' :
-                        'Analysis type: Summary';
-        context += `\n\n${safeHint}`;
+        if (analysisResult.kpiValue) {
+          // For SQL results and aggregations, provide the actual answer
+          context += `\n\nAnalysis Complete: The answer is ${analysisResult.kpiValue}${analysisResult.unit ? ' ' + analysisResult.unit : ''}.`;
+        } else if (analysisResult.trendData) {
+          context += `\n\nAnalysis type: Time series trend data available.`;
+        } else if (analysisResult.groupedData) {
+          context += `\n\nAnalysis type: Categorical breakdown available.`;
+        } else {
+          context += `\n\nAnalysis type: Summary with ${analysisResult.totalRecords || csvData.length} records.`;
+        }
       }
     }
 
     context += `\n\nProvide response in JSON:
 {
-  "answer": "Natural language answer incorporating the analysis results",
+  "answer": "Natural language answer stating the actual result value. Be direct and clear.",
   "chartType": "Suggested chart type: bar, line, pie, area, or null"
 }`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
       messages: [
-        { role: "system", content: "You are an expert BI analyst. Provide clear insights in JSON format." },
+        { role: "system", content: "You are an expert BI analyst. Provide clear, direct answers with actual values in JSON format." },
         { role: "user", content: context }
       ],
       response_format: { type: "json_object" },
