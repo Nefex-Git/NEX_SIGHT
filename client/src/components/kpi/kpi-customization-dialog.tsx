@@ -88,9 +88,9 @@ export function KPICustomizationDialog({
   // Auto-detect format from answer
   useEffect(() => {
     if (answer.includes('$') || answer.includes('USD') || answer.toLowerCase().includes('dollar')) {
-      setConfig(prev => ({ ...prev, format: 'currency', prefix: '$' }));
+      setConfig(prev => ({ ...prev, format: 'currency', prefix: '$', suffix: '' }));
     } else if (answer.includes('%') || answer.toLowerCase().includes('percent')) {
-      setConfig(prev => ({ ...prev, format: 'percentage', suffix: '%' }));
+      setConfig(prev => ({ ...prev, format: 'percentage', prefix: '', suffix: '%' }));
     }
   }, [answer]);
 
@@ -165,16 +165,15 @@ export function KPICustomizationDialog({
                 onValueChange={(value: any) => setConfig({ ...config, visualType: value })}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-1">
                   <TabsTrigger value="big-number" data-testid="visual-type-big-number">
                     Simple Card
                   </TabsTrigger>
-                  <TabsTrigger value="big-number-trendline" data-testid="visual-type-trendline">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    With Trend
-                  </TabsTrigger>
                 </TabsList>
               </Tabs>
+              <p className="text-xs text-muted-foreground">
+                More visual styles coming soon!
+              </p>
             </div>
 
             {/* Format Type */}
@@ -187,16 +186,15 @@ export function KPICustomizationDialog({
                 onValueChange={(value: any) => {
                   const newConfig = { ...config, format: value };
                   if (value === 'currency') {
-                    newConfig.prefix = CURRENCY_OPTIONS.find(c => c.code === config.currencyCode)?.symbol || '$';
+                    const symbol = CURRENCY_OPTIONS.find(c => c.code === config.currencyCode)?.symbol || '$';
+                    newConfig.prefix = symbol;
+                    newConfig.suffix = '';
                   } else if (value === 'percentage') {
+                    newConfig.prefix = '';
                     newConfig.suffix = '%';
                   } else {
-                    if (config.prefix === '$' || CURRENCY_OPTIONS.some(c => c.symbol === config.prefix)) {
-                      newConfig.prefix = '';
-                    }
-                    if (config.suffix === '%') {
-                      newConfig.suffix = '';
-                    }
+                    newConfig.prefix = '';
+                    newConfig.suffix = '';
                   }
                   setConfig(newConfig);
                 }}
