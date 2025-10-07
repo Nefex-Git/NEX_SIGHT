@@ -23,6 +23,7 @@ interface ChatMessage {
   chartType?: string;
   kpiValue?: string;
   unit?: string;
+  sqlQuery?: string;
 }
 
 export default function AssistantPage() {
@@ -58,6 +59,7 @@ export default function AssistantPage() {
         chartType: response.chartType,
         kpiValue: response.kpiValue,
         unit: response.unit,
+        sqlQuery: response.sqlQuery,
       };
       
       setMessages(prev => [...prev, assistantMessage]);
@@ -300,6 +302,16 @@ export default function AssistantPage() {
                 </div>
                 
                 <div className="text-sm">{message.content}</div>
+                
+                {/* SQL Query Display */}
+                {message.sqlQuery && (
+                  <div className="mt-3 p-3 bg-muted/50 rounded-lg border" data-testid={`sql-query-${message.id}`}>
+                    <div className="text-xs font-medium text-muted-foreground mb-2">Generated SQL Query:</div>
+                    <code className="text-xs font-mono block p-2 bg-background rounded border">
+                      {message.sqlQuery}
+                    </code>
+                  </div>
+                )}
                 
                 {/* Chart Visualization */}
                 {message.chartData && message.chartType && (
