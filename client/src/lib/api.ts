@@ -91,10 +91,10 @@ export async function deleteDataSource(id: string): Promise<void> {
 }
 
 // AI Query API
-export async function submitAiQuery(question: string, dataSourceId?: string, isVoiceQuery = false): Promise<AiQuery> {
+export async function submitAiQuery(question: string, dataSourceIds?: string[], isVoiceQuery = false): Promise<AiQuery> {
   const response = await apiRequest('POST', '/api/ai/query', {
     question,
-    dataSourceId,
+    dataSourceIds,
     isVoiceQuery
   });
   return response.json();
