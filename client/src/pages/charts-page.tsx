@@ -1,209 +1,298 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCharts, createChart, deleteChart } from "@/lib/api";
+import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ChartContainer from "@/components/dashboard/chart-container";
-import { Plus, Trash2, BarChart3, LineChart, PieChart } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  BarChart3,
+  LineChart,
+  PieChart,
+  Activity,
+  TrendingUp,
+  GitBranch,
+  Target,
+  Map,
+  Workflow,
+  Table,
+  Brain,
+  MoreHorizontal,
+  Search,
+  ChevronDown,
+  ChevronRight,
+  Gauge,
+  Sparkles,
+  Box,
+  Trophy,
+} from "lucide-react";
+import {
+  CHART_CATALOG,
+  getCategories,
+  getTags,
+  searchCharts,
+  getChartsByCategory,
+  type ChartCategory,
+  type ChartType,
+} from "@/lib/chart-catalog";
+
+const categoryIcons: Record<string, any> = {
+  Popular: Sparkles,
+  KPI: Gauge,
+  Distribution: BarChart3,
+  Evolution: TrendingUp,
+  Correlation: GitBranch,
+  "Part of a Whole": PieChart,
+  Ranking: Trophy,
+  Map: Map,
+  Flow: Workflow,
+  Table: Table,
+  "Advanced-Analytics": Brain,
+  Other: MoreHorizontal,
+};
+
+const chartTypeIcons: Record<string, any> = {
+  big_number: Target,
+  big_number_trendline: Activity,
+  gauge: Gauge,
+  bar: BarChart3,
+  stacked_bar: BarChart3,
+  grouped_bar: BarChart3,
+  line: LineChart,
+  multi_line: LineChart,
+  smooth_line: LineChart,
+  stepped_line: LineChart,
+  area: Activity,
+  stacked_area: Activity,
+  pie: PieChart,
+  donut: PieChart,
+  scatter: GitBranch,
+  bubble: GitBranch,
+  heatmap: Box,
+  calendar_heatmap: Box,
+  boxplot: BarChart3,
+  histogram: BarChart3,
+  table: Table,
+  pivot_table: Table,
+  country_map: Map,
+  geojson_map: Map,
+  funnel: Workflow,
+  sankey: Workflow,
+  treemap: Box,
+  sunburst: Target,
+  waterfall: Workflow,
+  radar: GitBranch,
+};
 
 export default function ChartsPage() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+  const [selectedCategory, setSelectedCategory] = useState<string>("All charts");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [tagsExpanded, setTagsExpanded] = useState(false);
 
-  const { data: charts = [], isLoading } = useQuery({
-    queryKey: ["/api/charts"],
-    queryFn: () => getCharts(),
-  });
+  const categories = useMemo(() => getCategories(), []);
+  const tags = useMemo(() => getTags(), []);
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteChart,
-    onSuccess: () => {
-      toast({
-        title: "Chart deleted",
-        description: "The chart has been removed successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/charts"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Delete failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  // Get chart counts for each category
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { "All charts": CHART_CATALOG.length };
+    categories.forEach((cat) => {
+      counts[cat] = getChartsByCategory(cat).length;
+    });
+    return counts;
+  }, [categories]);
 
-  const getChartIcon = (type: string) => {
-    switch (type) {
-      case 'line':
-        return LineChart;
-      case 'bar':
-        return BarChart3;
-      case 'pie':
-        return PieChart;
-      default:
-        return BarChart3;
+  // Filter charts based on selected category and search query
+  const filteredCharts = useMemo(() => {
+    let charts = CHART_CATALOG;
+
+    // Filter by category
+    if (selectedCategory !== "All charts") {
+      charts = getChartsByCategory(selectedCategory as ChartCategory);
     }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      charts = searchCharts(searchQuery).filter((chart) => {
+        if (selectedCategory === "All charts") return true;
+        return chart.category.includes(selectedCategory as ChartCategory);
+      });
+    }
+
+    return charts;
+  }, [selectedCategory, searchQuery]);
+
+  const handleChartClick = (chart: ChartType) => {
+    // Navigate to chart builder with selected chart type
+    // For now, we'll just log it - you can implement navigation to chart builder
+    console.log("Selected chart:", chart);
+    // setLocation(`/chart-builder?type=${chart.id}`);
   };
 
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
-    if (diffHours < 1) return "just now";
-    if (diffHours < 24) return `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
+  const getChartIcon = (chartId: string) => {
+    return chartTypeIcons[chartId] || BarChart3;
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">NEX-VIZ</h2>
-          <p className="text-muted-foreground">
-            Create and manage your data visualizations
-          </p>
-        </div>
-        <Button className="bg-primary hover:bg-primary/90" data-testid="button-create-chart">
-          <Plus className="mr-2 h-4 w-4" />
-          Create Chart
-        </Button>
-      </div>
+    <div className="flex h-screen bg-background">
+      {/* Left Sidebar */}
+      <div className="w-64 border-r border-border bg-card">
+        <ScrollArea className="h-full">
+          <div className="p-4 space-y-4">
+            {/* All Charts Button */}
+            <Button
+              variant={selectedCategory === "All charts" ? "default" : "ghost"}
+              className="w-full justify-start"
+              onClick={() => setSelectedCategory("All charts")}
+              data-testid="button-category-all-charts"
+            >
+              <Box className="mr-2 h-4 w-4" />
+              All charts
+              <span className="ml-auto text-xs opacity-70">
+                {categoryCounts["All charts"]}
+              </span>
+            </Button>
 
-      {/* Quick Chart Templates */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Quick Templates</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button
-              variant="outline"
-              className="h-20 flex flex-col items-center justify-center gap-2"
-              data-testid="button-template-line"
-            >
-              <LineChart className="h-6 w-6" />
-              <span className="text-sm">Line Chart</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-20 flex flex-col items-center justify-center gap-2"
-              data-testid="button-template-bar"
-            >
-              <BarChart3 className="h-6 w-6" />
-              <span className="text-sm">Bar Chart</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-20 flex flex-col items-center justify-center gap-2"
-              data-testid="button-template-pie"
-            >
-              <PieChart className="h-6 w-6" />
-              <span className="text-sm">Pie Chart</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {isLoading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-32" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-48 w-full" />
-              </CardContent>
-            </Card>
-          ))
-        ) : charts.length > 0 ? (
-          charts.map((chart) => {
-            const IconComponent = getChartIcon(chart.type);
-            return (
-              <Card key={chart.id} className="hover:border-primary/30 transition-all">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <IconComponent className="h-5 w-5" />
-                      {chart.title}
-                    </CardTitle>
+            {/* Recommended Tags Section */}
+            <div className="space-y-2">
+              <Collapsible open={tagsExpanded} onOpenChange={setTagsExpanded}>
+                <CollapsibleTrigger
+                  className="flex items-center w-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  data-testid="button-toggle-tags"
+                >
+                  {tagsExpanded ? (
+                    <ChevronDown className="mr-2 h-3 w-3" />
+                  ) : (
+                    <ChevronRight className="mr-2 h-3 w-3" />
+                  )}
+                  Recommended tags
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-1">
+                  {tags.map((tag) => (
                     <Button
-                      size="sm"
+                      key={tag}
                       variant="ghost"
-                      onClick={() => deleteMutation.mutate(chart.id)}
-                      disabled={deleteMutation.isPending}
-                      data-testid={`button-delete-chart-${chart.id}`}
+                      size="sm"
+                      className="w-full justify-start text-xs pl-6"
+                      data-testid={`button-tag-${tag}`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      # {tag}
                     </Button>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Created {formatTimeAgo(chart.createdAt)}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    title=""
-                    type={chart.type as any}
-                    data={chart.config.data || []}
-                    showTitle={false}
-                  />
-                </CardContent>
-              </Card>
-            );
-          })
-        ) : (
-          <Card className="col-span-full p-8 text-center">
-            <div className="text-muted-foreground">
-              <BarChart3 className="mx-auto h-12 w-12 mb-4" />
-              <p className="text-lg font-medium mb-2">No charts yet</p>
-              <p>Create your first chart to visualize your data.</p>
-              <Button className="mt-4" data-testid="button-create-first-chart">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Chart
-              </Button>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
             </div>
-          </Card>
-        )}
+
+            {/* Category Section */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-muted-foreground px-2">Category</h3>
+              <div className="space-y-1">
+                {categories.map((category) => {
+                  const IconComponent = categoryIcons[category] || MoreHorizontal;
+                  return (
+                    <Button
+                      key={category}
+                      variant={selectedCategory === category ? "secondary" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => setSelectedCategory(category)}
+                      data-testid={`button-category-${category.toLowerCase().replace(/\s+/g, "-")}`}
+                    >
+                      <IconComponent className="mr-2 h-4 w-4" />
+                      {category}
+                      <span className="ml-auto text-xs opacity-70">
+                        {categoryCounts[category] || 0}
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </ScrollArea>
       </div>
 
-      {/* Sample Charts for Demo */}
-      {charts.length === 0 && !isLoading && (
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-4">Sample Visualizations</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ChartContainer
-              title="Revenue Trends"
-              type="line"
-              data={[
-                { name: "Jan", value: 400000 },
-                { name: "Feb", value: 650000 },
-                { name: "Mar", value: 800000 },
-                { name: "Apr", value: 550000 },
-                { name: "May", value: 1245000 },
-                { name: "Jun", value: 750000 },
-              ]}
-            />
-            
-            <ChartContainer
-              title="Product Categories"
-              type="bar"
-              data={[
-                { name: "Electronics", value: 245000 },
-                { name: "Clothing", value: 189500 },
-                { name: "Home & Garden", value: 152200 },
-                { name: "Sports", value: 98750 },
-              ]}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Search Bar */}
+        <div className="p-6 border-b border-border bg-card">
+          <div className="relative max-w-2xl">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search all charts"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              data-testid="input-chart-search"
             />
           </div>
         </div>
-      )}
+
+        {/* Chart Grid */}
+        <ScrollArea className="flex-1">
+          <div className="p-6">
+            {filteredCharts.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {filteredCharts.map((chart) => {
+                  const IconComponent = getChartIcon(chart.id);
+                  return (
+                    <Card
+                      key={chart.id}
+                      className="group cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200"
+                      onClick={() => handleChartClick(chart)}
+                      data-testid={`card-chart-${chart.id}`}
+                    >
+                      <CardContent className="p-4 space-y-3">
+                        {/* Chart Icon/Thumbnail */}
+                        <div className="aspect-square bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg flex items-center justify-center group-hover:from-primary/20 group-hover:to-secondary/20 transition-colors">
+                          <IconComponent className="h-12 w-12 text-primary/70" />
+                        </div>
+
+                        {/* Chart Info */}
+                        <div className="space-y-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="text-sm font-medium leading-tight line-clamp-2">
+                              {chart.name}
+                            </h3>
+                            {chart.isDeprecated && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs shrink-0 border-orange-500 text-orange-500"
+                                data-testid={`badge-deprecated-${chart.id}`}
+                              >
+                                DEPRECATED
+                              </Badge>
+                            )}
+                          </div>
+                          {chart.requiresPlugin && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-blue-500 text-blue-500"
+                            >
+                              Plugin
+                            </Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                  No charts found
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Try adjusting your search or selecting a different category
+                </p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
     </div>
   );
 }
