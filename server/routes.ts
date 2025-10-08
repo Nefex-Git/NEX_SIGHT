@@ -197,6 +197,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/data-sources/:id/preview', requireAuth, async (req: any, res) => {
+    try {
+      const dataSource = await storage.getDataSource(req.params.id);
+      
+      if (!dataSource || dataSource.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Data source not found' });
+      }
+
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+
+      if (dataSource.type === 'csv' && dataSource.filename) {
+        const filePath = path.join(process.cwd(), 'uploads', dataSource.filename);
+        if (fs.existsSync(filePath)) {
+          const csvData = await parseCSVFile(filePath);
+          res.json({ data: csvData.slice(0, limit) });
+        } else {
+          res.json({ data: [] });
+        }
+      } else if (dataSource.metadata && (dataSource.metadata as any).isTableDataset) {
+        const metadata = dataSource.metadata as any;
+        const sanitizeIdentifier = (identifier: string): string => {
+          return identifier.replace(/[^a-zA-Z0-9_.]/g, '');
+        };
+        
+        const schemaName = metadata.schemaName ? sanitizeIdentifier(metadata.schemaName) : null;
+        const tableName = sanitizeIdentifier(metadata.tableName);
+        
+        if (!tableName) {
+          return res.json({ data: [] });
+        }
+        
+        const qualifiedTableName = schemaName ? `${schemaName}.${tableName}` : tableName;
+        const connectionType = metadata.connectionType || dataSource.type;
+        let query: string;
+        
+        if (connectionType === 'mssql' || connectionType === 'sqlserver') {
+          query = `SELECT TOP ${limit} * FROM ${qualifiedTableName}`;
+        } else if (connectionType === 'mysql') {
+          query = `SELECT * FROM ${qualifiedTableName} LIMIT ${limit}`;
+        } else {
+          query = `SELECT * FROM ${qualifiedTableName} LIMIT ${limit}`;
+        }
+        
+        const connectionConfig = {
+          host: metadata.host,
+          port: metadata.port,
+          database: metadata.database,
+          username: metadata.username,
+          password: metadata.password
+        };
+        
+        try {
+          const result = await DatabaseConnectorService.executeQuery(
+            connectionType, 
+            connectionConfig, 
+            query
+          );
+          res.json({ data: result.rows || [] });
+        } catch (error) {
+          console.error('Preview data query error:', error);
+          res.json({ data: [] });
+        }
+      } else {
+        res.json({ data: [] });
+      }
+    } catch (error) {
+      console.error('Preview data fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch preview data' });
+    }
+  });
+
   // Connector endpoints
   app.post('/api/connectors/test', requireAuth, async (req: any, res) => {
     try {
