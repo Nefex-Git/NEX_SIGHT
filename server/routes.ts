@@ -704,7 +704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const connectionType = metadata.connectionType || dataSource.type;
           let query: string;
           
-          if (connectionType === 'mssql') {
+          if (connectionType === 'mssql' || connectionType === 'sqlserver') {
             query = `SELECT TOP ${limit} * FROM ${qualifiedTableName}`;
           } else if (connectionType === 'mysql') {
             query = `SELECT * FROM ${qualifiedTableName} LIMIT ${limit}`;
