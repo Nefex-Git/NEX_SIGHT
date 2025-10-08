@@ -25,7 +25,7 @@ interface TableSelectionModalProps {
   connectionName: string;
   databaseType: string;
   connectionConfig: any;
-  onTablesSelected: (selectedTables: string[]) => void;
+  onTablesSelected: (selectedTables: string[], deselectedTableIds?: number[]) => void;
   connectionId?: string;
 }
 
@@ -121,15 +121,6 @@ export default function TableSelectionModal({
       );
       return results;
     },
-    onSuccess: (results) => {
-      toast({
-        title: "Tables imported successfully",
-        description: `${results.length} table(s) have been added to your datasets.`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/data-sources"] });
-      onTablesSelected(Array.from(selectedTables));
-      onClose();
-    },
     onError: (error) => {
       toast({
         title: "Import failed",
@@ -185,8 +176,30 @@ export default function TableSelectionModal({
       return;
     }
     
+    // If editing, calculate which tables were deselected
+    let deselectedTableIds: number[] = [];
+    if (connectionId && existingTables.length > 0) {
+      const existingTableKeys = new Set(
+        existingTables.map((t: any) => `${t.metadata?.schemaName}.${t.metadata?.tableName}`)
+      );
+      
+      deselectedTableIds = existingTables
+        .filter((t: any) => {
+          const tableKey = `${t.metadata?.schemaName}.${t.metadata?.tableName}`;
+          return !selectedTables.has(tableKey);
+        })
+        .map((t: any) => t.id);
+    }
+    
     setIsCreatingDatasets(true);
-    createDatasetsMutation.mutate(Array.from(selectedTables));
+    
+    // Create datasets for selected tables, then notify parent with deselected IDs
+    createDatasetsMutation.mutate(Array.from(selectedTables), {
+      onSuccess: () => {
+        onTablesSelected(Array.from(selectedTables), deselectedTableIds);
+        onClose();
+      }
+    });
   };
 
   const filteredTables = schemaInfo?.tables.filter(table => 
