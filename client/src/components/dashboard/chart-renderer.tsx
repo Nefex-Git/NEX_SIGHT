@@ -40,7 +40,10 @@ import {
 import type { Chart } from "@shared/schema";
 
 interface ChartRendererProps {
-  chartId: string;
+  chartId?: string;
+  chart?: Chart;
+  data?: any[];
+  isPreview?: boolean;
 }
 
 const COLORS = [
@@ -54,8 +57,8 @@ const COLORS = [
   "#84cc16", // Lime
 ];
 
-export function ChartRenderer({ chartId }: ChartRendererProps) {
-  // Fetch chart data
+export function ChartRenderer({ chartId, chart: chartProp, data: dataProp, isPreview = false }: ChartRendererProps) {
+  // Fetch chart data only if not in preview mode
   const { data: chart, isLoading, error } = useQuery<Chart>({
     queryKey: ["/api/charts", chartId],
     queryFn: async () => {
@@ -65,9 +68,10 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
       if (!response.ok) throw new Error("Failed to fetch chart");
       return response.json();
     },
+    enabled: !isPreview && !!chartId,
   });
 
-  // Fetch chart data (from data sources)
+  // Fetch chart data (from data sources) only if not in preview mode
   const { data: chartData, isLoading: dataLoading } = useQuery({
     queryKey: ["/api/charts", chartId, "data"],
     queryFn: async () => {
@@ -78,10 +82,14 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
       const result = await response.json();
       return result.data || [];
     },
-    enabled: !!chart,
+    enabled: !isPreview && !!chart,
   });
 
-  if (isLoading || dataLoading) {
+  // Use preview data or fetched data
+  const activeChart = isPreview ? chartProp : chart;
+  const activeData = isPreview ? (dataProp || []) : (chartData || []);
+
+  if (!isPreview && (isLoading || dataLoading)) {
     return (
       <div className="flex items-center justify-center h-full min-h-[200px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -89,7 +97,7 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
     );
   }
 
-  if (error || !chart) {
+  if (!isPreview && (error || !activeChart)) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-muted-foreground">
         <AlertCircle className="h-8 w-8 mb-2" />
@@ -98,9 +106,13 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
     );
   }
 
+  if (!activeChart) {
+    return null;
+  }
+
   const renderChart = () => {
-    const data = chartData || [];
-    const config = (chart.config || {}) as Record<string, any>;
+    const data = activeData || [];
+    const config = (activeChart.config || {}) as Record<string, any>;
 
     if (!data || data.length === 0) {
       return (
@@ -110,7 +122,7 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
       );
     }
 
-    switch (chart.type) {
+    switch (activeChart.type) {
       // KPI Charts
       case "big_number":
         const metric = config.metric;
@@ -124,7 +136,7 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
         const value = data[0]?.[metric] || 0;
         return (
           <BigNumber
-            title={chart.title}
+            title={activeChart.title}
             value={value}
             prefix={config.prefix}
             suffix={config.suffix}
@@ -149,7 +161,7 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
         const currentValue = data[data.length - 1]?.[metricTrend] || 0;
         return (
           <BigNumberTrendline
-            title={chart.title}
+            title={activeChart.title}
             value={currentValue}
             trendData={trendData}
             prefix={config.prefix}
@@ -163,7 +175,7 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
         const gaugeValue = data[0]?.[gaugeMetric] || 0;
         return (
           <GaugeChart
-            title={chart.title}
+            title={activeChart.title}
             value={gaugeValue}
             target={config.maxValue || 100}
             min={config.minValue || 0}
@@ -325,8 +337,8 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
                 nameKey={config.category}
                 cx="50%"
                 cy="50%"
-                outerRadius={chart.type === "donut" ? 80 : 100}
-                innerRadius={chart.type === "donut" ? 50 : 0}
+                outerRadius={activeChart.type === "donut" ? 80 : 100}
+                innerRadius={activeChart.type === "donut" ? 50 : 0}
                 label
               >
                 {data.map((_: any, index: number) => (
@@ -350,7 +362,7 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
               <YAxis dataKey={config.yAxis} stroke="#6b7280" fontSize={12} />
               <Tooltip cursor={{ strokeDasharray: "3 3" }} />
               <Legend />
-              <Scatter name={chart.title} data={data} fill={COLORS[0]} />
+              <Scatter name={activeChart.title} data={data} fill={COLORS[0]} />
             </ScatterChart>
           </ResponsiveContainer>
         );
@@ -375,7 +387,7 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
               <PolarAngleAxis dataKey={config.dimensions?.[0]} />
               <PolarRadiusAxis />
               <Radar
-                name={chart.title}
+                name={activeChart.title}
                 dataKey={config.metrics?.[0]}
                 stroke={COLORS[0]}
                 fill={COLORS[0]}
@@ -416,7 +428,7 @@ export function ChartRenderer({ chartId }: ChartRendererProps) {
       default:
         return (
           <div className="flex items-center justify-center h-full text-muted-foreground">
-            <p>Chart type "{chart.type}" not yet supported</p>
+            <p>Chart type "{activeChart.type}" not yet supported</p>
           </div>
         );
     }
