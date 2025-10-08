@@ -649,6 +649,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/charts/:id/data', requireAuth, async (req: any, res) => {
+    try {
+      const chart = await storage.getChart(req.params.id);
+      
+      if (!chart || chart.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Chart not found' });
+      }
+
+      const dataSourceIds = chart.dataSourceIds || [];
+      if (dataSourceIds.length === 0) {
+        return res.json({ data: [] });
+      }
+
+      // Fetch data from the first data source (simplified version)
+      // In a full implementation, would support joins across multiple sources
+      const dataSource = await storage.getDataSource(dataSourceIds[0]);
+      if (!dataSource || dataSource.userId !== req.user.id) {
+        return res.json({ data: [] });
+      }
+
+      // Limit data for preview
+      const limit = Math.min(parseInt(req.query.limit as string) || 100, 1000);
+      
+      if (dataSource.type === 'csv' && dataSource.filename) {
+        const filePath = path.join(process.cwd(), 'uploads', dataSource.filename);
+        if (fs.existsSync(filePath)) {
+          const csvData = await parseCSVFile(filePath);
+          res.json({ data: csvData.slice(0, limit) });
+        } else {
+          res.json({ data: [] });
+        }
+      } else if (dataSource.metadata && (dataSource.metadata as any).isTableDataset) {
+        try {
+          const metadata = dataSource.metadata as any;
+          
+          // Sanitize identifiers to prevent SQL injection
+          const sanitizeIdentifier = (identifier: string): string => {
+            // Remove any characters that aren't alphanumeric, underscore, or dot
+            return identifier.replace(/[^a-zA-Z0-9_.]/g, '');
+          };
+          
+          const schemaName = metadata.schemaName ? sanitizeIdentifier(metadata.schemaName) : null;
+          const tableName = sanitizeIdentifier(metadata.tableName);
+          
+          if (!tableName) {
+            return res.json({ data: [] });
+          }
+          
+          // Build safe qualified table name
+          const qualifiedTableName = schemaName ? `${schemaName}.${tableName}` : tableName;
+          
+          // Use database-specific limit syntax
+          const connectionType = metadata.connectionType || dataSource.type;
+          let query: string;
+          
+          if (connectionType === 'mssql') {
+            query = `SELECT TOP ${limit} * FROM ${qualifiedTableName}`;
+          } else if (connectionType === 'mysql') {
+            query = `SELECT * FROM ${qualifiedTableName} LIMIT ${limit}`;
+          } else {
+            // PostgreSQL, SQLite
+            query = `SELECT * FROM ${qualifiedTableName} LIMIT ${limit}`;
+          }
+          
+          const connectionConfig = {
+            host: metadata.host,
+            port: metadata.port,
+            database: metadata.database,
+            username: metadata.username,
+            password: metadata.password
+          };
+          
+          const result = await DatabaseConnectorService.executeQuery(
+            connectionType, 
+            connectionConfig, 
+            query
+          );
+          
+          res.json({ data: result.rows || [] });
+        } catch (error) {
+          console.error('Chart data query error:', error);
+          res.json({ data: [] });
+        }
+      } else {
+        res.json({ data: [] });
+      }
+    } catch (error) {
+      console.error('Chart data fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch chart data' });
+    }
+  });
+
   app.put('/api/charts/:id', requireAuth, async (req: any, res) => {
     try {
       const chart = await storage.getChart(req.params.id);
