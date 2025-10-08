@@ -32,7 +32,7 @@ export function BarChartConfig({ config, onChange, columns = [] }: BarChartConfi
               <SelectValue placeholder="Select category column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
@@ -64,7 +64,7 @@ export function BarChartConfig({ config, onChange, columns = [] }: BarChartConfi
               <SelectValue placeholder="Select value column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>

@@ -43,7 +43,7 @@ export function TableConfig({ config, onChange, columns = [] }: TableConfigProps
         {columns.length > 0 ? (
           <>
             <div className="border rounded-md p-3 space-y-2 max-h-48 overflow-y-auto">
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <div key={col} className="flex items-center space-x-2">
                   <Checkbox
                     id={`col-${col}`}
@@ -97,7 +97,7 @@ export function TableConfig({ config, onChange, columns = [] }: TableConfigProps
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">None</SelectItem>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
