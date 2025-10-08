@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,7 @@ export default function TableSelectionModal({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTables, setSelectedTables] = useState<Set<string>>(new Set());
   const [isCreatingDatasets, setIsCreatingDatasets] = useState(false);
+  const hasInitialized = useRef(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -76,7 +77,7 @@ export default function TableSelectionModal({
   });
 
   // Fetch existing tables for this connection (if editing)
-  const { data: existingTables = [] } = useQuery({
+  const { data: existingTables = [], isFetched: existingTablesFetched } = useQuery({
     queryKey: ['/api/connections', connectionId, 'tables'],
     queryFn: async () => {
       const response = await apiRequest('GET', `/api/connections/${connectionId}/tables`);
@@ -87,19 +88,33 @@ export default function TableSelectionModal({
 
   // Reset selection when modal opens, or pre-select existing tables when editing
   useEffect(() => {
-    if (isOpen) {
-      if (connectionId && existingTables.length > 0) {
-        // Pre-select existing tables
-        const preSelected = new Set<string>(
-          existingTables.map((t: any) => `${t.metadata?.schemaName}.${t.metadata?.tableName}` as string)
-        );
-        setSelectedTables(preSelected);
-      } else {
+    if (isOpen && !hasInitialized.current) {
+      if (connectionId && existingTablesFetched) {
+        // Editing: data has been fetched (even if empty)
+        if (existingTables.length > 0) {
+          // Pre-select existing tables
+          const preSelected = new Set<string>(
+            existingTables.map((t: any) => `${t.metadata?.schemaName}.${t.metadata?.tableName}` as string)
+          );
+          setSelectedTables(preSelected);
+        } else {
+          // Connection exists but has no tables - start with empty selection
+          setSelectedTables(new Set<string>());
+        }
+        setSearchTerm("");
+        hasInitialized.current = true;
+      } else if (!connectionId) {
+        // New connection (not editing) - initialize empty and mark as initialized
         setSelectedTables(new Set<string>());
+        setSearchTerm("");
+        hasInitialized.current = true;
       }
-      setSearchTerm("");
+      // If connectionId exists but data hasn't been fetched yet, wait for it
+    } else if (!isOpen) {
+      // Reset flag when modal closes
+      hasInitialized.current = false;
     }
-  }, [isOpen, connectionId, existingTables]);
+  }, [isOpen, connectionId, existingTables, existingTablesFetched]);
 
   const createDatasetsMutation = useMutation({
     mutationFn: async (tableIds: string[]) => {
