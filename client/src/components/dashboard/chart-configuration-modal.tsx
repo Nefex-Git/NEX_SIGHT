@@ -416,7 +416,7 @@ export function ChartConfigurationModal({
         return chartType.id === "multi_value_card" ? (
           <MultiValueConfig {...commonProps} />
         ) : (
-          <BigNumberConfig {...commonProps} />
+          <BigNumberConfig {...commonProps} chartType={chartType.id} />
         );
       
       case "bar":
