@@ -21,8 +21,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import KpiCard from "@/components/dashboard/kpi-card";
 import { DrillDownModal } from "@/components/chart/DrillDownModal";
+import { ChartTypeSelectionModal } from "@/components/dashboard/chart-type-selection-modal";
+import { ChartConfigurationModal } from "@/components/dashboard/chart-configuration-modal";
 import type { Dashboard, Chart, DashboardChart } from "@shared/schema";
 import type { KPI } from "@/lib/api";
+import type { ChartType } from "@/lib/chart-catalog";
 
 interface DashboardWithKpis extends Dashboard {
   kpis: KPI[];
@@ -44,6 +47,12 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
   const [kpiUnit, setKpiUnit] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
+  
+  // Chart creation flow state
+  const [isChartTypeModalOpen, setIsChartTypeModalOpen] = useState(false);
+  const [isChartConfigModalOpen, setIsChartConfigModalOpen] = useState(false);
+  const [selectedChartType, setSelectedChartType] = useState<ChartType | null>(null);
+  
   const { toast } = useToast();
 
   const { data: dashboard, isLoading } = useQuery<DashboardWithKpis>({
@@ -223,7 +232,7 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
             <Settings className="mr-2 h-4 w-4" />
             {isEditMode ? "Done" : "Edit Layout"}
           </Button>
-          <Button onClick={() => setAddKpiDialogOpen(true)} data-testid="button-add-kpi">
+          <Button onClick={() => setIsChartTypeModalOpen(true)} data-testid="button-add-kpi">
             <Plus className="mr-2 h-4 w-4" />
             Add KPI
           </Button>
@@ -317,7 +326,7 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
             <TrendingUp className="mx-auto h-12 w-12 mb-4" />
             <h3 className="text-lg font-semibold mb-2">No KPIs Yet</h3>
             <p className="mb-4">Add your first KPI to start tracking metrics</p>
-            <Button onClick={() => setAddKpiDialogOpen(true)} data-testid="button-add-first-kpi">
+            <Button onClick={() => setIsChartTypeModalOpen(true)} data-testid="button-add-first-kpi">
               <Plus className="mr-2 h-4 w-4" />
               Add KPI
             </Button>
@@ -376,6 +385,34 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
           chartTitle={
             dashboardCharts.find((dc) => dc.chart?.id === selectedChartId)?.chart?.title || "Chart"
           }
+        />
+      )}
+
+      {/* Chart Type Selection Modal */}
+      <ChartTypeSelectionModal
+        isOpen={isChartTypeModalOpen}
+        onClose={() => setIsChartTypeModalOpen(false)}
+        onSelectChartType={(chartType) => {
+          setSelectedChartType(chartType);
+          setIsChartTypeModalOpen(false);
+          setIsChartConfigModalOpen(true);
+        }}
+      />
+
+      {/* Chart Configuration Modal */}
+      {selectedChartType && (
+        <ChartConfigurationModal
+          isOpen={isChartConfigModalOpen}
+          onClose={() => {
+            setIsChartConfigModalOpen(false);
+            setSelectedChartType(null);
+          }}
+          chartType={selectedChartType}
+          dashboardId={dashboardId}
+          onBack={() => {
+            setIsChartConfigModalOpen(false);
+            setIsChartTypeModalOpen(true);
+          }}
         />
       )}
     </div>
