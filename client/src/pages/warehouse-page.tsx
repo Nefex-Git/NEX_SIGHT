@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Database, 
-  Upload, 
   FileText, 
   Trash2, 
   Plus,
@@ -24,7 +23,6 @@ import { Badge } from "@/components/ui/badge";
 import TableSelectionModal from "@/components/table-selection-modal";
 
 export default function WarehousePage() {
-  const [isDragging, setIsDragging] = useState(false);
   const [isConnectorModalOpen, setIsConnectorModalOpen] = useState(false);
   const [isCreatingConnection, setIsCreatingConnection] = useState(false);
   const [isTableSelectionOpen, setIsTableSelectionOpen] = useState(false);
@@ -136,38 +134,6 @@ export default function WarehousePage() {
     setIsConnectorModalOpen(true);
   };
 
-  const handleFileUpload = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    
-    const file = files[0];
-    if (!file.name.endsWith('.csv')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a CSV file.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    uploadMutation.mutate(file);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    handleFileUpload(e.dataTransfer.files);
-  };
-
   const formatFileSize = (bytes: number | undefined) => {
     if (!bytes) return "—";
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -272,41 +238,6 @@ export default function WarehousePage() {
           )}
         </div>
 
-        {/* Upload Area */}
-        <Card>
-          <CardContent className="p-6">
-            <div
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">
-                Drop your CSV files here, or click to browse
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Supports CSV files up to 10MB
-              </p>
-              <Input
-                type="file"
-                accept=".csv"
-                onChange={(e) => handleFileUpload(e.target.files)}
-                className="max-w-xs mx-auto"
-                disabled={uploadMutation.isPending}
-                data-testid="input-file-upload"
-              />
-              {uploadMutation.isPending && (
-                <p className="text-sm text-primary mt-2">Uploading and processing...</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* CSV Datasets Grid */}
         {dataSourcesLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -377,12 +308,16 @@ export default function WarehousePage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingConnection ? 'Edit Connection' : 'Connect to Database'}
+              {editingConnection ? 'Edit Connection' : 'Connect Data Source'}
             </DialogTitle>
           </DialogHeader>
           <DatabaseConnectorForm
             onSubmit={handleDatabaseConnectionSubmit}
-            isLoading={isCreatingConnection}
+            onFileUpload={(file, name) => {
+              uploadMutation.mutate(file);
+              setIsConnectorModalOpen(false);
+            }}
+            isLoading={isCreatingConnection || uploadMutation.isPending}
           />
         </DialogContent>
       </Dialog>
