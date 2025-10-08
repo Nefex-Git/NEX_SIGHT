@@ -117,14 +117,16 @@ const createConnectionSchema = (connector: DatabaseConnectorSpec | null) => {
 
 interface DatabaseConnectorFormProps {
   onSubmit: (name: string, type: string, config: DatabaseConnectionConfig) => void;
+  onFileUpload?: (file: File, name: string) => void;
   isLoading?: boolean;
 }
 
-export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseConnectorFormProps) {
+export default function DatabaseConnectorForm({ onSubmit, onFileUpload, isLoading }: DatabaseConnectorFormProps) {
   const [selectedConnector, setSelectedConnector] = useState<DatabaseConnectorSpec | null>(null);
   const [connectionTest, setConnectionTest] = useState<ConnectionTestResult | null>(null);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionName, setConnectionName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
 
   // Fetch available connectors
@@ -213,6 +215,30 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
     testConnectionMutation.mutate(config);
   };
 
+  const handleFileUpload = () => {
+    if (!selectedConnector || !connectionName.trim()) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please select a connector and provide a connection name',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!selectedFile) {
+      toast({
+        title: 'No File Selected',
+        description: 'Please select a file to upload',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (onFileUpload) {
+      onFileUpload(selectedFile, connectionName);
+    }
+  };
+
   const handleSubmit = (config: DatabaseConnectionConfig) => {
     if (!selectedConnector || !connectionName.trim()) {
       toast({
@@ -238,13 +264,54 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
   const renderConnectionFields = () => {
     if (!selectedConnector) return null;
 
+    // File-based connectors show file upload interface
+    if (selectedConnector.category === 'file') {
+      return (
+        <div className="space-y-4">
+          <div className="border-2 border-dashed rounded-lg p-8 text-center transition-colors hover:border-primary/50">
+            <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">
+              Select your {selectedConnector.displayName}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Choose a file from your computer
+            </p>
+            <Input
+              type="file"
+              accept={selectedConnector.name === 'csv' ? '.csv' : selectedConnector.name === 'excel' ? '.xlsx,.xls' : '.json'}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setSelectedFile(file);
+                  // Auto-populate connection name from filename if empty
+                  if (!connectionName) {
+                    setConnectionName(file.name.replace(/\.[^/.]+$/, ''));
+                  }
+                }
+              }}
+              className="max-w-xs mx-auto"
+              data-testid="input-file-upload"
+            />
+            {selectedFile && (
+              <div className="mt-4">
+                <p className="text-sm text-primary">
+                  Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Database connectors show connection fields
     return (
       <div className="space-y-4">
         {/* Basic connection fields */}
         {selectedConnector.requiresHost && (
           <FormField
             control={form.control}
-            name="host" as any
+            name={"host" as any}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Host</FormLabel>
@@ -286,7 +353,7 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
         {selectedConnector.requiresDatabase && (
           <FormField
             control={form.control}
-            name="database" as any
+            name={"database" as any}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Database</FormLabel>
@@ -307,7 +374,7 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
           <>
             <FormField
               control={form.control}
-              name="username" as any
+              name={"username" as any}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Username</FormLabel>
@@ -325,7 +392,7 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
 
             <FormField
               control={form.control}
-              name="password" as any
+              name={"password" as any}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
@@ -348,7 +415,7 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
         {selectedConnector.name === 'bigquery' && (
           <FormField
             control={form.control}
-            name="projectId" as any
+            name={"projectId" as any}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Project ID</FormLabel>
@@ -369,7 +436,7 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
           <>
             <FormField
               control={form.control}
-              name="account" as any
+              name={"account" as any}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Account</FormLabel>
@@ -387,7 +454,7 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
 
             <FormField
               control={form.control}
-              name="warehouse" as any
+              name={"warehouse" as any}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Warehouse</FormLabel>
@@ -405,7 +472,7 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
 
             <FormField
               control={form.control}
-              name="role" as any
+              name={"role" as any}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role (Optional)</FormLabel>
@@ -423,32 +490,11 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
           </>
         )}
 
-        {/* File path for file-based connectors */}
-        {selectedConnector.category === 'file' && (
-          <FormField
-            control={form.control}
-            name="filePath" as any
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>File Path</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="/path/to/file.csv"
-                    {...field}
-                    data-testid="input-file-path"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
         {/* SSL Configuration */}
         {selectedConnector.supportsSSL && (
           <FormField
             control={form.control}
-            name="sslMode" as any
+            name={"sslMode" as any}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>SSL Mode</FormLabel>
@@ -580,65 +626,86 @@ export default function DatabaseConnectorForm({ onSubmit, isLoading }: DatabaseC
                 {/* Dynamic connection fields */}
                 {renderConnectionFields()}
 
-                {/* Connection Test */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-medium">Connection Test</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleTestConnection}
-                      disabled={isTestingConnection}
-                      data-testid="button-test-connection"
-                    >
-                      {isTestingConnection ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Testing...
-                        </>
-                      ) : (
-                        'Test Connection'
-                      )}
-                    </Button>
-                  </div>
-
-                  {connectionTest && (
-                    <Alert className={connectionTest.success ? 'border-green-500' : 'border-red-500'}>
-                      <div className="flex items-center gap-2">
-                        {connectionTest.success ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                {/* Connection Test - Only for database connectors */}
+                {selectedConnector.category !== 'file' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-medium">Connection Test</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleTestConnection}
+                        disabled={isTestingConnection}
+                        data-testid="button-test-connection"
+                      >
+                        {isTestingConnection ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Testing...
+                          </>
                         ) : (
-                          <XCircle className="h-4 w-4 text-red-600" />
+                          'Test Connection'
                         )}
-                        <AlertDescription className="flex-1">
-                          {connectionTest.message}
-                          {connectionTest.latency && (
-                            <span className="ml-2 text-muted-foreground">
-                              ({connectionTest.latency}ms)
-                            </span>
+                      </Button>
+                    </div>
+
+                    {connectionTest && (
+                      <Alert className={connectionTest.success ? 'border-green-500' : 'border-red-500'}>
+                        <div className="flex items-center gap-2">
+                          {connectionTest.success ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-600" />
                           )}
-                        </AlertDescription>
-                      </div>
-                    </Alert>
-                  )}
-                </div>
+                          <AlertDescription className="flex-1">
+                            {connectionTest.message}
+                            {connectionTest.latency && (
+                              <span className="ml-2 text-muted-foreground">
+                                ({connectionTest.latency}ms)
+                              </span>
+                            )}
+                          </AlertDescription>
+                        </div>
+                      </Alert>
+                    )}
+                  </div>
+                )}
 
                 {/* Submit Button */}
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading || !connectionTest?.success || !connectionName.trim()}
-                  data-testid="button-save-connection"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Connection...
-                    </>
-                  ) : (
-                    'Save Connection'
-                  )}
-                </Button>
+                {selectedConnector.category === 'file' ? (
+                  <Button
+                    type="button"
+                    className="w-full"
+                    onClick={handleFileUpload}
+                    disabled={isLoading || !selectedFile || !connectionName.trim()}
+                    data-testid="button-upload-file"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      'Upload File'
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading || !connectionTest?.success || !connectionName.trim()}
+                    data-testid="button-save-connection"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating Connection...
+                      </>
+                    ) : (
+                      'Save Connection'
+                    )}
+                  </Button>
+                )}
               </form>
             </Form>
           </CardContent>
