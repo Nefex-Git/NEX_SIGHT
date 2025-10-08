@@ -103,7 +103,11 @@ const chartTypeIcons: Record<string, any> = {
   multi_value_card: MultiValueCardIcon,
 };
 
-export default function ChartsPage() {
+interface ChartsPageProps {
+  onNavigateToBuilder?: (chartType: string) => void;
+}
+
+export default function ChartsPage({ onNavigateToBuilder }: ChartsPageProps) {
   const [, setLocation] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string>("All charts");
   const [searchQuery, setSearchQuery] = useState("");
@@ -142,7 +146,11 @@ export default function ChartsPage() {
   }, [selectedCategory, searchQuery]);
 
   const handleChartClick = (chart: ChartType) => {
-    setLocation(`/chart-builder?type=${chart.id}`);
+    if (onNavigateToBuilder) {
+      onNavigateToBuilder(chart.id);
+    } else {
+      setLocation(`/chart-builder?type=${chart.id}`);
+    }
   };
 
   const getChartIcon = (chartId: string) => {
