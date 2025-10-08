@@ -327,7 +327,7 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
             <TrendingUp className="mx-auto h-12 w-12 mb-4" />
             <h3 className="text-lg font-semibold mb-2">No KPIs Yet</h3>
             <p className="mb-4">Add your first KPI to start tracking metrics</p>
-            <Button onClick={() => setAddKpiDialogOpen(true)} data-testid="button-add-first-kpi">
+            <Button onClick={() => setIsChartTypeModalOpen(true)} data-testid="button-add-first-kpi">
               <Plus className="mr-2 h-4 w-4" />
               Add KPI
             </Button>
