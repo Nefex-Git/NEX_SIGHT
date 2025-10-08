@@ -372,15 +372,15 @@ const DatasetsTab = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      {previewData.columns.map((column: string, index: number) => (
+                      {(previewData.columns || []).map((column: string, index: number) => (
                         <TableHead key={index}>{column}</TableHead>
                       ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {previewData.rows.map((row: string[], rowIndex: number) => (
+                    {(previewData.rows || []).map((row: string[], rowIndex: number) => (
                       <TableRow key={rowIndex}>
-                        {row.map((cell: string, cellIndex: number) => (
+                        {(row || []).map((cell: string, cellIndex: number) => (
                           <TableCell key={cellIndex} className="font-mono text-sm">
                             {cell}
                           </TableCell>
@@ -772,15 +772,15 @@ const SQLEngineTab = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {queryResults.columns.map((column: string, index: number) => (
+                    {(queryResults.columns || []).map((column: string, index: number) => (
                       <TableHead key={index}>{column}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {queryResults.rows.map((row: string[], rowIndex: number) => (
+                  {(queryResults.rows || []).map((row: string[], rowIndex: number) => (
                     <TableRow key={rowIndex}>
-                      {row.map((cell: string, cellIndex: number) => (
+                      {(row || []).map((cell: string, cellIndex: number) => (
                         <TableCell key={cellIndex} className="font-mono text-sm">
                           {cell}
                         </TableCell>
@@ -790,9 +790,9 @@ const SQLEngineTab = () => {
                 </TableBody>
               </Table>
             </div>
-            {queryResults.rowCount > queryResults.rows.length && (
+            {queryResults.rowCount > (queryResults.rows || []).length && (
               <div className="text-center text-sm text-muted-foreground mt-4">
-                Showing {queryResults.rows.length} of {queryResults.rowCount} rows
+                Showing {(queryResults.rows || []).length} of {queryResults.rowCount} rows
               </div>
             )}
           </CardContent>

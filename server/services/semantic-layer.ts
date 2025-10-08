@@ -354,25 +354,31 @@ export class SemanticLayer {
       });
     } else if (metadata.columns && Array.isArray(metadata.columns)) {
       // For CSV files
-      metadata.columns.forEach((col: string) => {
+      metadata.columns.forEach((col: any) => {
+        // Handle both string columns and object columns
+        const colName = typeof col === 'string' ? col : (col.name || col.column_name || String(col));
+        
         // Assume numeric-looking columns are metrics
         dimensions.push({
-          name: col,
-          field: col,
+          name: colName,
+          field: colName,
           type: 'string'
         });
         
-        // Add as metric if it looks numeric
-        if (col.toLowerCase().includes('total') || 
-            col.toLowerCase().includes('amount') ||
-            col.toLowerCase().includes('price') ||
-            col.toLowerCase().includes('quantity')) {
-          metrics.push({
-            name: col,
-            field: col,
-            aggregation: 'sum',
-            format: 'number'
-          });
+        // Add as metric if it looks numeric (only if colName is a string)
+        if (typeof colName === 'string') {
+          const lowerCol = colName.toLowerCase();
+          if (lowerCol.includes('total') || 
+              lowerCol.includes('amount') ||
+              lowerCol.includes('price') ||
+              lowerCol.includes('quantity')) {
+            metrics.push({
+              name: colName,
+              field: colName,
+              aggregation: 'sum',
+              format: 'number'
+            });
+          }
         }
       });
     }

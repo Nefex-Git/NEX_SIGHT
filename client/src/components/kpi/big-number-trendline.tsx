@@ -78,12 +78,12 @@ export function BigNumberTrendline({
 
   return (
     <Card className="w-full" data-testid="kpi-big-number-trendline">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-1">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2 p-4 pt-0">
         <div className="text-4xl font-bold" data-testid="kpi-trendline-value">
           {prefix}{formatValue(value)}{suffix}
         </div>
