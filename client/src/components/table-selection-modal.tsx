@@ -26,6 +26,7 @@ interface TableSelectionModalProps {
   databaseType: string;
   connectionConfig: any;
   onTablesSelected: (selectedTables: string[]) => void;
+  connectionId?: string;
 }
 
 interface DatabaseTable {
@@ -52,7 +53,8 @@ export default function TableSelectionModal({
   connectionName,
   databaseType,
   connectionConfig,
-  onTablesSelected
+  onTablesSelected,
+  connectionId
 }: TableSelectionModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTables, setSelectedTables] = useState<Set<string>>(new Set());
@@ -73,13 +75,31 @@ export default function TableSelectionModal({
     enabled: isOpen && !!databaseType && !!connectionConfig,
   });
 
-  // Reset selection when modal opens
+  // Fetch existing tables for this connection (if editing)
+  const { data: existingTables = [] } = useQuery({
+    queryKey: ['/api/connections', connectionId, 'tables'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/connections/${connectionId}/tables`);
+      return response.json();
+    },
+    enabled: isOpen && !!connectionId,
+  });
+
+  // Reset selection when modal opens, or pre-select existing tables when editing
   useEffect(() => {
     if (isOpen) {
-      setSelectedTables(new Set());
+      if (connectionId && existingTables.length > 0) {
+        // Pre-select existing tables
+        const preSelected = new Set<string>(
+          existingTables.map((t: any) => `${t.metadata?.schemaName}.${t.metadata?.tableName}` as string)
+        );
+        setSelectedTables(preSelected);
+      } else {
+        setSelectedTables(new Set<string>());
+      }
       setSearchTerm("");
     }
-  }, [isOpen]);
+  }, [isOpen, connectionId, existingTables]);
 
   const createDatasetsMutation = useMutation({
     mutationFn: async (tableIds: string[]) => {
@@ -89,6 +109,7 @@ export default function TableSelectionModal({
           if (!table) throw new Error(`Table ${tableId} not found`);
 
           return apiRequest('POST', '/api/data-sources/table', {
+            connectionId,
             connectionName,
             databaseType,
             connectionConfig,
