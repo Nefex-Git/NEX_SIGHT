@@ -47,8 +47,6 @@ export default function WarehousePage() {
     queryFn: () => getConnections(),
   });
 
-  // Filter only CSV datasets
-  const csvDatasets = dataSources.filter(source => source.type === 'csv');
 
   const uploadMutation = useMutation({
     mutationFn: uploadDataSource,
@@ -228,82 +226,6 @@ export default function WarehousePage() {
         )}
       </div>
 
-      {/* CSV Datasets Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">CSV Datasets</h3>
-          {csvDatasets.length > 0 && (
-            <Badge variant="secondary">{csvDatasets.length}</Badge>
-          )}
-        </div>
-
-        {/* CSV Datasets Grid */}
-        {dataSourcesLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 w-full" />
-            ))}
-          </div>
-        ) : csvDatasets.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {csvDatasets.map((dataset) => (
-              <Card 
-                key={dataset.id} 
-                className="hover:border-primary/30 transition-all"
-                data-testid={`card-dataset-${dataset.id}`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2 rounded-lg bg-primary/20">
-                      <FileText className="text-primary h-5 w-5" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={getStatusColor(dataset.status)}>
-                        {dataset.status}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteMutation.mutate(dataset.id)}
-                        disabled={deleteMutation.isPending}
-                        data-testid={`button-delete-${dataset.id}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <h4 className="font-semibold mb-1">{dataset.name}</h4>
-                  <p className="text-xs text-muted-foreground mb-3">CSV dataset</p>
-                  
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
-                      {dataset.rowCount ? `${dataset.rowCount.toLocaleString()} rows` : '—'}
-                    </span>
-                    <span>{formatFileSize(dataset.size)}</span>
-                  </div>
-                  
-                  {dataset.columnCount && (
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      {dataset.columnCount} columns
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="p-8 text-center">
-            <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No CSV datasets yet</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Upload CSV files to get started
-            </p>
-          </Card>
-        )}
-      </div>
-      
       <Dialog open={isConnectorModalOpen} onOpenChange={setIsConnectorModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
