@@ -8,6 +8,7 @@ import AssistantPage from "./assistant-page";
 import WarehousePage from "./warehouse-page";
 import ChartsPage from "./charts-page";
 import DatasetsPage from "./datasets-page";
+import ChartBuilderPage from "./chart-builder-page";
 
 type Page = "dashboard" | "assistant" | "warehouse" | "charts" | "datasets";
 
@@ -15,6 +16,7 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [viewingDashboardId, setViewingDashboardId] = useState<string | null>(null);
+  const [buildingChartType, setBuildingChartType] = useState<string | null>(null);
 
   const handleNavigateToDashboard = (dashboardId: string) => {
     setViewingDashboardId(dashboardId);
@@ -22,6 +24,14 @@ export default function HomePage() {
 
   const handleBackToDashboards = () => {
     setViewingDashboardId(null);
+  };
+
+  const handleNavigateToChartBuilder = (chartType: string) => {
+    setBuildingChartType(chartType);
+  };
+
+  const handleBackToCharts = () => {
+    setBuildingChartType(null);
   };
 
   const renderPage = () => {
@@ -37,13 +47,23 @@ export default function HomePage() {
       return <DashboardPage onNavigateToDashboard={handleNavigateToDashboard} />;
     }
 
+    if (currentPage === "charts") {
+      if (buildingChartType) {
+        return (
+          <ChartBuilderPage 
+            chartType={buildingChartType}
+            onBack={handleBackToCharts}
+          />
+        );
+      }
+      return <ChartsPage onNavigateToBuilder={handleNavigateToChartBuilder} />;
+    }
+
     switch (currentPage) {
       case "assistant":
         return <AssistantPage />;
       case "warehouse":
         return <WarehousePage />;
-      case "charts":
-        return <ChartsPage />;
       case "datasets":
         return <DatasetsPage />;
       default:
@@ -58,6 +78,7 @@ export default function HomePage() {
         onPageChange={(page) => {
           setCurrentPage(page as Page);
           setViewingDashboardId(null); // Reset dashboard view when changing pages
+          setBuildingChartType(null); // Reset chart builder when changing pages
         }}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}

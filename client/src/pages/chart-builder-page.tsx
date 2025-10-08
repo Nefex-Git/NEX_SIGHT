@@ -32,13 +32,18 @@ import { BarChartConfig } from "@/components/chart-config/BarChartConfig";
 import { LineChartConfig } from "@/components/chart-config/LineChartConfig";
 import { PieChartConfig } from "@/components/chart-config/PieChartConfig";
 
-export default function ChartBuilderPage() {
+interface ChartBuilderPageProps {
+  chartType?: string;
+  onBack?: () => void;
+}
+
+export default function ChartBuilderPage({ chartType: chartTypeProp, onBack }: ChartBuilderPageProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
-  // Get chart type from URL params
+  // Get chart type from props or URL params
   const urlParams = new URLSearchParams(window.location.search);
-  const chartTypeId = urlParams.get("type") || "bar";
+  const chartTypeId = chartTypeProp || urlParams.get("type") || "bar";
   
   const chartType = CHART_CATALOG.find((c) => c.id === chartTypeId);
   
@@ -133,7 +138,11 @@ export default function ChartBuilderPage() {
         title: "Chart created",
         description: "Your chart has been created successfully.",
       });
-      setLocation("/charts");
+      if (onBack) {
+        onBack();
+      } else {
+        setLocation("/");
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -229,7 +238,13 @@ export default function ChartBuilderPage() {
             <div className="space-y-4">
               <Button
                 variant="ghost"
-                onClick={() => setLocation("/charts")}
+                onClick={() => {
+                  if (onBack) {
+                    onBack();
+                  } else {
+                    setLocation("/");
+                  }
+                }}
                 className="pl-0"
                 data-testid="button-back-to-charts"
               >
