@@ -11,9 +11,10 @@ import {
 interface WaterfallConfigProps {
   config: Record<string, any>;
   onChange: (config: Record<string, any>) => void;
+  columns?: string[];
 }
 
-export function WaterfallConfig({ config, onChange }: WaterfallConfigProps) {
+export function WaterfallConfig({ config, onChange, columns = [] }: WaterfallConfigProps) {
   const updateConfig = (key: string, value: any) => {
     onChange({ ...config, [key]: value });
   };
@@ -22,24 +23,62 @@ export function WaterfallConfig({ config, onChange }: WaterfallConfigProps) {
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="category">Category (Steps)</Label>
-        <Input
-          id="category"
-          placeholder="e.g., month, step_name"
-          value={config.category || ""}
-          onChange={(e) => updateConfig("category", e.target.value)}
-          data-testid="input-category"
-        />
+        {columns.length > 0 ? (
+          <Select
+            value={config.category || ""}
+            onValueChange={(value) => updateConfig("category", value)}
+          >
+            <SelectTrigger id="category" data-testid="select-category">
+              <SelectValue placeholder="Select a column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="category"
+            placeholder="Select a dataset first"
+            value={config.category || ""}
+            onChange={(e) => updateConfig("category", e.target.value)}
+            data-testid="input-category"
+            disabled
+          />
+        )}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="metric">Value Metric</Label>
-        <Input
-          id="metric"
-          placeholder="e.g., SUM(change), value"
-          value={config.metric || ""}
-          onChange={(e) => updateConfig("metric", e.target.value)}
-          data-testid="input-metric"
-        />
+        {columns.length > 0 ? (
+          <Select
+            value={config.metric || ""}
+            onValueChange={(value) => updateConfig("metric", value)}
+          >
+            <SelectTrigger id="metric" data-testid="select-metric">
+              <SelectValue placeholder="Select a column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="metric"
+            placeholder="Select a dataset first"
+            value={config.metric || ""}
+            onChange={(e) => updateConfig("metric", e.target.value)}
+            data-testid="input-metric"
+            disabled
+          />
+        )}
       </div>
 
       <div className="space-y-2">

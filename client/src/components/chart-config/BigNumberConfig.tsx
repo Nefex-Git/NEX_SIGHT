@@ -11,9 +11,10 @@ import { Input } from "@/components/ui/input";
 interface BigNumberConfigProps {
   config: Record<string, any>;
   onChange: (config: Record<string, any>) => void;
+  columns?: string[];
 }
 
-export function BigNumberConfig({ config, onChange }: BigNumberConfigProps) {
+export function BigNumberConfig({ config, onChange, columns = [] }: BigNumberConfigProps) {
   const updateConfig = (key: string, value: any) => {
     onChange({ ...config, [key]: value });
   };
@@ -21,16 +22,35 @@ export function BigNumberConfig({ config, onChange }: BigNumberConfigProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="metric">Metric</Label>
-        <Input
-          id="metric"
-          placeholder="e.g., COUNT(*), SUM(revenue), AVG(price)"
-          value={config.metric || ""}
-          onChange={(e) => updateConfig("metric", e.target.value)}
-          data-testid="input-metric"
-        />
+        <Label htmlFor="metric">Metric Column</Label>
+        {columns.length > 0 ? (
+          <Select
+            value={config.metric || ""}
+            onValueChange={(value) => updateConfig("metric", value)}
+          >
+            <SelectTrigger id="metric" data-testid="select-metric">
+              <SelectValue placeholder="Select a column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="metric"
+            placeholder="Select a dataset first"
+            value={config.metric || ""}
+            onChange={(e) => updateConfig("metric", e.target.value)}
+            data-testid="input-metric"
+            disabled
+          />
+        )}
         <p className="text-xs text-muted-foreground">
-          SQL expression to calculate the value
+          Column to aggregate (e.g., revenue, price, count)
         </p>
       </div>
 

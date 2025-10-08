@@ -62,6 +62,41 @@ export default function ChartBuilderPage({ chartType: chartTypeProp, onBack }: C
   const [title, setTitle] = useState(`New ${chartType?.name || "Chart"}`);
   const [selectedDatasets, setSelectedDatasets] = useState<string[]>([]);
   const [config, setConfig] = useState<Record<string, any>>({});
+  const [availableColumns, setAvailableColumns] = useState<string[]>([]);
+  
+  // Fetch columns from selected datasets
+  useEffect(() => {
+    const fetchColumns = async () => {
+      if (selectedDatasets.length === 0) {
+        setAvailableColumns([]);
+        return;
+      }
+
+      try {
+        const columnSets = await Promise.all(
+          selectedDatasets.map(async (datasetId) => {
+            const response = await fetch(`/api/data-sources/${datasetId}/columns`, {
+              credentials: "include",
+            });
+            if (response.ok) {
+              const data = await response.json();
+              return data.columns || [];
+            }
+            return [];
+          })
+        );
+
+        // Combine and deduplicate columns from all datasets
+        const allColumns = Array.from(new Set(columnSets.flat()));
+        setAvailableColumns(allColumns);
+      } catch (error) {
+        console.error("Failed to fetch columns:", error);
+        setAvailableColumns([]);
+      }
+    };
+
+    fetchColumns();
+  }, [selectedDatasets]);
   
   // Initialize config with defaults based on chart type
   useEffect(() => {
@@ -339,7 +374,7 @@ export default function ChartBuilderPage({ chartType: chartTypeProp, onBack }: C
       );
     }
     
-    return <ConfigComponent config={config} onChange={setConfig} />;
+    return <ConfigComponent config={config} onChange={setConfig} columns={availableColumns} />;
   };
   
   return (

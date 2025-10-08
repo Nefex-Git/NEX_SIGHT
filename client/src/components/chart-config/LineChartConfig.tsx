@@ -12,9 +12,10 @@ import { Switch } from "@/components/ui/switch";
 interface LineChartConfigProps {
   config: Record<string, any>;
   onChange: (config: Record<string, any>) => void;
+  columns?: string[];
 }
 
-export function LineChartConfig({ config, onChange }: LineChartConfigProps) {
+export function LineChartConfig({ config, onChange, columns = [] }: LineChartConfigProps) {
   const updateConfig = (key: string, value: any) => {
     onChange({ ...config, [key]: value });
   };
@@ -23,13 +24,31 @@ export function LineChartConfig({ config, onChange }: LineChartConfigProps) {
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="xAxis">X-Axis (Time/Category)</Label>
-        <Input
-          id="xAxis"
-          placeholder="e.g., date, month, category"
-          value={config.xAxis || ""}
-          onChange={(e) => updateConfig("xAxis", e.target.value)}
-          data-testid="input-x-axis"
-        />
+        {columns.length > 0 ? (
+          <Select
+            value={config.xAxis || ""}
+            onValueChange={(value) => updateConfig("xAxis", value)}
+          >
+            <SelectTrigger id="xAxis" data-testid="select-x-axis">
+              <SelectValue placeholder="Select time/category column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="xAxis"
+            placeholder="Select a dataset first"
+            value={config.xAxis || ""}
+            disabled
+            data-testid="input-x-axis"
+          />
+        )}
         <p className="text-xs text-muted-foreground">
           Column for time series or categories
         </p>
@@ -37,13 +56,31 @@ export function LineChartConfig({ config, onChange }: LineChartConfigProps) {
 
       <div className="space-y-2">
         <Label htmlFor="yAxis">Y-Axis (Value)</Label>
-        <Input
-          id="yAxis"
-          placeholder="e.g., SUM(sales), COUNT(*)"
-          value={config.yAxis || ""}
-          onChange={(e) => updateConfig("yAxis", e.target.value)}
-          data-testid="input-y-axis"
-        />
+        {columns.length > 0 ? (
+          <Select
+            value={config.yAxis || ""}
+            onValueChange={(value) => updateConfig("yAxis", value)}
+          >
+            <SelectTrigger id="yAxis" data-testid="select-y-axis">
+              <SelectValue placeholder="Select value column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="yAxis"
+            placeholder="Select a dataset first"
+            value={config.yAxis || ""}
+            disabled
+            data-testid="input-y-axis"
+          />
+        )}
         <p className="text-xs text-muted-foreground">
           Metric to plot over time
         </p>
@@ -51,13 +88,32 @@ export function LineChartConfig({ config, onChange }: LineChartConfigProps) {
 
       <div className="space-y-2">
         <Label htmlFor="groupBy">Group By (Optional)</Label>
-        <Input
-          id="groupBy"
-          placeholder="e.g., category, region"
-          value={config.groupBy || ""}
-          onChange={(e) => updateConfig("groupBy", e.target.value)}
-          data-testid="input-group-by"
-        />
+        {columns.length > 0 ? (
+          <Select
+            value={config.groupBy || ""}
+            onValueChange={(value) => updateConfig("groupBy", value)}
+          >
+            <SelectTrigger id="groupBy" data-testid="select-group-by">
+              <SelectValue placeholder="Select group column (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">None</SelectItem>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="groupBy"
+            placeholder="Select a dataset first"
+            value={config.groupBy || ""}
+            disabled
+            data-testid="input-group-by"
+          />
+        )}
         <p className="text-xs text-muted-foreground">
           Create multiple lines by grouping
         </p>
