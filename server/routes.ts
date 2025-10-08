@@ -171,6 +171,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/data-sources/:id/columns', requireAuth, async (req: any, res) => {
+    try {
+      const dataSource = await storage.getDataSource(req.params.id);
+      
+      if (!dataSource || dataSource.userId !== req.user.id) {
+        return res.status(404).json({ message: 'Data source not found' });
+      }
+
+      // Extract columns from metadata
+      const metadata = dataSource.metadata as any;
+      let columns: string[] = [];
+
+      if (metadata?.columns) {
+        columns = metadata.columns;
+      } else if (metadata?.schema) {
+        // For database tables, extract column names from schema
+        columns = metadata.schema.map((col: any) => col.name || col.column_name);
+      }
+
+      res.json({ columns });
+    } catch (error) {
+      console.error('Get columns error:', error);
+      res.status(500).json({ message: 'Failed to fetch columns' });
+    }
+  });
+
   // Connector endpoints
   app.post('/api/connectors/test', requireAuth, async (req: any, res) => {
     try {

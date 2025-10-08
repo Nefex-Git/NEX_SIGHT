@@ -12,9 +12,10 @@ import { Switch } from "@/components/ui/switch";
 interface TableConfigProps {
   config: Record<string, any>;
   onChange: (config: Record<string, any>) => void;
+  columns?: string[];
 }
 
-export function TableConfig({ config, onChange }: TableConfigProps) {
+export function TableConfig({ config, onChange, columns = [] }: TableConfigProps) {
   const updateConfig = (key: string, value: any) => {
     onChange({ ...config, [key]: value });
   };
