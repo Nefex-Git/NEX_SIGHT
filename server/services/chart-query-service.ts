@@ -1,6 +1,6 @@
 import { SemanticLayer, SemanticDataset, QuerySpec } from './semantic-layer';
 import { queryCache } from './query-cache';
-import { DatabaseConnectorService } from './database-connector';
+import { DatabaseConnectorService } from './database-connectors';
 import * as fs from 'fs';
 import * as path from 'path';
 import csvParser from 'csv-parser';
