@@ -108,7 +108,7 @@ export function BigNumber({
   const colorClass = getColorClass();
 
   return (
-    <Card className="w-full" data-testid="kpi-big-number">
+    <Card className="w-full bg-white dark:bg-white" data-testid="kpi-big-number">
       <CardHeader className="pb-1">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
