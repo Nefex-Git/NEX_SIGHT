@@ -23,6 +23,7 @@ import KpiCard from "@/components/dashboard/kpi-card";
 import { DrillDownModal } from "@/components/chart/DrillDownModal";
 import { ChartTypeSelectionModal } from "@/components/dashboard/chart-type-selection-modal";
 import { ChartConfigurationModal } from "@/components/dashboard/chart-configuration-modal";
+import { ChartRenderer } from "@/components/dashboard/chart-renderer";
 import type { Dashboard, Chart, DashboardChart } from "@shared/schema";
 import type { KPI } from "@/lib/api";
 import type { ChartType } from "@/lib/chart-catalog";
@@ -350,8 +351,8 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
             draggableHandle=".drag-handle"
           >
             {dashboardCharts.map((dc) => (
-              <div key={dc.id} className="bg-card border border-border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
+              <div key={dc.id} className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between p-3 border-b">
                   <h4 className="font-medium">{dc.chart?.title || "Chart"}</h4>
                   <div className="flex items-center gap-2">
                     <Button
@@ -369,7 +370,9 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground">Type: {dc.chart?.type}</p>
+                <div className="flex-1 p-4 min-h-[200px]">
+                  {dc.chart?.id && <ChartRenderer chartId={dc.chart.id} />}
+                </div>
               </div>
             ))}
           </GridLayout>

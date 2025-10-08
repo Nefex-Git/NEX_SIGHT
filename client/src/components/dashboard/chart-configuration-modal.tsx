@@ -148,6 +148,80 @@ export function ChartConfigurationModal({
     },
   });
 
+  const validateChartConfig = (): { valid: boolean; error?: string } => {
+    const type = chartType.id;
+    
+    // Validate based on chart type
+    if (['big_number', 'gauge'].includes(type)) {
+      if (!config.metric) {
+        return { valid: false, error: "Metric column is required for this chart type" };
+      }
+    } else if (['big_number_trendline'].includes(type)) {
+      if (!config.metric || !config.timeColumn) {
+        return { valid: false, error: "Both metric and time column are required for trendline" };
+      }
+    } else if (['bar', 'stacked_bar', 'grouped_bar', 'horizontal_bar'].includes(type)) {
+      if (!config.xAxis || !config.yAxis) {
+        return { valid: false, error: "Both X-Axis and Y-Axis columns are required" };
+      }
+    } else if (['line', 'multi_line', 'smooth_line', 'stepped_line', 'area', 'stacked_area'].includes(type)) {
+      if (!config.xAxis || !config.yAxis) {
+        return { valid: false, error: "Both X-Axis and Y-Axis columns are required" };
+      }
+    } else if (['pie', 'donut'].includes(type)) {
+      if (!config.category || !config.value) {
+        return { valid: false, error: "Both category and value columns are required" };
+      }
+    } else if (['scatter', 'bubble'].includes(type)) {
+      if (!config.xAxis || !config.yAxis) {
+        return { valid: false, error: "Both X-Axis and Y-Axis columns are required" };
+      }
+    } else if (['heatmap', 'calendar_heatmap'].includes(type)) {
+      if (!config.xAxis || !config.yAxis || !config.metric) {
+        return { valid: false, error: "X-Axis, Y-Axis, and metric columns are required" };
+      }
+    } else if (['table', 'pivot_table'].includes(type)) {
+      if (!Array.isArray(config.columns) || config.columns.length === 0) {
+        return { valid: false, error: "At least one column must be selected" };
+      }
+    } else if (['funnel'].includes(type)) {
+      if (!config.stage || !config.metric) {
+        return { valid: false, error: "Stage and metric columns are required" };
+      }
+    } else if (['treemap', 'sunburst'].includes(type)) {
+      if (!Array.isArray(config.dimensions) || config.dimensions.length === 0 || !config.metric) {
+        return { valid: false, error: "At least one dimension and a metric column are required" };
+      }
+    } else if (['radar'].includes(type)) {
+      if (!Array.isArray(config.dimensions) || config.dimensions.length === 0 || 
+          !Array.isArray(config.metrics) || config.metrics.length === 0) {
+        return { valid: false, error: "At least one dimension and one metric are required" };
+      }
+    } else if (['multi_value_card'].includes(type)) {
+      if (!Array.isArray(config.metrics) || config.metrics.length === 0) {
+        return { valid: false, error: "At least one metric must be selected" };
+      }
+    } else if (['sankey'].includes(type)) {
+      if (!config.source || !config.target || !config.value) {
+        return { valid: false, error: "Source, target, and value columns are required" };
+      }
+    } else if (['waterfall'].includes(type)) {
+      if (!config.category || !config.value) {
+        return { valid: false, error: "Category and value columns are required" };
+      }
+    } else if (['boxplot', 'histogram'].includes(type)) {
+      if (!config.metric) {
+        return { valid: false, error: "Metric column is required" };
+      }
+    } else if (['country_map', 'geojson_map'].includes(type)) {
+      if (!config.location || !config.metric) {
+        return { valid: false, error: "Location and metric columns are required" };
+      }
+    }
+    
+    return { valid: true };
+  };
+
   const handleSave = () => {
     if (!title.trim()) {
       toast({
@@ -162,6 +236,16 @@ export function ChartConfigurationModal({
       toast({
         title: "Error",
         description: "Please select at least one dataset",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validation = validateChartConfig();
+    if (!validation.valid) {
+      toast({
+        title: "Configuration Error",
+        description: validation.error,
         variant: "destructive",
       });
       return;
