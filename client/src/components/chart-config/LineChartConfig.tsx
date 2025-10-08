@@ -98,7 +98,7 @@ export function LineChartConfig({ config, onChange, columns = [] }: LineChartCon
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">None</SelectItem>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>

@@ -33,7 +33,7 @@ export function RadarConfig({ config, onChange, columns = [] }: RadarConfigProps
               <SelectValue placeholder="Select a column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
@@ -64,7 +64,7 @@ export function RadarConfig({ config, onChange, columns = [] }: RadarConfigProps
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">None</SelectItem>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
@@ -94,7 +94,7 @@ export function RadarConfig({ config, onChange, columns = [] }: RadarConfigProps
               <SelectValue placeholder="Select a column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>

@@ -32,7 +32,7 @@ export function MapConfig({ config, onChange, columns = [] }: MapConfigProps) {
               <SelectValue placeholder="Select a column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
@@ -62,7 +62,7 @@ export function MapConfig({ config, onChange, columns = [] }: MapConfigProps) {
               <SelectValue placeholder="Select a column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
