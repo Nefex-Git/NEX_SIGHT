@@ -434,5 +434,9 @@ export function ChartRenderer({ chartId, chart: chartProp, data: dataProp, isPre
     }
   };
 
-  return <div className="w-full h-full">{renderChart()}</div>;
+  return (
+    <div className="w-full h-full bg-white dark:bg-white rounded-lg p-4">
+      {renderChart()}
+    </div>
+  );
 }

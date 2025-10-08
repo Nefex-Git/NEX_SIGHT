@@ -33,7 +33,7 @@ export function LineChartConfig({ config, onChange, columns = [] }: LineChartCon
               <SelectValue placeholder="Select time/category column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
@@ -65,7 +65,7 @@ export function LineChartConfig({ config, onChange, columns = [] }: LineChartCon
               <SelectValue placeholder="Select value column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
