@@ -38,6 +38,113 @@ interface ChartConfigurationModalProps {
   onBack: () => void;
 }
 
+// Helper function to aggregate preview data
+function aggregatePreviewData(rawData: any[], config: Record<string, any>, chartType: string): any[] {
+  if (!rawData || rawData.length === 0) return [];
+
+  // For bar/line charts with aggregation
+  if (['bar', 'stacked_bar', 'grouped_bar', 'line', 'multi_line', 'area', 'stacked_area'].includes(chartType)) {
+    const { xAxis, yAxis, aggregation = 'sum', limit, sortOrder = 'desc' } = config;
+    
+    if (!xAxis || !yAxis) return rawData;
+
+    // Group by xAxis and aggregate yAxis
+    const grouped: Record<string, number> = {};
+    const counts: Record<string, number> = {};
+
+    rawData.forEach((row) => {
+      const key = String(row[xAxis] || 'Unknown');
+      const value = parseFloat(row[yAxis]) || 0;
+
+      if (!grouped[key]) {
+        grouped[key] = 0;
+        counts[key] = 0;
+      }
+
+      switch (aggregation) {
+        case 'sum':
+          grouped[key] += value;
+          break;
+        case 'avg':
+          grouped[key] += value;
+          counts[key] += 1;
+          break;
+        case 'count':
+          grouped[key] += 1;
+          break;
+        case 'min':
+          grouped[key] = grouped[key] === 0 ? value : Math.min(grouped[key], value);
+          break;
+        case 'max':
+          grouped[key] = Math.max(grouped[key], value);
+          break;
+        default:
+          grouped[key] += value;
+      }
+    });
+
+    // Convert to array and apply avg calculation if needed
+    let aggregated = Object.entries(grouped).map(([key, value]) => ({
+      [xAxis]: key,
+      [yAxis]: aggregation === 'avg' && counts[key] > 0 ? value / counts[key] : value,
+    }));
+
+    // Sort
+    aggregated.sort((a, b) => {
+      const aVal = Number(a[yAxis]) || 0;
+      const bVal = Number(b[yAxis]) || 0;
+      const diff = bVal - aVal;
+      return sortOrder === 'desc' ? diff : -diff;
+    });
+
+    // Apply limit
+    if (limit && parseInt(limit) > 0) {
+      aggregated = aggregated.slice(0, parseInt(limit));
+    }
+
+    return aggregated;
+  }
+
+  // For pie/donut charts
+  if (['pie', 'donut'].includes(chartType)) {
+    const { category, value, limit, sortOrder = 'desc' } = config;
+    
+    if (!category || !value) return rawData;
+
+    // Group by category and sum values
+    const grouped: Record<string, number> = {};
+
+    rawData.forEach((row) => {
+      const key = String(row[category] || 'Unknown');
+      const val = parseFloat(row[value]) || 0;
+      grouped[key] = (grouped[key] || 0) + val;
+    });
+
+    // Convert to array
+    let aggregated = Object.entries(grouped).map(([key, val]) => ({
+      [category]: key,
+      [value]: val,
+    }));
+
+    // Sort
+    aggregated.sort((a, b) => {
+      const aVal = Number(a[value]) || 0;
+      const bVal = Number(b[value]) || 0;
+      const diff = bVal - aVal;
+      return sortOrder === 'desc' ? diff : -diff;
+    });
+
+    // Apply limit
+    if (limit && parseInt(limit) > 0) {
+      aggregated = aggregated.slice(0, parseInt(limit));
+    }
+
+    return aggregated;
+  }
+
+  return rawData;
+}
+
 export function ChartConfigurationModal({
   isOpen,
   onClose,
@@ -512,7 +619,7 @@ export function ChartConfigurationModal({
                       userId: "",
                       query: null
                     }}
-                    data={previewData}
+                    data={aggregatePreviewData(previewData, config, chartType.id)}
                     isPreview={true}
                   />
                 )}
