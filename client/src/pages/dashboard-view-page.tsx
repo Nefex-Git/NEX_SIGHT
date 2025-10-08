@@ -305,7 +305,7 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
         </Dialog>
 
       {/* KPIs Grid */}
-      {dashboard?.kpis && dashboard.kpis.length > 0 ? (
+      {(dashboard?.kpis?.length ?? 0) > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {dashboard.kpis.map((kpi) => (
             <KpiCard 
@@ -327,7 +327,7 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
             <TrendingUp className="mx-auto h-12 w-12 mb-4" />
             <h3 className="text-lg font-semibold mb-2">No KPIs Yet</h3>
             <p className="mb-4">Add your first KPI to start tracking metrics</p>
-            <Button onClick={() => setIsChartTypeModalOpen(true)} data-testid="button-add-first-kpi">
+            <Button onClick={() => setAddKpiDialogOpen(true)} data-testid="button-add-first-kpi">
               <Plus className="mr-2 h-4 w-4" />
               Add KPI
             </Button>
