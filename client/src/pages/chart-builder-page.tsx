@@ -80,7 +80,9 @@ export default function ChartBuilderPage({ chartType: chartTypeProp, onBack }: C
             });
             if (response.ok) {
               const data = await response.json();
-              return data.columns || [];
+              const columns = data.columns || [];
+              // Extract column names from column objects
+              return columns.map((col: any) => typeof col === 'string' ? col : col.name);
             }
             return [];
           })
