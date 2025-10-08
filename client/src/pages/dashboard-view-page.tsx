@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,8 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
   const [kpiUnit, setKpiUnit] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
+  const [containerWidth, setContainerWidth] = useState(1200);
+  const gridContainerRef = useRef<HTMLDivElement>(null);
   
   // Chart creation flow state
   const [isChartTypeModalOpen, setIsChartTypeModalOpen] = useState(false);
@@ -120,6 +122,19 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
       updateLayoutMutation.mutate(updates);
     }
   };
+
+  // Measure container width for responsive grid
+  useEffect(() => {
+    const updateWidth = () => {
+      if (gridContainerRef.current) {
+        setContainerWidth(gridContainerRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   const addKpiMutation = useMutation({
     mutationFn: async (data: { question: string; value: string; unit?: string; dashboardId: string }) => {
@@ -341,14 +356,14 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
       
       {/* Charts Grid Layout */}
       {dashboardCharts.length > 0 && (
-        <div className="mt-6">
+        <div className="mt-6" ref={gridContainerRef}>
           <h3 className="text-lg font-semibold mb-4">Charts</h3>
           <GridLayout
             className="layout"
             layout={layout}
             cols={12}
-            rowHeight={60}
-            width={1200}
+            rowHeight={100}
+            width={containerWidth}
             isDraggable={isEditMode}
             isResizable={isEditMode}
             onLayoutChange={handleLayoutChange}

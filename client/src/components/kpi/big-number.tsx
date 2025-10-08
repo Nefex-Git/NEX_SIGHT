@@ -109,12 +109,12 @@ export function BigNumber({
 
   return (
     <Card className="w-full" data-testid="kpi-big-number">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-1">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-1 p-4 pt-0">
         <div className={cn("text-4xl font-bold", colorClass)} data-testid="kpi-value">
           {prefix}{formatValue(value)}{suffix}
         </div>
