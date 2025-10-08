@@ -519,7 +519,7 @@ export class DatabaseConnectorService {
 
   /**
    * Transform LIMIT syntax to SQL Server TOP syntax
-   * Conservative approach: only transforms simple, common query patterns
+   * Handles simple SELECT queries and CTEs
    */
   private static transformLimitToTop(query: string): string {
     // Match LIMIT with optional OFFSET at end (ignore trailing comments/whitespace)
@@ -534,18 +534,6 @@ export class DatabaseConnectorService {
     // Remove LIMIT clause and trailing comments
     const queryWithoutLimit = query.replace(limitOffsetPattern, '');
     
-    // CONSERVATIVE: Only transform if query starts with SELECT (possibly with leading whitespace/comments)
-    // This avoids complex cases like CTEs, subqueries, or SELECT in string literals
-    const simpleSelectPattern = /^(?:\s*(?:--[^\n]*\n|\/\*[\s\S]*?\*\/)*\s*)*SELECT(\s+(?:DISTINCT|ALL))?\s+/i;
-    const selectMatch = queryWithoutLimit.match(simpleSelectPattern);
-    
-    if (!selectMatch) {
-      // Query is too complex (e.g., CTE, subquery) - user must rewrite it in SQL Server syntax
-      throw new Error('This query uses LIMIT with advanced SQL features (CTEs, subqueries, etc). Please rewrite it using SQL Server syntax (TOP instead of LIMIT, or OFFSET-FETCH for pagination).');
-    }
-    
-    const modifier = selectMatch[1] || '';
-    
     // If OFFSET is present, use OFFSET-FETCH syntax (requires ORDER BY)
     if (offset) {
       if (queryWithoutLimit.match(/\s+ORDER\s+BY\s+/i)) {
@@ -555,8 +543,29 @@ export class DatabaseConnectorService {
       }
     }
     
-    // For simple LIMIT, use TOP syntax
-    return queryWithoutLimit.replace(simpleSelectPattern, `SELECT${modifier} TOP ${limit} `);
+    // Try to find and transform SELECT statement
+    // Case 1: Query starts with WITH (CTE)
+    if (/^\s*(?:--[^\n]*\n|\/\*[\s\S]*?\*\/)*\s*WITH\s+/i.test(queryWithoutLimit)) {
+      // Find the main SELECT after CTE (look for closing paren followed by SELECT)
+      const ctePattern = /(\))\s*SELECT(\s+(?:DISTINCT|ALL))?\s+/i;
+      const cteMatch = queryWithoutLimit.match(ctePattern);
+      if (cteMatch) {
+        const modifier = cteMatch[2] || '';
+        return queryWithoutLimit.replace(ctePattern, `${cteMatch[1]} SELECT${modifier} TOP ${limit} `);
+      }
+    }
+    
+    // Case 2: Simple SELECT query
+    const simpleSelectPattern = /^(?:\s*(?:--[^\n]*\n|\/\*[\s\S]*?\*\/)*\s*)*SELECT(\s+(?:DISTINCT|ALL))?\s+/i;
+    const selectMatch = queryWithoutLimit.match(simpleSelectPattern);
+    
+    if (selectMatch) {
+      const modifier = selectMatch[1] || '';
+      return queryWithoutLimit.replace(simpleSelectPattern, `SELECT${modifier} TOP ${limit} `);
+    }
+    
+    // Case 3: Too complex - throw error
+    throw new Error('This query uses LIMIT with complex SQL features. Please rewrite it using SQL Server syntax (TOP instead of LIMIT, or OFFSET-FETCH for pagination).');
   }
 
   /**

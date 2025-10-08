@@ -56,7 +56,7 @@ export function GaugeChart({
   const progressArcLength = (progressAngle / 180) * circumference;
   
   return (
-    <Card className="w-full" data-testid="kpi-gauge-chart">
+    <Card className="w-full bg-white dark:bg-white" data-testid="kpi-gauge-chart">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
