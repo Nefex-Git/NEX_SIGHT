@@ -12,9 +12,10 @@ interface BigNumberConfigProps {
   config: Record<string, any>;
   onChange: (config: Record<string, any>) => void;
   columns?: string[];
+  chartType?: string;
 }
 
-export function BigNumberConfig({ config, onChange, columns = [] }: BigNumberConfigProps) {
+export function BigNumberConfig({ config, onChange, columns = [], chartType }: BigNumberConfigProps) {
   const updateConfig = (key: string, value: any) => {
     onChange({ ...config, [key]: value });
   };
@@ -53,6 +54,41 @@ export function BigNumberConfig({ config, onChange, columns = [] }: BigNumberCon
           Column to aggregate (e.g., revenue, price, count)
         </p>
       </div>
+
+      {chartType === "big_number_trendline" && (
+        <div className="space-y-2">
+          <Label htmlFor="timeColumn">Trend Column (Time/Date)</Label>
+          {columns.length > 0 ? (
+            <Select
+              value={config.timeColumn || ""}
+              onValueChange={(value) => updateConfig("timeColumn", value)}
+            >
+              <SelectTrigger id="timeColumn" data-testid="select-trend">
+                <SelectValue placeholder="Select a time column" />
+              </SelectTrigger>
+              <SelectContent>
+                {columns.filter(col => col && col.trim()).map((col) => (
+                  <SelectItem key={col} value={col}>
+                    {col}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id="timeColumn"
+              placeholder="Select a dataset first"
+              value={config.timeColumn || ""}
+              onChange={(e) => updateConfig("timeColumn", e.target.value)}
+              data-testid="input-trend"
+              disabled
+            />
+          )}
+          <p className="text-xs text-muted-foreground">
+            Column with date/time values for the trendline
+          </p>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="format">Format</Label>

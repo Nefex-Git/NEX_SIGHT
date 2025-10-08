@@ -208,7 +208,7 @@ export default function ChartContainer({
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-white dark:bg-white">
       {showTitle && (
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -227,8 +227,8 @@ export default function ChartContainer({
         </CardHeader>
       )}
       <CardContent className={showTitle ? "pt-2" : "p-6"}>
-        {/* Light background for better chart visibility on dark theme */}
-        <div className="bg-white dark:bg-gray-100 p-4 rounded-lg">
+        {/* White background for better chart visibility */}
+        <div className="bg-white dark:bg-white p-4 rounded-lg">
           {renderChart()}
         </div>
         {showTitle && (
