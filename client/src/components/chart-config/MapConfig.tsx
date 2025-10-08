@@ -11,9 +11,10 @@ import {
 interface MapConfigProps {
   config: Record<string, any>;
   onChange: (config: Record<string, any>) => void;
+  columns?: string[];
 }
 
-export function MapConfig({ config, onChange }: MapConfigProps) {
+export function MapConfig({ config, onChange, columns = [] }: MapConfigProps) {
   const updateConfig = (key: string, value: any) => {
     onChange({ ...config, [key]: value });
   };
@@ -22,24 +23,62 @@ export function MapConfig({ config, onChange }: MapConfigProps) {
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="location">Location Column</Label>
-        <Input
-          id="location"
-          placeholder="e.g., country_code, state, city"
-          value={config.location || ""}
-          onChange={(e) => updateConfig("location", e.target.value)}
-          data-testid="input-location"
-        />
+        {columns.length > 0 ? (
+          <Select
+            value={config.location || ""}
+            onValueChange={(value) => updateConfig("location", value)}
+          >
+            <SelectTrigger id="location" data-testid="select-location">
+              <SelectValue placeholder="Select a column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="location"
+            placeholder="Select a dataset first"
+            value={config.location || ""}
+            onChange={(e) => updateConfig("location", e.target.value)}
+            data-testid="input-location"
+            disabled
+          />
+        )}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="metric">Value Metric</Label>
-        <Input
-          id="metric"
-          placeholder="e.g., SUM(sales), COUNT(*)"
-          value={config.metric || ""}
-          onChange={(e) => updateConfig("metric", e.target.value)}
-          data-testid="input-metric"
-        />
+        {columns.length > 0 ? (
+          <Select
+            value={config.metric || ""}
+            onValueChange={(value) => updateConfig("metric", value)}
+          >
+            <SelectTrigger id="metric" data-testid="select-metric">
+              <SelectValue placeholder="Select a column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="metric"
+            placeholder="Select a dataset first"
+            value={config.metric || ""}
+            onChange={(e) => updateConfig("metric", e.target.value)}
+            data-testid="input-metric"
+            disabled
+          />
+        )}
       </div>
 
       <div className="space-y-2">

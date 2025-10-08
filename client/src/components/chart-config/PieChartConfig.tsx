@@ -12,9 +12,10 @@ import { Switch } from "@/components/ui/switch";
 interface PieChartConfigProps {
   config: Record<string, any>;
   onChange: (config: Record<string, any>) => void;
+  columns?: string[];
 }
 
-export function PieChartConfig({ config, onChange }: PieChartConfigProps) {
+export function PieChartConfig({ config, onChange, columns = [] }: PieChartConfigProps) {
   const updateConfig = (key: string, value: any) => {
     onChange({ ...config, [key]: value });
   };
@@ -23,13 +24,31 @@ export function PieChartConfig({ config, onChange }: PieChartConfigProps) {
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="category">Category Field</Label>
-        <Input
-          id="category"
-          placeholder="e.g., product_category, region"
-          value={config.category || ""}
-          onChange={(e) => updateConfig("category", e.target.value)}
-          data-testid="input-category"
-        />
+        {columns.length > 0 ? (
+          <Select
+            value={config.category || ""}
+            onValueChange={(value) => updateConfig("category", value)}
+          >
+            <SelectTrigger id="category" data-testid="select-category">
+              <SelectValue placeholder="Select category column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="category"
+            placeholder="Select a dataset first"
+            value={config.category || ""}
+            disabled
+            data-testid="input-category"
+          />
+        )}
         <p className="text-xs text-muted-foreground">
           Column for slice labels
         </p>
@@ -37,13 +56,31 @@ export function PieChartConfig({ config, onChange }: PieChartConfigProps) {
 
       <div className="space-y-2">
         <Label htmlFor="value">Value Field</Label>
-        <Input
-          id="value"
-          placeholder="e.g., SUM(sales), COUNT(*)"
-          value={config.value || ""}
-          onChange={(e) => updateConfig("value", e.target.value)}
-          data-testid="input-value"
-        />
+        {columns.length > 0 ? (
+          <Select
+            value={config.value || ""}
+            onValueChange={(value) => updateConfig("value", value)}
+          >
+            <SelectTrigger id="value" data-testid="select-value">
+              <SelectValue placeholder="Select value column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="value"
+            placeholder="Select a dataset first"
+            value={config.value || ""}
+            disabled
+            data-testid="input-value"
+          />
+        )}
         <p className="text-xs text-muted-foreground">
           Metric for slice sizes
         </p>

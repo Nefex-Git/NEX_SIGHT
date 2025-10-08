@@ -1,13 +1,21 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
 interface HistogramConfigProps {
   config: Record<string, any>;
   onChange: (config: Record<string, any>) => void;
+  columns?: string[];
 }
 
-export function HistogramConfig({ config, onChange }: HistogramConfigProps) {
+export function HistogramConfig({ config, onChange, columns = [] }: HistogramConfigProps) {
   const updateConfig = (key: string, value: any) => {
     onChange({ ...config, [key]: value });
   };
@@ -16,13 +24,32 @@ export function HistogramConfig({ config, onChange }: HistogramConfigProps) {
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="column">Data Column</Label>
-        <Input
-          id="column"
-          placeholder="e.g., age, price, score"
-          value={config.column || ""}
-          onChange={(e) => updateConfig("column", e.target.value)}
-          data-testid="input-column"
-        />
+        {columns.length > 0 ? (
+          <Select
+            value={config.column || ""}
+            onValueChange={(value) => updateConfig("column", value)}
+          >
+            <SelectTrigger id="column" data-testid="select-column">
+              <SelectValue placeholder="Select a column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col} value={col}>
+                  {col}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="column"
+            placeholder="Select a dataset first"
+            value={config.column || ""}
+            onChange={(e) => updateConfig("column", e.target.value)}
+            data-testid="input-column"
+            disabled
+          />
+        )}
       </div>
 
       <div className="space-y-2">
