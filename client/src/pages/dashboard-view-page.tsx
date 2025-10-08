@@ -305,22 +305,26 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
         </Dialog>
 
       {/* KPIs Grid */}
-      {(dashboard?.kpis?.length ?? 0) > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {dashboard.kpis.map((kpi) => (
-            <KpiCard 
-              key={kpi.id} 
-              kpi={{
-                ...kpi,
-                unit: kpi.unit ?? undefined,
-                changePercent: kpi.changePercent ?? undefined,
-                visualType: kpi.visualType ?? undefined,
-                prefix: kpi.prefix ?? undefined,
-                format: kpi.format ?? undefined,
-              } as KPI} 
-            />
-          ))}
-        </div>
+      {(dashboard?.kpis?.length ?? 0) > 0 || dashboardCharts.length > 0 ? (
+        <>
+          {(dashboard?.kpis?.length ?? 0) > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {dashboard.kpis.map((kpi) => (
+                <KpiCard 
+                  key={kpi.id} 
+                  kpi={{
+                    ...kpi,
+                    unit: kpi.unit ?? undefined,
+                    changePercent: kpi.changePercent ?? undefined,
+                    visualType: kpi.visualType ?? undefined,
+                    prefix: kpi.prefix ?? undefined,
+                    format: kpi.format ?? undefined,
+                  } as KPI} 
+                />
+              ))}
+            </div>
+          )}
+        </>
       ) : (
         <Card className="p-12 text-center">
           <div className="text-muted-foreground">
