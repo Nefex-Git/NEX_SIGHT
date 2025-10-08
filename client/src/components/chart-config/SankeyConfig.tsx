@@ -32,7 +32,7 @@ export function SankeyConfig({ config, onChange, columns = [] }: SankeyConfigPro
               <SelectValue placeholder="Select a column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
@@ -62,7 +62,7 @@ export function SankeyConfig({ config, onChange, columns = [] }: SankeyConfigPro
               <SelectValue placeholder="Select a column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
@@ -92,7 +92,7 @@ export function SankeyConfig({ config, onChange, columns = [] }: SankeyConfigPro
               <SelectValue placeholder="Select a column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>

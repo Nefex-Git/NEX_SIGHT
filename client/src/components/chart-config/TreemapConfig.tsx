@@ -32,7 +32,7 @@ export function TreemapConfig({ config, onChange, columns = [] }: TreemapConfigP
               <SelectValue placeholder="Select a column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
@@ -63,7 +63,7 @@ export function TreemapConfig({ config, onChange, columns = [] }: TreemapConfigP
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">None</SelectItem>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
@@ -93,7 +93,7 @@ export function TreemapConfig({ config, onChange, columns = [] }: TreemapConfigP
               <SelectValue placeholder="Select a column" />
             </SelectTrigger>
             <SelectContent>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
@@ -124,7 +124,7 @@ export function TreemapConfig({ config, onChange, columns = [] }: TreemapConfigP
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">None</SelectItem>
-              {columns.map((col) => (
+              {columns.filter(col => col && col.trim()).map((col) => (
                 <SelectItem key={col} value={col}>
                   {col}
                 </SelectItem>
