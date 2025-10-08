@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getDataSources, deleteDataSource, previewDataSource, getViews, createView, updateView, deleteView, executeView, executeSQLQuery, getConnections, getConnectionTables, type Connection } from "@/lib/api";
+import { getDataSources, deleteDataSource, previewDataSource, getViews, createView, updateView, deleteView, executeView, executeSQLQuery } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,8 +31,7 @@ import {
   TableProperties,
   Plus,
   ChevronDown,
-  ChevronRight,
-  Link as LinkIcon
+  ChevronRight
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -49,103 +48,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-// Connection Display Component
-const ConnectionCard = ({ connection, onPreview }: { 
-  connection: Connection; 
-  onPreview: (source: any) => void;
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const { data: connectionTables = [], isLoading: tablesLoading } = useQuery({
-    queryKey: ["/api/connections", connection.id, "tables"],
-    queryFn: () => getConnectionTables(connection.id),
-    enabled: isExpanded,
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'connected':
-        return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'disconnected':
-      case 'error':
-        return 'bg-red-500/20 text-red-400 border-red-500/30';
-      default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-    }
-  };
-
-  return (
-    <Card className="hover:bg-muted/50 transition-colors">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="p-1 h-6 w-6"
-              data-testid={`button-expand-connection-${connection.id}`}
-            >
-              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            </Button>
-            
-            <LinkIcon className="h-5 w-5 text-primary" />
-            
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium" data-testid={`text-connection-name-${connection.id}`}>{connection.name}</h3>
-                <Badge variant="secondary" className={`text-xs ${getStatusColor(connection.status)}`}>
-                  {connection.status}
-                </Badge>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {connection.type.toUpperCase()} • {connectionTables.length} tables
-                {connection.metadata?.host && ` • ${connection.metadata.host}`}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {isExpanded && (
-          <div className="mt-4 ml-9 space-y-2">
-            {tablesLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : connectionTables.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-4 text-center">
-                No tables imported from this connection
-              </div>
-            ) : (
-              connectionTables.map((table) => (
-                <div key={table.id} className="flex items-center justify-between p-2 rounded border bg-background">
-                  <div className="flex items-center gap-2">
-                    <TableProperties className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium text-sm" data-testid={`text-table-name-${table.id}`}>{table.name}</span>
-                    <Badge variant="outline" className="text-xs">
-                      {table.rowCount ? `${table.rowCount.toLocaleString()} rows` : '—'}
-                    </Badge>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onPreview(table)}
-                    data-testid={`button-preview-table-${table.id}`}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
 // Datasets Tab Component
 const DatasetsTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -159,11 +61,6 @@ const DatasetsTab = () => {
   const { data: dataSources = [], isLoading: dataSourcesLoading } = useQuery({
     queryKey: ["/api/data-sources"],
     queryFn: () => getDataSources(),
-  });
-
-  const { data: connections = [], isLoading: connectionsLoading } = useQuery({
-    queryKey: ["/api/connections"],
-    queryFn: () => getConnections(),
   });
 
   const deleteMutation = useMutation({
@@ -322,37 +219,6 @@ const DatasetsTab = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Connections Section */}
-      {connections.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LinkIcon className="h-5 w-5" />
-              Database Connections ({connections.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {connectionsLoading ? (
-              <div className="space-y-4">
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {connections.map((connection) => (
-                  <ConnectionCard
-                    key={connection.id}
-                    connection={connection}
-                    onPreview={handlePreviewData}
-                  />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* Datasets Table */}
       <Card>
@@ -947,10 +813,6 @@ export default function DatasetsPage() {
             Data management, views, and SQL query engine
           </p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90" data-testid="button-add-dataset">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Dataset
-        </Button>
       </div>
 
       <Tabs defaultValue="datasets" className="w-full">
