@@ -25,6 +25,8 @@ Preferred communication style: Simple, everyday language.
 - **AI Integration**: OpenAI API for natural language processing and data analysis
 - **File Handling**: Multer for CSV file uploads with local storage
 - **Authentication**: Passport.js with local strategy and session-based auth
+- **Semantic Layer**: Production-grade BI semantic layer with metrics/dimensions abstraction (matching Apache Superset, Domo, Power BI)
+- **Query Caching**: Redis-backed query result caching with intelligent invalidation and TTL management
 
 ## Data Storage Solutions
 - **Primary Database**: PostgreSQL (configured for Neon serverless)
