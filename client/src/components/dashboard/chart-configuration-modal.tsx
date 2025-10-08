@@ -28,6 +28,7 @@ import { WaterfallConfig } from "@/components/chart-config/WaterfallConfig";
 import { SankeyConfig } from "@/components/chart-config/SankeyConfig";
 import { HistogramConfig } from "@/components/chart-config/HistogramConfig";
 import { MultiValueConfig } from "@/components/chart-config/MultiValueConfig";
+import { ChartRenderer } from "./chart-renderer";
 
 interface ChartConfigurationModalProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ export function ChartConfigurationModal({
   const [selectedDatasets, setSelectedDatasets] = useState<string[]>([]);
   const [config, setConfig] = useState<Record<string, any>>({});
   const [availableColumns, setAvailableColumns] = useState<string[]>([]);
+  const [previewData, setPreviewData] = useState<any[]>([]);
 
   // Fetch all available datasets
   const { data: dataSources = [], isLoading: dataSourcesLoading } = useQuery<DataSource[]>({
@@ -56,38 +58,57 @@ export function ChartConfigurationModal({
     enabled: isOpen,
   });
 
-  // Fetch columns from selected datasets
+  // Fetch columns and preview data from selected datasets
   useEffect(() => {
-    const fetchColumns = async () => {
+    const fetchColumnsAndPreview = async () => {
       if (selectedDatasets.length === 0) {
         setAvailableColumns([]);
+        setPreviewData([]);
         return;
       }
 
       try {
-        const columnSets = await Promise.all(
-          selectedDatasets.map(async (datasetId) => {
-            const response = await fetch(`/api/data-sources/${datasetId}/columns`, {
-              credentials: "include",
-            });
-            if (response.ok) {
-              const data = await response.json();
-              const columns = data.columns || [];
-              return columns.map((col: any) => typeof col === 'string' ? col : col.name);
-            }
-            return [];
-          })
-        );
+        const [columnSets, previewSets] = await Promise.all([
+          Promise.all(
+            selectedDatasets.map(async (datasetId) => {
+              const response = await fetch(`/api/data-sources/${datasetId}/columns`, {
+                credentials: "include",
+              });
+              if (response.ok) {
+                const data = await response.json();
+                const columns = data.columns || [];
+                return columns.map((col: any) => typeof col === 'string' ? col : col.name);
+              }
+              return [];
+            })
+          ),
+          Promise.all(
+            selectedDatasets.map(async (datasetId) => {
+              const response = await fetch(`/api/data-sources/${datasetId}/preview?limit=50`, {
+                credentials: "include",
+              });
+              if (response.ok) {
+                const data = await response.json();
+                return data.data || [];
+              }
+              return [];
+            })
+          )
+        ]);
 
         const allColumns = Array.from(new Set(columnSets.flat()));
         setAvailableColumns(allColumns);
+        
+        // Use preview data from first selected dataset
+        setPreviewData(previewSets[0] || []);
       } catch (error) {
-        console.error("Failed to fetch columns:", error);
+        console.error("Failed to fetch columns and preview:", error);
         setAvailableColumns([]);
+        setPreviewData([]);
       }
     };
 
-    fetchColumns();
+    fetchColumnsAndPreview();
   }, [selectedDatasets]);
 
   // Initialize config with defaults
@@ -356,8 +377,8 @@ export function ChartConfigurationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0" data-testid="dialog-chart-configuration">
-        <div className="flex flex-col h-[80vh]">
+      <DialogContent className="max-w-7xl max-h-[90vh] p-0" data-testid="dialog-chart-configuration">
+        <div className="flex flex-col h-[85vh]">
           <DialogHeader className="px-6 py-4 border-b">
             <div className="flex items-center gap-3">
               <Button
@@ -368,14 +389,16 @@ export function ChartConfigurationModal({
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div>
+              <div className="flex-1">
                 <DialogTitle>Configure {chartType.name}</DialogTitle>
                 <DialogDescription>{chartType.description}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 p-6">
+          <div className="flex flex-1 overflow-hidden">
+            {/* Configuration Panel - Left Side */}
+            <ScrollArea className="flex-1 border-r p-6">
             <div className="space-y-6">
               {/* Chart Title */}
               <div className="space-y-2">
@@ -458,7 +481,44 @@ export function ChartConfigurationModal({
                 </div>
               )}
             </div>
-          </ScrollArea>
+            </ScrollArea>
+
+            {/* Preview Panel - Right Side */}
+            <div className="w-1/2 p-6 bg-muted/30 flex flex-col">
+              <h3 className="text-sm font-semibold mb-4">Live Preview</h3>
+              <div className="flex-1 border rounded-lg bg-background p-4">
+                {selectedDatasets.length === 0 ? (
+                  <div className="h-full flex items-center justify-center">
+                    <p className="text-muted-foreground text-sm">Select a dataset to see preview</p>
+                  </div>
+                ) : !config.xAxis && !config.yAxis && !config.metric && !config.category ? (
+                  <div className="h-full flex items-center justify-center">
+                    <p className="text-muted-foreground text-sm">Configure chart columns to see preview</p>
+                  </div>
+                ) : previewData.length === 0 ? (
+                  <div className="h-full flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <ChartRenderer
+                    chart={{
+                      id: "preview",
+                      createdAt: null,
+                      updatedAt: null,
+                      title: title,
+                      type: chartType.id,
+                      config: config,
+                      dataSourceIds: selectedDatasets,
+                      userId: "",
+                      query: null
+                    }}
+                    data={previewData}
+                    isPreview={true}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
 
           <DialogFooter className="px-6 py-4 border-t">
             <Button
