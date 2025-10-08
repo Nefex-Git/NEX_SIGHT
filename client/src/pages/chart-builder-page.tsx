@@ -31,6 +31,17 @@ import { BigNumberConfig } from "@/components/chart-config/BigNumberConfig";
 import { BarChartConfig } from "@/components/chart-config/BarChartConfig";
 import { LineChartConfig } from "@/components/chart-config/LineChartConfig";
 import { PieChartConfig } from "@/components/chart-config/PieChartConfig";
+import { ScatterChartConfig } from "@/components/chart-config/ScatterChartConfig";
+import { HeatmapConfig } from "@/components/chart-config/HeatmapConfig";
+import { TableConfig } from "@/components/chart-config/TableConfig";
+import { FunnelConfig } from "@/components/chart-config/FunnelConfig";
+import { TreemapConfig } from "@/components/chart-config/TreemapConfig";
+import { RadarConfig } from "@/components/chart-config/RadarConfig";
+import { MapConfig } from "@/components/chart-config/MapConfig";
+import { WaterfallConfig } from "@/components/chart-config/WaterfallConfig";
+import { SankeyConfig } from "@/components/chart-config/SankeyConfig";
+import { HistogramConfig } from "@/components/chart-config/HistogramConfig";
+import { MultiValueConfig } from "@/components/chart-config/MultiValueConfig";
 
 interface ChartBuilderPageProps {
   chartType?: string;
@@ -41,7 +52,7 @@ export default function ChartBuilderPage({ chartType: chartTypeProp, onBack }: C
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
-  // Get chart type from props or URL params
+  // Get chart type from props (or fallback to URL params for standalone access)
   const urlParams = new URLSearchParams(window.location.search);
   const chartTypeId = chartTypeProp || urlParams.get("type") || "bar";
   
@@ -101,6 +112,92 @@ export default function ChartBuilderPage({ chartType: chartTypeProp, onBack }: C
             donutMode: type === "donut",
             showLabels: true,
             showPercentages: false,
+          };
+        case "scatter":
+        case "bubble":
+          return {
+            xAxis: "",
+            yAxis: "",
+            size: "",
+            color: "",
+            limit: "",
+          };
+        case "heatmap":
+        case "calendar_heatmap":
+          return {
+            xAxis: "",
+            yAxis: "",
+            metric: "",
+            colorScheme: "blues",
+          };
+        case "table":
+        case "pivot_table":
+          return {
+            columns: "",
+            orderBy: "",
+            limit: "",
+            pagination: true,
+            search: true,
+          };
+        case "funnel":
+          return {
+            stage: "",
+            metric: "",
+            orientation: "vertical",
+            labelPosition: "inside",
+          };
+        case "treemap":
+        case "sunburst":
+          return {
+            category: "",
+            subcategory: "",
+            metric: "",
+            colorMetric: "",
+          };
+        case "radar":
+          return {
+            category: "",
+            series: "",
+            metric: "",
+            fillArea: true,
+          };
+        case "country_map":
+        case "geojson_map":
+          return {
+            location: "",
+            metric: "",
+            mapType: "country",
+            colorScheme: "sequential",
+          };
+        case "waterfall":
+          return {
+            category: "",
+            metric: "",
+            sortOrder: "none",
+            totalLabel: "Total",
+          };
+        case "sankey":
+          return {
+            source: "",
+            target: "",
+            value: "",
+            nodeAlign: "justify",
+          };
+        case "histogram":
+        case "boxplot":
+          return {
+            column: "",
+            bins: "",
+            binRange: "",
+            cumulative: false,
+            normalized: false,
+          };
+        case "multi_value_card":
+          return {
+            metrics: "",
+            labels: "",
+            format: "",
+            showTrend: false,
           };
         default:
           return {};
@@ -209,6 +306,23 @@ export default function ChartBuilderPage({ chartType: chartTypeProp, onBack }: C
       stacked_area: LineChartConfig,
       pie: PieChartConfig,
       donut: PieChartConfig,
+      scatter: ScatterChartConfig,
+      bubble: ScatterChartConfig,
+      heatmap: HeatmapConfig,
+      calendar_heatmap: HeatmapConfig,
+      table: TableConfig,
+      pivot_table: TableConfig,
+      funnel: FunnelConfig,
+      treemap: TreemapConfig,
+      sunburst: TreemapConfig,
+      radar: RadarConfig,
+      country_map: MapConfig,
+      geojson_map: MapConfig,
+      waterfall: WaterfallConfig,
+      sankey: SankeyConfig,
+      histogram: HistogramConfig,
+      boxplot: HistogramConfig,
+      multi_value_card: MultiValueConfig,
     };
     
     const ConfigComponent = configMap[chartTypeId];
