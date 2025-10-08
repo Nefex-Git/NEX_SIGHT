@@ -207,64 +207,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
 
-      if (dataSource.type === 'csv' && dataSource.filename) {
-        const filePath = path.join(process.cwd(), 'uploads', dataSource.filename);
-        if (fs.existsSync(filePath)) {
-          const csvData = await parseCSVFile(filePath);
-          res.json({ data: csvData.slice(0, limit) });
-        } else {
-          res.json({ data: [] });
-        }
-      } else if (dataSource.metadata && (dataSource.metadata as any).isTableDataset) {
-        const metadata = dataSource.metadata as any;
-        const sanitizeIdentifier = (identifier: string): string => {
-          return identifier.replace(/[^a-zA-Z0-9_.]/g, '');
-        };
-        
-        const schemaName = metadata.schemaName ? sanitizeIdentifier(metadata.schemaName) : null;
-        const tableName = sanitizeIdentifier(metadata.tableName);
-        
-        if (!tableName) {
-          return res.json({ data: [] });
-        }
-        
-        const qualifiedTableName = schemaName ? `${schemaName}.${tableName}` : tableName;
-        const connectionType = metadata.connectionType || dataSource.type;
-        let query: string;
-        
-        if (connectionType === 'mssql' || connectionType === 'sqlserver') {
-          query = `SELECT TOP ${limit} * FROM ${qualifiedTableName}`;
-        } else if (connectionType === 'mysql') {
-          query = `SELECT * FROM ${qualifiedTableName} LIMIT ${limit}`;
-        } else {
-          query = `SELECT * FROM ${qualifiedTableName} LIMIT ${limit}`;
-        }
-        
-        const connectionConfig = {
-          host: metadata.host,
-          port: metadata.port,
-          database: metadata.database,
-          username: metadata.username,
-          password: metadata.password
-        };
-        
-        try {
-          const result = await DatabaseConnectorService.executeQuery(
-            connectionType, 
-            connectionConfig, 
-            query
-          );
-          res.json({ data: result.rows || [] });
-        } catch (error) {
-          console.error('Preview data query error:', error);
-          res.json({ data: [] });
-        }
-      } else {
-        res.json({ data: [] });
-      }
+      // Use semantic layer - just get raw data without aggregation for preview
+      const { ChartQueryService } = await import('./services/chart-query-service');
+      
+      const data = await ChartQueryService.executeChartQuery({
+        chartId: 'preview',
+        chartType: 'table', // Use table type to get raw data
+        config: { limit: limit.toString() },
+        dataSource,
+        limit
+      });
+
+      res.json({ data });
     } catch (error) {
       console.error('Preview data fetch error:', error);
       res.status(500).json({ message: 'Failed to fetch preview data' });
+    }
+  });
+
+  // Cache management endpoints
+  app.get('/api/cache/stats', requireAuth, async (req: any, res) => {
+    try {
+      const { queryCache } = await import('./services/query-cache');
+      const stats = await queryCache.getStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to get cache stats' });
+    }
+  });
+
+  app.post('/api/cache/clear', requireAuth, async (req: any, res) => {
+    try {
+      const { queryCache } = await import('./services/query-cache');
+      await queryCache.clear();
+      res.json({ message: 'Cache cleared successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to clear cache' });
     }
   });
 
@@ -740,72 +718,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ data: [] });
       }
 
-      // Limit data for preview
-      const limit = Math.min(parseInt(req.query.limit as string) || 100, 1000);
+      // Use semantic layer to execute query with caching
+      const { ChartQueryService } = await import('./services/chart-query-service');
       
-      if (dataSource.type === 'csv' && dataSource.filename) {
-        const filePath = path.join(process.cwd(), 'uploads', dataSource.filename);
-        if (fs.existsSync(filePath)) {
-          const csvData = await parseCSVFile(filePath);
-          res.json({ data: csvData.slice(0, limit) });
-        } else {
-          res.json({ data: [] });
-        }
-      } else if (dataSource.metadata && (dataSource.metadata as any).isTableDataset) {
-        try {
-          const metadata = dataSource.metadata as any;
-          
-          // Sanitize identifiers to prevent SQL injection
-          const sanitizeIdentifier = (identifier: string): string => {
-            // Remove any characters that aren't alphanumeric, underscore, or dot
-            return identifier.replace(/[^a-zA-Z0-9_.]/g, '');
-          };
-          
-          const schemaName = metadata.schemaName ? sanitizeIdentifier(metadata.schemaName) : null;
-          const tableName = sanitizeIdentifier(metadata.tableName);
-          
-          if (!tableName) {
-            return res.json({ data: [] });
-          }
-          
-          // Build safe qualified table name
-          const qualifiedTableName = schemaName ? `${schemaName}.${tableName}` : tableName;
-          
-          // Use database-specific limit syntax
-          const connectionType = metadata.connectionType || dataSource.type;
-          let query: string;
-          
-          if (connectionType === 'mssql' || connectionType === 'sqlserver') {
-            query = `SELECT TOP ${limit} * FROM ${qualifiedTableName}`;
-          } else if (connectionType === 'mysql') {
-            query = `SELECT * FROM ${qualifiedTableName} LIMIT ${limit}`;
-          } else {
-            // PostgreSQL, SQLite
-            query = `SELECT * FROM ${qualifiedTableName} LIMIT ${limit}`;
-          }
-          
-          const connectionConfig = {
-            host: metadata.host,
-            port: metadata.port,
-            database: metadata.database,
-            username: metadata.username,
-            password: metadata.password
-          };
-          
-          const result = await DatabaseConnectorService.executeQuery(
-            connectionType, 
-            connectionConfig, 
-            query
-          );
-          
-          res.json({ data: result.rows || [] });
-        } catch (error) {
-          console.error('Chart data query error:', error);
-          res.json({ data: [] });
-        }
-      } else {
-        res.json({ data: [] });
-      }
+      const data = await ChartQueryService.executeChartQuery({
+        chartId: chart.id,
+        chartType: chart.type,
+        config: chart.config as Record<string, any>,
+        dataSource,
+        limit: Math.min(parseInt(req.query.limit as string) || 100, 1000)
+      });
+
+      res.json({ data });
     } catch (error) {
       console.error('Chart data fetch error:', error);
       res.status(500).json({ message: 'Failed to fetch chart data' });
