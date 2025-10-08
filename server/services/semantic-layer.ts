@@ -60,61 +60,144 @@ export class SemanticLayer {
     };
 
     switch (chartType) {
+      // Bar charts
       case 'bar':
       case 'stacked_bar':
       case 'grouped_bar':
       case 'horizontal_bar':
-        // Bar charts: dimension on x-axis, aggregated metric on y-axis
-        if (config.xAxis) querySpec.dimensions.push(config.xAxis);
-        if (config.yAxis) {
-          querySpec.metrics.push(config.yAxis);
-          querySpec.sortBy = config.yAxis;
+        if (config.xAxis || config.dimension) querySpec.dimensions.push(config.xAxis || config.dimension);
+        if (config.yAxis || config.metric) {
+          querySpec.metrics.push(config.yAxis || config.metric);
+          querySpec.sortBy = config.yAxis || config.metric;
         }
+        if (config.metrics && Array.isArray(config.metrics)) {
+          querySpec.metrics.push(...config.metrics);
+        }
+        if (config.groupBy) querySpec.dimensions.push(config.groupBy);
         break;
 
+      // Line/Area charts
       case 'line':
       case 'area':
       case 'multi_line':
       case 'stacked_area':
-        // Time series: time dimension + metric + optional groupBy
-        if (config.xAxis) querySpec.dimensions.push(config.xAxis);
-        if (config.yAxis) querySpec.metrics.push(config.yAxis);
+      case 'smooth_line':
+      case 'stepped_line':
+      case 'big_number_trendline':
+        if (config.xAxis || config.timeColumn) querySpec.dimensions.push(config.xAxis || config.timeColumn);
+        if (config.yAxis || config.metric) querySpec.metrics.push(config.yAxis || config.metric);
+        if (config.metrics && Array.isArray(config.metrics)) {
+          querySpec.metrics.push(...config.metrics);
+        }
         if (config.groupBy) querySpec.dimensions.push(config.groupBy);
         break;
 
+      // Pie/Donut charts
       case 'pie':
       case 'donut':
-        // Pie charts: category dimension + value metric
-        if (config.category) querySpec.dimensions.push(config.category);
-        if (config.value) {
-          querySpec.metrics.push(config.value);
-          querySpec.sortBy = config.value;
+        if (config.category || config.dimension) querySpec.dimensions.push(config.category || config.dimension);
+        if (config.value || config.metric) {
+          querySpec.metrics.push(config.value || config.metric);
+          querySpec.sortBy = config.value || config.metric;
         }
         break;
 
+      // KPI charts
       case 'big_number':
       case 'gauge':
-        // Single metric, no dimensions
+      case 'multi_value_card':
         if (config.metric) querySpec.metrics.push(config.metric);
+        if (config.values && Array.isArray(config.values)) {
+          querySpec.metrics.push(...config.values);
+        }
         querySpec.limit = 1;
         break;
 
+      // Scatter/Bubble
       case 'scatter':
       case 'bubble':
-        // Scatter: two metrics, optional dimensions
         if (config.xAxis) querySpec.metrics.push(config.xAxis);
         if (config.yAxis) querySpec.metrics.push(config.yAxis);
         if (config.size) querySpec.metrics.push(config.size);
-        if (config.color) querySpec.dimensions.push(config.color);
+        if (config.color || config.groupBy) querySpec.dimensions.push(config.color || config.groupBy);
         break;
 
+      // Heatmaps
+      case 'heatmap':
+      case 'calendar_heatmap':
+        if (config.xAxis || config.dateColumn) querySpec.dimensions.push(config.xAxis || config.dateColumn);
+        if (config.yAxis) querySpec.dimensions.push(config.yAxis);
+        if (config.metric) querySpec.metrics.push(config.metric);
+        break;
+
+      // Distribution
+      case 'boxplot':
+        if (config.dimension) querySpec.dimensions.push(config.dimension);
+        if (config.metric) querySpec.metrics.push(config.metric);
+        break;
+
+      case 'histogram':
+        if (config.metric) querySpec.metrics.push(config.metric);
+        break;
+
+      // Flow charts
+      case 'funnel':
+      case 'waterfall':
+      case 'treemap':
+        if (config.dimension) querySpec.dimensions.push(config.dimension);
+        if (config.metric) querySpec.metrics.push(config.metric);
+        if (config.groupBy) querySpec.dimensions.push(config.groupBy);
+        break;
+
+      case 'sankey':
+        if (config.source) querySpec.dimensions.push(config.source);
+        if (config.target) querySpec.dimensions.push(config.target);
+        if (config.value) querySpec.metrics.push(config.value);
+        break;
+
+      // Hierarchical
+      case 'sunburst':
+        if (config.hierarchy && Array.isArray(config.hierarchy)) {
+          querySpec.dimensions.push(...config.hierarchy);
+        }
+        if (config.metric) querySpec.metrics.push(config.metric);
+        break;
+
+      // Multi-dimensional
+      case 'radar':
+        if (config.dimensions && Array.isArray(config.dimensions)) {
+          querySpec.dimensions.push(...config.dimensions);
+        }
+        if (config.metrics && Array.isArray(config.metrics)) {
+          querySpec.metrics.push(...config.metrics);
+        }
+        break;
+
+      // Table/Pivot
       case 'table':
-        // Table: all requested columns
+      case 'pivot_table':
         if (config.columns) {
-          const cols = config.columns.split(',').map((c: string) => c.trim());
+          const cols = typeof config.columns === 'string' 
+            ? config.columns.split(',').map((c: string) => c.trim())
+            : config.columns;
           querySpec.dimensions.push(...cols);
         }
+        if (config.rows && Array.isArray(config.rows)) {
+          querySpec.dimensions.push(...config.rows);
+        }
+        if (config.metrics && Array.isArray(config.metrics)) {
+          querySpec.metrics.push(...config.metrics);
+        }
         querySpec.limit = config.limit ? parseInt(config.limit) : 50;
+        break;
+
+      // Map charts
+      case 'country_map':
+      case 'geojson_map':
+        if (config.countryColumn || config.geojsonColumn) {
+          querySpec.dimensions.push(config.countryColumn || config.geojsonColumn);
+        }
+        if (config.metric) querySpec.metrics.push(config.metric);
         break;
 
       default:
@@ -122,6 +205,10 @@ export class SemanticLayer {
         if (config.xAxis) querySpec.dimensions.push(config.xAxis);
         if (config.yAxis) querySpec.metrics.push(config.yAxis);
     }
+
+    // Remove duplicates and filter out undefined
+    querySpec.dimensions = Array.from(new Set(querySpec.dimensions.filter(Boolean)));
+    querySpec.metrics = Array.from(new Set(querySpec.metrics.filter(Boolean)));
 
     return querySpec;
   }
