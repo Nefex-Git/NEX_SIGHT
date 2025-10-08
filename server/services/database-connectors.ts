@@ -518,6 +518,48 @@ export class DatabaseConnectorService {
   }
 
   /**
+   * Transform LIMIT syntax to SQL Server TOP syntax
+   * Conservative approach: only transforms simple, common query patterns
+   */
+  private static transformLimitToTop(query: string): string {
+    // Match LIMIT with optional OFFSET at end (ignore trailing comments/whitespace)
+    const limitOffsetPattern = /\s+LIMIT\s+(\d+)(?:\s+OFFSET\s+(\d+))?(?:\s*(?:--[^\n]*)?(?:\/\*[\s\S]*?\*\/)?\s*;?\s*)?$/i;
+    const match = query.match(limitOffsetPattern);
+    
+    if (!match) return query;
+    
+    const limit = match[1];
+    const offset = match[2];
+    
+    // Remove LIMIT clause and trailing comments
+    const queryWithoutLimit = query.replace(limitOffsetPattern, '');
+    
+    // CONSERVATIVE: Only transform if query starts with SELECT (possibly with leading whitespace/comments)
+    // This avoids complex cases like CTEs, subqueries, or SELECT in string literals
+    const simpleSelectPattern = /^(?:\s*(?:--[^\n]*\n|\/\*[\s\S]*?\*\/)*\s*)*SELECT(\s+(?:DISTINCT|ALL))?\s+/i;
+    const selectMatch = queryWithoutLimit.match(simpleSelectPattern);
+    
+    if (!selectMatch) {
+      // Query is too complex (e.g., CTE, subquery) - user must rewrite it in SQL Server syntax
+      throw new Error('This query uses LIMIT with advanced SQL features (CTEs, subqueries, etc). Please rewrite it using SQL Server syntax (TOP instead of LIMIT, or OFFSET-FETCH for pagination).');
+    }
+    
+    const modifier = selectMatch[1] || '';
+    
+    // If OFFSET is present, use OFFSET-FETCH syntax (requires ORDER BY)
+    if (offset) {
+      if (queryWithoutLimit.match(/\s+ORDER\s+BY\s+/i)) {
+        return queryWithoutLimit + ` OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY`;
+      } else {
+        throw new Error('SQL Server requires ORDER BY clause when using OFFSET. Please add ORDER BY to your query.');
+      }
+    }
+    
+    // For simple LIMIT, use TOP syntax
+    return queryWithoutLimit.replace(simpleSelectPattern, `SELECT${modifier} TOP ${limit} `);
+  }
+
+  /**
    * Execute SQL Server query
    */
   private static async executeSQLServerQuery(config: DatabaseConnectionConfig, query: string): Promise<any> {
@@ -540,12 +582,15 @@ export class DatabaseConnectorService {
         },
       };
 
+      // Transform LIMIT to TOP for SQL Server
+      const transformedQuery = this.transformLimitToTop(query);
+
       // Properly instantiate ConnectionPool from mssql
       const { ConnectionPool } = sql.default || sql;
       pool = new ConnectionPool(sqlConfig);
       await pool.connect();
       
-      const result = await pool.request().query(query);
+      const result = await pool.request().query(transformedQuery);
       
       return {
         columns: result.recordset.columns ? Object.keys(result.recordset.columns) : [],
