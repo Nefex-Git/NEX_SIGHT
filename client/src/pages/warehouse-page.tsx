@@ -100,16 +100,29 @@ export default function WarehousePage() {
     setIsTableSelectionOpen(true);
   };
 
-  const handleTablesSelected = (selectedTables: string[]) => {
-    toast({
-      title: editingConnection ? "Connection updated" : "Tables imported successfully",
-      description: `${selectedTables.length} table(s) have been added to your datasets.`,
-    });
-    queryClient.invalidateQueries({ queryKey: ["/api/data-sources"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/connections"] });
-    setIsTableSelectionOpen(false);
-    setPendingConnection(null);
-    setEditingConnection(null);
+  const handleTablesSelected = async (selectedTables: string[], deselectedTableIds?: number[]) => {
+    try {
+      // If editing and there are deselected tables, delete them first
+      if (editingConnection && deselectedTableIds && deselectedTableIds.length > 0) {
+        await Promise.all(deselectedTableIds.map(id => deleteMutation.mutateAsync(id)));
+      }
+
+      toast({
+        title: editingConnection ? "Connection updated" : "Tables imported successfully",
+        description: `${selectedTables.length} table(s) have been added to your datasets.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/data-sources"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/connections"] });
+      setIsTableSelectionOpen(false);
+      setPendingConnection(null);
+      setEditingConnection(null);
+    } catch (error) {
+      toast({
+        title: "Error updating connection",
+        description: "Failed to update connection. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleTableSelectionClose = () => {
