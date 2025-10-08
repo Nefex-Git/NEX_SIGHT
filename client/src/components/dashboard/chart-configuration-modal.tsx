@@ -72,7 +72,8 @@ export function ChartConfigurationModal({
             });
             if (response.ok) {
               const data = await response.json();
-              return data.columns || [];
+              const columns = data.columns || [];
+              return columns.map((col: any) => typeof col === 'string' ? col : col.name);
             }
             return [];
           })
