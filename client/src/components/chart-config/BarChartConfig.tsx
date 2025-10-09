@@ -136,6 +136,66 @@ export function BarChartConfig({ config, onChange, columns = [] }: BarChartConfi
           </SelectContent>
         </Select>
       </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="orientation">Orientation</Label>
+        <Select
+          value={config.orientation || "vertical"}
+          onValueChange={(value) => updateConfig("orientation", value)}
+        >
+          <SelectTrigger id="orientation" data-testid="select-orientation">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="vertical">Vertical Bars</SelectItem>
+            <SelectItem value="horizontal">Horizontal Bars</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Choose bar direction - horizontal helps with long labels
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="labelDisplay">Label Display</Label>
+        <Select
+          value={config.labelDisplay || "hover"}
+          onValueChange={(value) => updateConfig("labelDisplay", value)}
+        >
+          <SelectTrigger id="labelDisplay" data-testid="select-label-display">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Hidden</SelectItem>
+            <SelectItem value="hover">Show on Hover</SelectItem>
+            <SelectItem value="always">Always Visible</SelectItem>
+            <SelectItem value="inside">Inside Bars</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          How to display data labels
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="valueFormat">Value Format</Label>
+        <Select
+          value={config.valueFormat || "value"}
+          onValueChange={(value) => updateConfig("valueFormat", value)}
+        >
+          <SelectTrigger id="valueFormat" data-testid="select-value-format">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="value">Actual Values</SelectItem>
+            <SelectItem value="percentage">Percentages</SelectItem>
+            <SelectItem value="both">Values & Percentages</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          How to format displayed values
+        </p>
+      </div>
     </div>
   );
 }

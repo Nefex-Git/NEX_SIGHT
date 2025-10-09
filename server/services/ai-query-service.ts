@@ -85,7 +85,7 @@ export class AiQueryService {
   }
 
   /**
-   * Process CSV file query
+   * Process CSV file query using Python sandbox
    */
   private static async processCsvQuery(question: string, dataSource: any): Promise<AiQueryResponse> {
     const filePath = path.join(process.cwd(), 'uploads', dataSource.filename);
@@ -96,7 +96,10 @@ export class AiQueryService {
 
     const csvData = await parseCSVFile(filePath);
 
-    const analysis = await analyzeDataWithPrivacy({
+    // Use Python sandbox for advanced analysis
+    const { analyzeDataWithPythonSandbox } = await import('../ai-privacy');
+    
+    const analysis = await analyzeDataWithPythonSandbox({
       question,
       csvData,
       dataSourceMetadata: {

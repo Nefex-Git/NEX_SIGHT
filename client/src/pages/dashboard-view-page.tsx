@@ -77,17 +77,42 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
     },
   });
   
-  // Grid layout configuration
+  // Grid layout configuration with responsive side-by-side stacking
   const layout: Layout[] = useMemo(() => {
-    return dashboardCharts.map((dc) => ({
-      i: dc.id,
-      x: dc.x,
-      y: dc.y,
-      w: dc.w,
-      h: dc.h,
-      minW: 2,
-      minH: 2,
-    }));
+    return dashboardCharts.map((dc, index) => {
+      // Auto-calculate position for side-by-side layout if not already set
+      const cols = 12; // Total columns
+      const defaultWidth = 6; // 2 charts per row on desktop
+      const defaultHeight = 4; // Reduced height for less bulk
+      
+      // If positions are already set, use them
+      if (dc.x !== 0 || dc.y !== 0 || dc.w !== 4 || dc.h !== 3) {
+        return {
+          i: dc.id,
+          x: dc.x,
+          y: dc.y,
+          w: dc.w,
+          h: dc.h,
+          minW: 3,
+          minH: 3,
+        };
+      }
+      
+      // Auto-position: stack side by side
+      const chartsPerRow = Math.floor(cols / defaultWidth);
+      const row = Math.floor(index / chartsPerRow);
+      const col = index % chartsPerRow;
+      
+      return {
+        i: dc.id,
+        x: col * defaultWidth,
+        y: row * defaultHeight,
+        w: defaultWidth,
+        h: defaultHeight,
+        minW: 3,
+        minH: 3,
+      };
+    });
   }, [dashboardCharts]);
   
   const updateLayoutMutation = useMutation({
@@ -362,12 +387,14 @@ export default function DashboardViewPage({ dashboardId, onBack }: DashboardView
             className="layout"
             layout={layout}
             cols={12}
-            rowHeight={100}
+            rowHeight={70}
             width={containerWidth}
             isDraggable={isEditMode}
             isResizable={isEditMode}
             onLayoutChange={handleLayoutChange}
             draggableHandle=".drag-handle"
+            compactType="vertical"
+            preventCollision={false}
           >
             {dashboardCharts.map((dc) => (
               <div key={dc.id} className="bg-card border border-border rounded-lg overflow-hidden flex flex-col">
