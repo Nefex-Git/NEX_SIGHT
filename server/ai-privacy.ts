@@ -345,3 +345,142 @@ function prepareChartData(chartType: string, analysisResult: any, schema: any): 
   
   return [];
 }
+
+/**
+ * Analyze data using Python sandbox for advanced analysis
+ */
+export async function analyzeDataWithPythonSandbox(request: DataAnalysisRequest): Promise<DataAnalysisResponse> {
+  try {
+    const { question, csvData, dataSourceMetadata } = request;
+
+    if (!csvData || csvData.length === 0) {
+      return {
+        answer: "No data available for analysis."
+      };
+    }
+
+    // Step 1: Extract schema (NO REAL DATA sent to OpenAI)
+    const dataSchema = extractDataSchema(csvData);
+    const dummyDataSummary = createPrivacySafeDataSummary(csvData);
+    
+    // Step 2: Generate Python analysis code using OpenAI (with dummy data only)
+    const { generateAnalysisCode } = await import('./services/ai-code-generator');
+    
+    const codeGeneration = await generateAnalysisCode({
+      question,
+      dataSchema,
+      dummyDataSummary
+    });
+
+    console.log('Generated Python code:', codeGeneration.code);
+    console.log('Expected output type:', codeGeneration.outputType);
+
+    // Step 3: Execute Python code on REAL data (locally, never sent to OpenAI)
+    const { executePythonCode } = await import('./services/code-executor');
+    
+    const executionResult = await executePythonCode({
+      code: codeGeneration.code,
+      data: csvData,
+      timeout: 30000
+    });
+
+    console.log('Python execution result:', executionResult);
+
+    if (!executionResult.success) {
+      // Fallback to simple analysis if Python fails
+      console.log('Python execution failed, falling back to simple analysis');
+      return analyzeDataWithPrivacy(request);
+    }
+
+    // Step 4: Format the result with OpenAI
+    const resultSummary = typeof executionResult.result === 'object' 
+      ? JSON.stringify(executionResult.result).substring(0, 500)
+      : String(executionResult.result);
+
+    let context = `You are a business intelligence analyst. The data analysis has been completed.
+
+User Question: ${question}
+
+Analysis Result: ${resultSummary}
+
+Provide a clear, natural language answer based on this result.`;
+
+    // Detect if visualization is needed
+    const questionLower = question.toLowerCase();
+    const isVisualizationRequest = 
+      questionLower.includes('chart') || 
+      questionLower.includes('graph') || 
+      questionLower.includes('visualize') || 
+      questionLower.includes('show me') ||
+      questionLower.includes('plot') ||
+      questionLower.includes('trend') ||
+      questionLower.includes('breakdown') ||
+      questionLower.includes('distribution') ||
+      questionLower.includes('compare');
+
+    const hasMultipleDataPoints = 
+      Array.isArray(executionResult.result) && executionResult.result.length > 1;
+
+    if (isVisualizationRequest || hasMultipleDataPoints || codeGeneration.outputType === 'chart') {
+      context += `\n\nProvide response in JSON:
+{
+  "answer": "Natural language answer with the actual result value",
+  "chartType": "bar, line, pie, table, or null based on the data"
+}`;
+    } else {
+      context += `\n\nProvide response in JSON:
+{
+  "answer": "Natural language answer with the actual result value",
+  "chartType": null
+}`;
+    }
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        { role: "system", content: "You are an expert BI analyst. Provide clear answers in JSON format." },
+        { role: "user", content: context }
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const aiResult = JSON.parse(response.choices[0].message.content || "{}");
+
+    // Prepare chart data if needed
+    let chartData = null;
+    let kpiValue = null;
+    let unit = null;
+
+    if (Array.isArray(executionResult.result) && executionResult.result.length > 0) {
+      // Multi-row result - prepare for charting
+      if (aiResult.chartType) {
+        chartData = prepareChartData(aiResult.chartType, executionResult.result, dataSchema);
+      }
+    } else if (typeof executionResult.result === 'number' || typeof executionResult.result === 'string') {
+      // Single value result - KPI
+      kpiValue = String(executionResult.result);
+      
+      // Try to extract unit from the question
+      if (questionLower.includes('total') || questionLower.includes('sum')) {
+        unit = 'total';
+      } else if (questionLower.includes('average') || questionLower.includes('mean')) {
+        unit = 'average';
+      } else if (questionLower.includes('count')) {
+        unit = 'count';
+      }
+    }
+
+    return {
+      answer: aiResult.answer || "Analysis completed successfully.",
+      chartData,
+      chartType: aiResult.chartType || undefined,
+      kpiValue: kpiValue || undefined,
+      unit: unit || undefined
+    };
+
+  } catch (error) {
+    console.error("Python sandbox analysis error:", error);
+    // Fallback to simple analysis
+    return analyzeDataWithPrivacy(request);
+  }
+}
