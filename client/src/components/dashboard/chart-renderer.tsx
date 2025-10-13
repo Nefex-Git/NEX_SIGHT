@@ -183,40 +183,10 @@ export function ChartRenderer({ chartId, chart: chartProp, data: dataProp, isPre
           />
         );
 
-      // Bar Charts
+      // Bar Charts with customization options
       case "bar":
       case "stacked_bar":
       case "grouped_bar":
-        if (!config.xAxis || !config.yAxis) {
-          return (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p>X-Axis and Y-Axis columns not configured</p>
-            </div>
-          );
-        }
-        return (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey={config.xAxis} stroke="#6b7280" fontSize={12} />
-              <YAxis stroke="#6b7280" fontSize={12} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#ffffff",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "6px",
-                }}
-              />
-              <Legend />
-              <Bar
-                dataKey={config.yAxis}
-                fill={COLORS[0]}
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        );
-
       case "horizontal_bar":
         if (!config.xAxis || !config.yAxis) {
           return (
@@ -225,24 +195,76 @@ export function ChartRenderer({ chartId, chart: chartProp, data: dataProp, isPre
             </div>
           );
         }
+        
+        const isHorizontal = config.orientation === "horizontal" || activeChart.type === "horizontal_bar";
+        const labelDisplay = config.labelDisplay || "hover";
+        const valueFormat = config.valueFormat || "value";
+        
+        // Calculate total for percentage display
+        const total = data.reduce((sum: number, item: any) => sum + (Number(item[config.yAxis]) || 0), 0);
+        
+        // Format label based on valueFormat
+        const formatLabel = (value: number) => {
+          if (valueFormat === "percentage") {
+            return `${((value / total) * 100).toFixed(1)}%`;
+          } else if (valueFormat === "both") {
+            return `${value} (${((value / total) * 100).toFixed(1)}%)`;
+          }
+          return value;
+        };
+        
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} layout="vertical">
+            <BarChart 
+              data={data} 
+              layout={isHorizontal ? "vertical" : "horizontal"}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis type="number" stroke="#6b7280" fontSize={12} />
-              <YAxis type="category" dataKey={config.xAxis} stroke="#6b7280" fontSize={12} />
+              {isHorizontal ? (
+                <>
+                  <XAxis type="number" stroke="#6b7280" fontSize={12} />
+                  <YAxis 
+                    type="category" 
+                    dataKey={config.xAxis} 
+                    stroke="#6b7280" 
+                    fontSize={11}
+                    width={100}
+                    tick={{ fill: "#374151" }}
+                  />
+                </>
+              ) : (
+                <>
+                  <XAxis 
+                    dataKey={config.xAxis} 
+                    stroke="#6b7280" 
+                    fontSize={11}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    tick={{ fill: "#374151" }}
+                  />
+                  <YAxis stroke="#6b7280" fontSize={12} />
+                </>
+              )}
               <Tooltip
                 contentStyle={{
                   backgroundColor: "#ffffff",
                   border: "1px solid #e5e7eb",
                   borderRadius: "6px",
                 }}
+                formatter={(value: number) => formatLabel(value)}
               />
               <Legend />
               <Bar
                 dataKey={config.yAxis}
                 fill={COLORS[0]}
-                radius={[0, 4, 4, 0]}
+                radius={isHorizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]}
+                label={labelDisplay === "always" || labelDisplay === "inside" ? {
+                  position: labelDisplay === "inside" ? "inside" : "top",
+                  fill: labelDisplay === "inside" ? "#ffffff" : "#374151",
+                  fontSize: 11,
+                  formatter: formatLabel
+                } : false}
               />
             </BarChart>
           </ResponsiveContainer>
