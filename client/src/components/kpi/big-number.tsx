@@ -18,6 +18,7 @@ interface BigNumberProps {
   };
   format?: 'number' | 'currency' | 'percentage';
   showTrend?: boolean;
+  fontColor?: string;
 }
 
 export function BigNumber({
@@ -32,6 +33,7 @@ export function BigNumber({
   colorThresholds,
   format = 'number',
   showTrend = true,
+  fontColor = '#1f2937',
 }: BigNumberProps) {
   
   const formatValue = (val: string | number): string => {
@@ -115,8 +117,14 @@ export function BigNumber({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1 p-4 pt-0">
-        <div className={cn("text-4xl font-bold", colorClass)} data-testid="kpi-value">
-          {prefix}{formatValue(value)}{suffix}
+        <div 
+          className="text-4xl font-bold" 
+          style={{ color: colorThresholds ? undefined : fontColor }}
+          data-testid="kpi-value"
+        >
+          <span className={colorThresholds ? colorClass : undefined}>
+            {prefix}{formatValue(value)}{suffix}
+          </span>
         </div>
         
         {(subheader || showComparison) && (

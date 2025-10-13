@@ -141,6 +141,7 @@ export function ChartRenderer({ chartId, chart: chartProp, data: dataProp, isPre
             prefix={config.prefix}
             suffix={config.suffix}
             format={config.format || "number"}
+            fontColor={config.fontColor}
           />
         );
 
@@ -167,6 +168,7 @@ export function ChartRenderer({ chartId, chart: chartProp, data: dataProp, isPre
             prefix={config.prefix}
             suffix={config.suffix}
             format={config.format || "number"}
+            fontColor={config.fontColor}
           />
         );
 
