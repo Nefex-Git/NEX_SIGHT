@@ -165,6 +165,45 @@ export function LineChartConfig({ config, onChange, columns = [] }: LineChartCon
           data-testid="switch-show-area"
         />
       </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="labelDisplay">Label Display</Label>
+        <Select
+          value={config.labelDisplay || "hover"}
+          onValueChange={(value) => updateConfig("labelDisplay", value)}
+        >
+          <SelectTrigger id="labelDisplay" data-testid="select-label-display">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Hidden</SelectItem>
+            <SelectItem value="hover">Show on Hover</SelectItem>
+            <SelectItem value="always">Always Visible</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          How to display data labels
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="valueFormat">Value Format</Label>
+        <Select
+          value={config.valueFormat || "value"}
+          onValueChange={(value) => updateConfig("valueFormat", value)}
+        >
+          <SelectTrigger id="valueFormat" data-testid="select-value-format">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="value">Actual Values</SelectItem>
+            <SelectItem value="abbreviated">Abbreviated (K, M, B)</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          How to format displayed values
+        </p>
+      </div>
     </div>
   );
 }
