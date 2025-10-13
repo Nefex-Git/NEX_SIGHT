@@ -161,6 +161,31 @@ export function BigNumberConfig({ config, onChange, columns = [], chartType }: B
           data-testid="input-suffix"
         />
       </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="fontColor">Font Color</Label>
+        <div className="flex gap-2">
+          <Input
+            id="fontColor"
+            type="color"
+            value={config.fontColor || "#1f2937"}
+            onChange={(e) => updateConfig("fontColor", e.target.value)}
+            className="w-20 h-10"
+            data-testid="input-font-color"
+          />
+          <Input
+            type="text"
+            value={config.fontColor || "#1f2937"}
+            onChange={(e) => updateConfig("fontColor", e.target.value)}
+            placeholder="#1f2937"
+            className="flex-1"
+            data-testid="input-font-color-text"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Color for the KPI value (default: dark gray for visibility on white backgrounds)
+        </p>
+      </div>
     </div>
   );
 }

@@ -19,6 +19,7 @@ interface BigNumberTrendlineProps {
   comparisonPeriod?: string;
   format?: 'number' | 'currency' | 'percentage';
   trendColor?: string;
+  fontColor?: string;
 }
 
 export function BigNumberTrendline({
@@ -32,6 +33,7 @@ export function BigNumberTrendline({
   comparisonPeriod = 'vs. previous period',
   format = 'number',
   trendColor = '#3b82f6',
+  fontColor = '#1f2937',
 }: BigNumberTrendlineProps) {
   
   const formatValue = (val: string | number): string => {
@@ -84,7 +86,7 @@ export function BigNumberTrendline({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 p-4 pt-0">
-        <div className="text-4xl font-bold" data-testid="kpi-trendline-value">
+        <div className="text-4xl font-bold" style={{ color: fontColor }} data-testid="kpi-trendline-value">
           {prefix}{formatValue(value)}{suffix}
         </div>
         
