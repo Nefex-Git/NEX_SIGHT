@@ -148,6 +148,47 @@ export function PieChartConfig({ config, onChange, columns = [] }: PieChartConfi
           data-testid="switch-show-percentages"
         />
       </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="labelDisplay">Label Position</Label>
+        <Select
+          value={config.labelDisplay || "outside"}
+          onValueChange={(value) => updateConfig("labelDisplay", value)}
+        >
+          <SelectTrigger id="labelDisplay" data-testid="select-label-display">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="outside">Outside Slices</SelectItem>
+            <SelectItem value="inside">Inside Slices</SelectItem>
+            <SelectItem value="hover">Show on Hover Only</SelectItem>
+            <SelectItem value="none">Hidden</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Where to display slice labels
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="valueFormat">Value Format</Label>
+        <Select
+          value={config.valueFormat || "value"}
+          onValueChange={(value) => updateConfig("valueFormat", value)}
+        >
+          <SelectTrigger id="valueFormat" data-testid="select-value-format">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="value">Actual Values</SelectItem>
+            <SelectItem value="percentage">Percentages Only</SelectItem>
+            <SelectItem value="both">Values & Percentages</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          How to format displayed values
+        </p>
+      </div>
     </div>
   );
 }
